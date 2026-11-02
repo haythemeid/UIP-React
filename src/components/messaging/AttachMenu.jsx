@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import '../../styles/css/chat-picker.css';
 import AttachSheet from './AttachSheet';
+import { hasDeviceGallery } from '../../lib/deviceGallery';
 
 /**
  * WhatsApp-style attachment menu: Document / Photos & videos / Camera / Audio / Poll / Location / New sticker.
@@ -55,6 +56,9 @@ export default function AttachMenu({
     return () => { document.removeEventListener('mousedown', away); document.removeEventListener('touchstart', away); document.removeEventListener('keydown', esc); };
   }, [open, phone]);
 
+  // phone browser: no gallery access for websites, so the paperclip opens the system photo picker straight away
+  // (albums + multi-select) and the "+" button keeps the other actions
+  const direct = phone && !!canMedia && !hasDeviceGallery();
   const run = (fn) => () => { setOpen(false); fn?.(); };
   const items = [
     canFiles && { k: 'doc', color: '#7f66ff', icon: ICONS.doc, label: ar ? 'مستند' : 'Document', fn: onPickFiles },
@@ -68,14 +72,19 @@ export default function AttachMenu({
 
   return (
     <div className="att-wrap" ref={wrap}>
+      {direct && (
+        <button type="button" className="msg-icon-btn" title={ar ? 'صور وفيديو' : 'Photos & videos'} aria-label={ar ? 'صور وفيديو' : 'Photos & videos'} onClick={() => onPickMedia?.()}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m21 11-8.5 8.5a5.5 5.5 0 0 1-7.8-7.8L13.2 3.2a3.7 3.7 0 0 1 5.2 5.2l-8.5 8.5a1.8 1.8 0 0 1-2.6-2.6l7.8-7.8" /></svg>
+        </button>
+      )}
       <button type="button" className={`msg-icon-btn${open ? ' is-active' : ''}`} title={title} aria-label={title} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? 'rotate(45deg)' : 'none', transition: 'transform .18s' }}><path d="M12 5v14M5 12h14" /></svg>
       </button>
       {open && phone && (
         <AttachSheet
           ar={ar}
-          canMedia={!!canMedia}
-          actions={items.filter((it) => it.k !== 'media' && it.k !== 'camera').map((it) => ({ k: it.k, color: it.color, icon: it.icon, label: it.label, run: run(it.fn) }))}
+          canMedia={!!canMedia && !direct}
+          actions={items.filter((it) => it.k !== 'media' && (direct || it.k !== 'camera')).map((it) => ({ k: it.k, color: it.color, icon: it.icon, label: it.label, run: run(it.fn) }))}
           onClose={() => setOpen(false)}
           onCamera={run(onPickCamera)}
           onSystemPicker={run(onPickMedia)}
