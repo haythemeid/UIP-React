@@ -387,6 +387,7 @@ export default function MeetingRoomShell({
     if (notice.type === 'camera_unavailable') return t("Couldn't open a camera. Check the browser's camera permission and that no other app is using it.");
     if (notice.type === 'screen_share_unsupported') return t("This browser can't share your screen.");
     if (notice.type === 'screen_share_failed') return t('Screen sharing could not start. Please try again.');
+    if (notice.type === 'sfu_unavailable') return t('The large-meeting video server is unreachable from your network — using direct connections where possible.');
     if (notice.type === 'camera_disabled_by_host') {
       return `${t('Your camera was turned off by the host.')}${notice.by ? ` (${notice.by})` : ''}`;
     }
@@ -525,7 +526,7 @@ export default function MeetingRoomShell({
             <button type="button" onClick={room.clearNotice} aria-label={t('Close')}><Icon name="x" size={14} /></button>
           </p>
         )}
-        {room.meshCapacity?.exceeds_recommended && (
+        {room.meshCapacity?.exceeds_recommended && room.transport !== 'sfu' && (
           <p className="meeting-room__alert is-warn">
             <Icon name="alert-triangle" size={15} />
             <span>{t('This meeting has reached the recommended participant limit — call quality may degrade.')}</span>

@@ -131,6 +131,28 @@ function withGuestToken(guestToken, body) {
   return guestToken ? { ...body, guest_token: guestToken } : body;
 }
 
+/**
+ * Cloudflare Realtime SFU (MeetingsSfuApiController). كلها بتعدّي على لارافيل — مفتاح Cloudflare مش في المتصفح.
+ * الـ GETs بتبعت guest_token في الـ query، الباقي في الـ body (زي signalingApi).
+ */
+const gq = (guestToken) => (guestToken ? `?guest_token=${encodeURIComponent(guestToken)}` : '');
+export const sfuApi = {
+  config: (meetingUuid, guestToken) => api.get(`/api/v1/meetings/${meetingUuid}/sfu/config${gq(guestToken)}`),
+  peers: (meetingUuid, guestToken) => api.get(`/api/v1/meetings/${meetingUuid}/sfu/peers${gq(guestToken)}`),
+  session: (meetingUuid, guestToken, role) =>
+    api.post(`/api/v1/meetings/${meetingUuid}/sfu/session`, withGuestToken(guestToken, { role })),
+  tracks: (meetingUuid, guestToken, sessionId, body) =>
+    api.post(`/api/v1/meetings/${meetingUuid}/sfu/sessions/${sessionId}/tracks`, withGuestToken(guestToken, body)),
+  renegotiate: (meetingUuid, guestToken, sessionId, body) =>
+    api.put(`/api/v1/meetings/${meetingUuid}/sfu/sessions/${sessionId}/renegotiate`, withGuestToken(guestToken, body)),
+  closeTracks: (meetingUuid, guestToken, sessionId, body) =>
+    api.put(`/api/v1/meetings/${meetingUuid}/sfu/sessions/${sessionId}/tracks/close`, withGuestToken(guestToken, body)),
+  report: (meetingUuid, guestToken, body) =>
+    api.post(`/api/v1/meetings/${meetingUuid}/sfu/report`, withGuestToken(guestToken, body)),
+  leave: (meetingUuid, guestToken) =>
+    api.post(`/api/v1/meetings/${meetingUuid}/sfu/leave`, withGuestToken(guestToken, {})),
+};
+
 export const signalingApi = {
   claimSession: (meetingUuid, guestToken) =>
     api.post(`/api/v1/meetings/${meetingUuid}/signaling/claim-session`, withGuestToken(guestToken, { session_id: MEETING_SESSION_ID })),

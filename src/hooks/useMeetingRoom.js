@@ -3,8 +3,9 @@ import { attachNoiseSuppressor } from '../lib/calls/noiseSuppress';
 import { attachEchoGate, echoGateEnabled, setRemoteAudio, clearRemoteAudio, tightenEchoGate } from '../lib/calls/echoGate';
 import { createCameraFx, cameraFxSupported } from '../lib/cameraFx';
 import { watchScreenCapture } from '../lib/captureGuard';
-import { createMeetingEcho, presenceChannelName, personalChannelName, signalingApi, chatApi, hostControlApi, meetingLifecycleApi, filesApi, notesApi, pollsApi, recordingsApi, remoteControlApi, leaveOnUnload, isAlreadyInMeetingError, isSessionReplacedError } from '../lib/meetingSignaling';
+import { createMeetingEcho, presenceChannelName, personalChannelName, signalingApi, chatApi, hostControlApi, meetingLifecycleApi, filesApi, notesApi, pollsApi, recordingsApi, remoteControlApi, sfuApi, leaveOnUnload, isAlreadyInMeetingError, isSessionReplacedError } from '../lib/meetingSignaling';
 import { REMOTE_CONTROL_CHANNEL } from '../lib/remoteControlReceiver';
+import { createMeetingTransport } from '../lib/sfu/meetingTransport';
 
 /**
  * Round 3 (Signaling) + Round 4 (WebRTC Core). Owns:
@@ -280,6 +281,7 @@ export function useMeetingRoom({
   const [screenStream, setScreenStream] = useState(null); // local preview of what we are presenting (the camera stream is untouched)
   const [hasCamera, setHasCamera] = useState(true); // false when no real camera track exists (only the black placeholder)
   const [meshCapacity, setMeshCapacity] = useState(null);
+  const [transport, setTransport] = useState('mesh'); // 'mesh' | 'sfu' — decided per room by the server (MeetingTransportService), see lib/sfu/meetingTransport.js
   const [hasTurn, setHasTurn] = useState(null); // null = unknown yet; false = server has no TURN relay configured
   const [status, setStatus] = useState('connecting'); // connecting | connected | error
   const [error, setError] = useState(null);
@@ -363,6 +365,13 @@ export function useMeetingRoom({
   const hasCameraRef = useRef(true);
   const cameraTrackSendersRef = useRef({}); // key -> RTCRtpSender, for screen-share track swapping
   const iceServersRef = useRef([]);
+  // ---- mesh <-> SFU transport (Cloudflare Realtime SFU). Mesh stays the default and the automatic fallback.
+  const transportRef = useRef('mesh');
+  const transportMgrRef = useRef(null);   // createMeetingTransport() instance, null until the room is set up
+  const sourceRef = useRef({});           // key -> 'mesh' | 'sfu': which transport the tile's remoteStream currently comes from
+  const meshQualityRef = useRef('good');  // worst mesh connection quality of the last sample (fed to the server's mesh/SFU decision)
+  const meshLimitRef = useRef(6);         // MeetingPolicyService::maxMeshParticipants, so a failed SFU only falls back to mesh when mesh is viable
+  const switchingRef = useRef(false);
   const remoteStreamsRef = useRef({}); // key -> MediaStream (fallback when ontrack gives no stream)
   const offeredRef = useRef({}); // key -> true when WE sent the offer for that pair (only the offerer retries)
   const offerToRef = useRef(null);
@@ -677,9 +686,14 @@ export function useMeetingRoom({
       // (only when the half-duplex gate is actually on — it is OFF by default, and without this check every remote voice still got a
       // WebAudio analyser + a getStats() poll every 60 ms: with 4 other people that is ~65 stats calls per second doing nothing.)
       if (e.track.kind === 'audio' && echoGateEnabled()) setRemoteAudio(`meeting:${key}`, new MediaStream([e.track]), e.receiver || null);
-      patchParticipant(key, { remoteStream: stream });
+      // when the SFU already feeds this tile (room switched to SFU), a late mesh track must not steal it back
+      const meshWins = () => !(transportRef.current === 'sfu' && sourceRef.current[key] === 'sfu');
+      if (meshWins()) {
+        if (transportRef.current === 'mesh') sourceRef.current[key] = 'mesh';
+        patchParticipant(key, { remoteStream: stream });
+      }
       // a track can be muted at first and unmute when media starts flowing — nudge React so tiles re-bind
-      e.track.onunmute = () => patchParticipant(key, { remoteStream: stream });
+      e.track.onunmute = () => { if (meshWins()) patchParticipant(key, { remoteStream: stream }); };
     };
 
     pc.onconnectionstatechange = () => {
@@ -753,6 +767,46 @@ export function useMeetingRoom({
       dbg('signal handling failed', kind, err?.message || String(err));
     }
   }, [myKey, createPeer]);
+
+  // ---- transport switching (mesh <-> SFU), make-before-break ------------
+  const onSfuRemote = useCallback((key, stream) => {
+    if (transportRef.current !== 'sfu') return;
+    sourceRef.current[key] = 'sfu';
+    patchParticipant(key, { remoteStream: stream, connectionState: 'connected' });
+  }, [patchParticipant]);
+
+  /** Publish to the SFU, pull everyone, then drop the mesh connections whose SFU stream arrived. Resolves false when the SFU is unusable. */
+  const switchToSfu = useCallback(async () => {
+    const mgr = transportMgrRef.current;
+    if (!mgr || transportRef.current === 'sfu') return transportRef.current === 'sfu';
+    if (switchingRef.current) return false;
+    switchingRef.current = true;
+    try {
+      const ok = await mgr.enterSfu(localStreamRef.current);
+      if (!ok) { setNotice({ type: 'sfu_unavailable' }); return false; }
+      transportRef.current = 'sfu';
+      setTransport('sfu');
+      if (screenTrackRef.current) mgr.replaceVideoTrack(screenTrackRef.current); // joined/switched while presenting
+      await mgr.syncPeers();
+      // mesh peers stay as a safety net until that person's SFU stream is really here
+      [2500, 6000, 12000].forEach((ms) => setTimeout(() => {
+        if (transportRef.current !== 'sfu') return;
+        Object.keys(peersRef.current).forEach((k) => { if (mgr.hasPeerStream(k) && sourceRef.current[k] === 'sfu') closePeer(k); });
+      }, ms));
+      return true;
+    } finally { switchingRef.current = false; }
+  }, [closePeer]);
+
+  /** Back to mesh. Only the side with the smaller key offers (both sides offering at once would cancel each other out). */
+  const switchToMesh = useCallback(() => {
+    if (transportRef.current === 'mesh') return;
+    transportRef.current = 'mesh';
+    setTransport('mesh');
+    Object.keys(participantsRef.current).forEach((k) => {
+      if (myKey < k) offerToRef.current?.(k).catch((err) => dbg('mesh offer failed', k, err?.message || String(err)));
+    });
+    setTimeout(() => { if (transportRef.current === 'mesh') transportMgrRef.current?.leaveSfu(); }, 8000);
+  }, [myKey]);
 
   // ---- setup: local media, ICE servers, roster, presence channel -------
   useEffect(() => {
@@ -844,6 +898,28 @@ export function useMeetingRoom({
         iceServersRef.current = iceJson.data.ice_servers || [];
         if (typeof iceJson.data.has_turn === 'boolean') setHasTurn(iceJson.data.has_turn);
         setMeshCapacity(rosterJson.data.mesh_capacity || null);
+        if (rosterJson.data.mesh_capacity?.limit) meshLimitRef.current = rosterJson.data.mesh_capacity.limit;
+        try {
+          const mgr = createMeetingTransport({
+            meetingUuid, guestToken, myKey, sfuApi, signalingApi,
+            getChannel: () => channelRef.current,
+            getIceServers: () => iceServersRef.current,
+            getMeshQuality: () => meshQualityRef.current,
+            getTransport: () => transportRef.current,
+            onRemote: onSfuRemote,
+            onServerMode: (mode) => { if (mode === 'sfu') switchToSfu(); else switchToMesh(); },
+            onSfuLost: (kind) => {
+              if (kind === 'retry') return localStreamRef.current;
+              // gave up on the SFU: mesh is only a sane fallback when the room is small enough for it
+              if (Object.keys(participantsRef.current).length + 1 <= meshLimitRef.current) switchToMesh();
+              else setNotice({ type: 'sfu_unavailable' });
+              return null;
+            },
+            log: dbg,
+          });
+          transportMgrRef.current = mgr;
+          await mgr.init(); // GET sfu/config — failing here just means "mesh only"
+        } catch (e) { dbg('sfu manager unavailable, mesh only', e?.message); transportMgrRef.current = null; }
         setFiles(filesJson.data?.files || []);
         setNotes({
           body: notesJson.data?.body || '',
@@ -928,6 +1004,7 @@ export function useMeetingRoom({
               return next;
             });
           }
+          const goSfu = !!(transportMgrRef.current && transportMgrRef.current.state.enabled && transportMgrRef.current.state.mode === 'sfu');
           present.forEach((m) => {
             if (m.id === myKey) return;
             setParticipants((prev) => ({
@@ -938,8 +1015,16 @@ export function useMeetingRoom({
                 screenShareAllowed: null, connectionState: 'connecting', connectionQuality: 'good', remoteStream: null,
               },
             }));
-            offerTo(m.id).catch((err) => dbg('offer failed', m.id, err?.message || String(err)));
+            if (!goSfu) offerTo(m.id).catch((err) => dbg('offer failed', m.id, err?.message || String(err)));
           });
+          transportMgrRef.current?.startReporting(); // mesh quality feeds the server's mesh/SFU decision too
+          if (goSfu) {
+            // the room already runs on the SFU: join it; if that fails for me, fall back to the mesh offers right away
+            switchToSfu().then((ok) => {
+              if (ok) return;
+              present.forEach((m) => { if (m.id !== myKey) offerTo(m.id).catch((err) => dbg('offer failed', m.id, err?.message || String(err))); });
+            });
+          }
         })
         .joining((raw) => {
           const m = normMember(raw);
@@ -961,6 +1046,8 @@ export function useMeetingRoom({
           const m = normMember(raw);
           if (!m.id) return;
           closePeer(m.id);
+          transportMgrRef.current?.dropPeer(m.id);
+          delete sourceRef.current[m.id];
           setParticipants((prev) => {
             const next = { ...prev };
             delete next[m.id];
@@ -968,6 +1055,7 @@ export function useMeetingRoom({
           });
         })
         .listenForWhisper('signal', handleSignal)
+        .listenForWhisper('sfu', (m) => transportMgrRef.current?.handleAnnounce(m))
         .listenForWhisper('wb', (e) => { wbHandlersRef.current.forEach((fn) => { try { fn(e); } catch { /* a bad whiteboard message must never break the call */ } }); })
         .listenForWhisper('capture', (e) => {
           // someone else's screenshot / recording warning (client event: it never goes through Laravel)
@@ -980,11 +1068,14 @@ export function useMeetingRoom({
         .listen('.connection.state.changed', (e) => {
           patchParticipant(e.participant_key, { connectionState: e.connection_state });
         })
+        .listen('.meeting.transport.changed', (e) => transportMgrRef.current?.applyServerMode(e))
         .listen('.connection.quality.changed', (e) => {
           patchParticipant(e.participant_key, { connectionQuality: e.connection_quality });
         })
         .listen('.participant.left', (e) => {
           closePeer(e.participant_key);
+          transportMgrRef.current?.dropPeer(e.participant_key);
+          delete sourceRef.current[e.participant_key];
           setParticipants((prev) => {
             const next = { ...prev };
             delete next[e.participant_key];
@@ -1193,6 +1284,8 @@ export function useMeetingRoom({
     return () => {
       cancelled = true;
       Object.keys(peersRef.current).forEach(closePeer);
+      transportMgrRef.current?.stop();
+      transportMgrRef.current = null; transportRef.current = 'mesh'; sourceRef.current = {};
       clearRemoteAudio('meeting:');
       channelRef.current?.stopListening('.media.state.changed');
       if (echoRef.current) {
@@ -1225,6 +1318,7 @@ export function useMeetingRoom({
   useEffect(() => {
     if (!kicked && !meetingEnded && !sessionConflict) return;
     Object.keys(peersRef.current).forEach(closePeer);
+    transportMgrRef.current?.stop();
     echoRef.current?.leave(presenceChannelName(meetingUuid));
     echoRef.current?.leave(personalChannelName(meetingUuid, myKey));
     echoRef.current?.disconnect();
@@ -1297,6 +1391,7 @@ export function useMeetingRoom({
       }
       badStreak = worst === 'poor' ? badStreak + 1 : 0;
       if (worst === 'poor' && badStreak < 2) worst = 'good'; // one bad sample is noise, not a weak network
+      meshQualityRef.current = worst;
       signalingApi.connectionQuality(meetingUuid, guestToken, worst).catch(() => {});
     }, 6000);
     return () => clearInterval(timer);
@@ -1343,6 +1438,7 @@ export function useMeetingRoom({
     // while presenting, peers keep receiving the screen; the camera comes back when the presentation stops
     if (!screenTrackRef.current) {
       Object.values(cameraTrackSendersRef.current).forEach((sender) => sender.replaceTrack(newTrack).catch(() => {}));
+      transportMgrRef.current?.replaceVideoTrack(newTrack);
     }
   }, []);
 
@@ -1464,6 +1560,7 @@ export function useMeetingRoom({
         screenTrackRef.current = null;
         const cameraTrack = localStreamRef.current?.getVideoTracks()[0] || null;
         Object.values(cameraTrackSendersRef.current).forEach((sender) => sender.replaceTrack(cameraTrack).catch(() => {}));
+        transportMgrRef.current?.replaceVideoTrack(cameraTrack);
         screenTrack.stop();
         setScreenStream(null);
         setScreenSharing(false);
@@ -1473,6 +1570,7 @@ export function useMeetingRoom({
 
       // Show it on OUR screen straight away — nothing below waits for the server or for the peers.
       screenTrackRef.current = screenTrack;
+      transportMgrRef.current?.replaceVideoTrack(screenTrack); // SFU publisher (no-op while the room is on mesh)
       setScreenStream(new MediaStream([screenTrack]));
       setScreenSharing(true);
       screenTrack.onended = stopSharing;
@@ -1755,7 +1853,7 @@ export function useMeetingRoom({
     requestRemoteControl, respondRemoteControl, stopRemoteControl, sendRemoteInput,
     status, error, meetingStatus, notice, clearNotice,
     localStream, screenStream, hasCamera, micEnabled, cameraEnabled, screenSharing, canShareScreen,
-    participants, meshCapacity, hasTurn,
+    participants, meshCapacity, hasTurn, transport,
     toggleMic, toggleCamera, toggleScreenShare, leave, endMeetingForAll,
     myDisplayName, isHost,
 
