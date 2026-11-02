@@ -55,7 +55,7 @@ export function BioBubble({ text, styleId, className = '', tail = true, children
 export function HeaderBio({ conversationId, text, styleId, own, onEdit }) {
   const t = useT();
   const [shown, setShown] = useState(false);
-  const [pos, setPos] = useState({ start: 52, size: 40 }); // where the contact's photo sits (distance from the inline-start edge)
+  const [pos, setPos] = useState({ start: 52, size: 40, inHdr: false, hStart: 0, hMax: 0, hTop: 0 }); // where the contact's photo sits (distance from the inline-start edge)
   const boxRef = useRef(null);
 
   // The note comes and goes: it fades in, stays long enough to read, fades out, and returns after a pause.
@@ -87,7 +87,37 @@ export function HeaderBio({ conversationId, text, styleId, own, onEdit }) {
       const rtl = getComputedStyle(box).direction === 'rtl';
       const start = Math.round(rtl ? b.right - r.right : r.left - b.left);
       const size = Math.round(r.width);
-      setPos((p) => (p.start === start && p.size === size ? p : { start, size }));
+      // free space in the header between the name and the header buttons: the note lives there when it is wide enough
+      let inHdr = false; let hStart = 0; let hMax = 0; let hTop = 0;
+      const hdr = box.previousElementSibling;
+      const meta = hdr?.querySelector('.msg-thread__peer-meta');
+      const acts = hdr?.querySelector('.msg-thread__header-actions');
+      if (hdr && meta && acts) {
+        const m = meta.getBoundingClientRect();
+        const a = acts.getBoundingClientRect();
+        const h = hdr.getBoundingClientRect();
+        // the name block stretches (flex:1), so measure the text itself: the furthest inline-end edge of its lines
+        let textEnd = null;
+        Array.from(meta.children).forEach((c) => {
+          const rg = document.createRange();
+          rg.selectNodeContents(c);
+          const q = rg.getBoundingClientRect();
+          if (!q.width) return;
+          const e = rtl ? q.left : q.right;
+          textEnd = textEnd == null ? e : (rtl ? Math.min(textEnd, e) : Math.max(textEnd, e));
+        });
+        if (textEnd == null) textEnd = rtl ? m.right : m.left;
+        const gapStart = textEnd;
+        const gapEnd = rtl ? a.right : a.left;
+        const avail = Math.round(rtl ? gapStart - gapEnd : gapEnd - gapStart) - 28;
+        if (avail >= 150) {
+          inHdr = true;
+          hStart = Math.round(rtl ? b.right - gapStart : gapStart - b.left) + 14;
+          hMax = Math.min(avail, 340);
+          hTop = Math.round(h.top + h.height / 2 - b.top);
+        }
+      }
+      setPos((p) => (p.start === start && p.size === size && p.inHdr === inHdr && p.hStart === hStart && p.hMax === hMax && p.hTop === hTop ? p : { start, size, inHdr, hStart, hMax, hTop }));
     };
     measure();
     window.addEventListener('resize', measure);
@@ -100,7 +130,8 @@ export function HeaderBio({ conversationId, text, styleId, own, onEdit }) {
   const editable = !!(own && onEdit);
   const act = editable ? () => onEdit() : () => setShown(false);
   return (
-    <div className="bio-float" ref={boxRef} style={{ '--bio-start': `${pos.start}px`, '--bio-av': `${pos.size}px` }}>
+    <div className={`bio-float${pos.inHdr ? ' is-inhdr' : ''}`} ref={boxRef}
+      style={{ '--bio-start': `${pos.start}px`, '--bio-av': `${pos.size}px`, ...(pos.inHdr ? { '--bio-hstart': `${pos.hStart}px`, '--bio-hmax': `${pos.hMax}px`, '--bio-htop': `${pos.hTop}px` } : {}) }}>
       <div className={`bio-hdr${shown ? ' is-in' : ''}`} role="note" aria-hidden={!shown} aria-label={t('Bio', 'البايو')}>
         <div className="bio-hdr__row">
           <BioBubble text={text} styleId={styleId} tail={false} className={`bio-hdr__bubble${isEmojiOnly(text) ? ' is-emoji' : ''}`}
