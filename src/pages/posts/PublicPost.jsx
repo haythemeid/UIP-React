@@ -4,6 +4,7 @@ import Icon from '../../components/Icon';
 import LandingNav from '../../components/LandingNav';
 import SiteFooter from '../../components/SiteFooter';
 import PostMedia from '../../components/posts/PostMedia';
+import LinkCard from '../../components/posts/LinkCard';
 import { PAvatar, REACTIONS, RichText } from '../../components/posts/shared';
 import { postsApi } from '../../api/postsApi';
 import { compact } from '../../lib/postMedia';
@@ -12,7 +13,6 @@ import { useLanguage } from '../../context/LanguageContext';
 import { roleHome } from '../../config/roleHome';
 import { MY_PC_PREFIXES } from '../../config/myPc';
 import { ago } from '../../components/feed/feedUi';
-import { safeHref } from '../../lib/safeUrl';
 import '../../styles/css/posts.css';
 import '../../styles/css/posts-pro.css';
 import '../../styles/css/public-post.css';
@@ -224,7 +224,7 @@ export default function PublicPost() {
                   {long && <button type="button" className="pp-link" onClick={() => setExpanded(true)}> {t('See more', 'عرض المزيد')}</button>}
                 </p>
               )}
-              {post.link_url && <a className="pp-linkcard" href={safeHref(post.link_url)} target="_blank" rel="noopener noreferrer nofollow"><Icon name="link" size={16} /><span dir="ltr">{post.link_url}</span></a>}
+              {post.link_url && <LinkCard url={post.link_url} />}
               {post.hashtags?.length > 0 && !post.body?.includes('#') && <div className="pp-tags">{post.hashtags.map((x) => <span key={x} className="pp-tag">#{x}</span>)}</div>}
 
               {hiddenMedia && post.media.length > 0 ? (

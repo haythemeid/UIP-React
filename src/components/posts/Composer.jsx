@@ -1,4 +1,5 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from '../Icon';
 import { postsApi } from '../../api/postsApi';
 import { errorMessage } from '../../api/client';
@@ -6,9 +7,11 @@ import { fmtBytes } from '../../lib/postMedia';
 import { zipSync } from 'fflate';
 import { useSandbox } from '../zipbench/runner/useSandbox';
 import { Alert, COMMENT_MODES, PAvatar, VIS, useTt } from './shared';
+import LinkCard, { parseLink } from './LinkCard';
 
 const CODE_EXT = ['py', 'js', 'ts', 'html', 'css', 'php', 'java', 'c', 'cpp', 'cs', 'go', 'rb', 'sh', 'sql', 'json', 'yml', 'md'];
 const SandboxTerminal = lazy(() => import('./SandboxTerminal'));
+const VoiceMessage = lazy(() => import('../messaging/VoiceMessage'));
 let seq = 0;
 
 /**
@@ -64,42 +67,255 @@ function CodeRunBox({ item, allowRun, onAllowRun, onOutput, tt }) {
   );
 }
 
-/** Language picker: a styled listbox instead of the browser's native <select> popup (which ignores the app theme and shows an OS scrollbar). */
+const LANG_NAMES = { py: 'Python', js: 'JavaScript', ts: 'TypeScript', html: 'HTML', css: 'CSS', php: 'PHP', java: 'Java', c: 'C', cpp: 'C++', cs: 'C#', go: 'Go', rb: 'Ruby', sh: 'Shell', sql: 'SQL', json: 'JSON', yml: 'YAML', md: 'Markdown' };
+
+/** Guess the language from what was pasted (only used until the author picks one by hand). */
+function detectLang(t) {
+  const s = t.trim().slice(0, 1500);
+  if (!s) return null;
+  if (/^<!doctype html|^<html[\s>]|^<(div|section|main|header|body|head|style|script|ul|p|h[1-6])[\s>]/i.test(s)) return 'html';
+  if (/^<\?php/.test(s)) return 'php';
+  if (/^#include\s*[<"]/m.test(s)) return /std::|cout|using namespace|class\s+\w+\s*[{:]/.test(s) ? 'cpp' : 'c';
+  if (/^package\s+main|^func\s+\w+\(/m.test(s)) return 'go';
+  if (/public\s+(static\s+)?(class|void)|System\.out\.print/.test(s)) return 'java';
+  if (/^\s*(select|insert\s+into|update|create\s+table)\b[\s\S]*\b(from|into|set|\()/i.test(s)) return 'sql';
+  if (/^#!\/bin\/(ba)?sh|^\s*(echo|sudo|apt|npm|cd)\s/m.test(s)) return 'sh';
+  if (/:\s*(string|number|boolean)\b|^interface\s+\w+|^type\s+\w+\s*=/m.test(s)) return 'ts';
+  if (/\bconsole\.log\(|\bconst\s+\w+\s*=|\blet\s+\w+\s*=|=>\s*[{(]|^\s*function\s+\w+\(|\brequire\(|^import\s.+from\s/m.test(s)) return 'js';
+  if (/^\s*def\s+\w+\(.*\):|^\s*print\(|^\s*(import\s+\w+|from\s+\w+\s+import)|^\s*class\s+\w+.*:/m.test(s)) return 'py';
+  if (/^[.#]?[\w-]+\s*\{[^}]*:[^}]*;/m.test(s)) return 'css';
+  if (/^\s*[{[]/.test(s) && /"\s*:/.test(s)) return 'json';
+  return null;
+}
+
+function fileKind(i) {
+  if (i.media?.kind) return i.media.kind;
+  const f = i.file; const t = f?.type || ''; const ext = String(i.name || '').split('.').pop().toLowerCase();
+  if (t.startsWith('image/')) return 'image';
+  if (t.startsWith('video/')) return 'video';
+  if (t.startsWith('audio/')) return 'audio';
+  if (CODE_EXT.includes(ext)) return 'code';
+  if (ext === 'pdf') return 'pdf';
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return 'archive';
+  return 'file';
+}
+const KIND_ICON = { image: 'image', video: 'video', audio: 'audio-wave', code: 'terminal', pdf: 'file', archive: 'folder', file: 'file' };
+
+/** A blob: URL for a local File that is released when the row goes away. */
+function useObjectUrl(file, enabled) {
+  const [url, setUrl] = useState(null);
+  useEffect(() => {
+    if (!file || !enabled) { setUrl(null); return undefined; }
+    const u = URL.createObjectURL(file); setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [file, enabled]);
+  return url;
+}
+
+function FileRow({ i, tt, onRemove, onRetry, children }) {
+  const kind = fileKind(i);
+  const thumb = useObjectUrl(i.file, kind === 'image');
+  const audio = useObjectUrl(i.file, kind === 'audio');
+  const pct = Math.round(i.progress || 0);
+  return (
+    <li className={`pp-fi is-${i.status}`} data-kind={kind}>
+      <span className="pp-fi__ico">{thumb ? <img src={thumb} alt="" /> : <Icon name={KIND_ICON[kind] || 'file'} size={20} />}</span>
+      <div className="pp-fi__main">
+        <strong className="pp-fi__name"><bdi dir="ltr">{i.name}</bdi></strong>
+        <span className="pp-fi__meta">
+          <bdi dir="ltr">{fmtBytes(i.size)}</bdi>
+          {i.status === 'up' && <><i>•</i><b>{tt('Uploading', 'جارٍ الرفع')} <bdi dir="ltr">{pct}%</bdi></b></>}
+          {i.status === 'done' && <><i>•</i><b className="is-ok"><Icon name="check" size={12} /> {tt('Ready', 'تم الرفع')}</b></>}
+          {i.status === 'err' && <><i>•</i><b className="is-err">{i.error}</b></>}
+        </span>
+        {i.status === 'up' && <i className="pp-bar"><b style={{ width: `${pct}%` }} /></i>}
+      </div>
+      {i.status === 'err' && i.file && <button type="button" className="pp-icon" onClick={() => onRetry(i)} aria-label={tt('Retry', 'إعادة المحاولة')}><Icon name="refresh" size={15} /></button>}
+      <button type="button" className="pp-icon" onClick={() => onRemove(i)} aria-label={tt('Remove', 'إزالة')}><Icon name="x" size={15} /></button>
+      {kind === 'audio' && audio && (
+        <div className="pp-fi__audio"><Suspense fallback={<div className="pp-skel" style={{ height: 44 }} />}><VoiceMessage src={audio} name={i.name} downloadable={false} /></Suspense></div>
+      )}
+      {children}
+    </li>
+  );
+}
+
+/** Language picker: a themed listbox rendered in a portal (so the composer's overflow never clips it) that flips upward near the screen edge. */
 function LangSelect({ value, options, onChange, label }) {
   const [open, setOpen] = useState(false);
   const [cur, setCur] = useState(0);
-  const root = useRef(null);
+  const [pos, setPos] = useState(null);
+  const btn = useRef(null);
   const list = useRef(null);
   const close = useCallback(() => setOpen(false), []);
+  const place = useCallback(() => {
+    const r = btn.current?.getBoundingClientRect();
+    if (!r) return;
+    const room = window.innerHeight - r.bottom;
+    const up = room < 280 && r.top > room;
+    setPos({ left: Math.max(8, Math.min(r.left, window.innerWidth - 232)), minWidth: Math.max(r.width, 210), ...(up ? { bottom: window.innerHeight - r.top + 6, maxHeight: Math.min(300, r.top - 16) } : { top: r.bottom + 6, maxHeight: Math.min(300, room - 16) }) });
+  }, []);
 
   useEffect(() => {
     if (!open) return undefined;
+    place();
     setCur(Math.max(0, options.indexOf(value)));
-    const down = (e) => { if (root.current && !root.current.contains(e.target)) close(); };
+    const down = (e) => { if (!btn.current?.contains(e.target) && !list.current?.contains(e.target)) close(); };
+    const scroll = (e) => { if (!list.current?.contains(e.target)) close(); };
     document.addEventListener('mousedown', down);
-    return () => document.removeEventListener('mousedown', down);
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', scroll, true);
+    return () => { document.removeEventListener('mousedown', down); window.removeEventListener('resize', place); window.removeEventListener('scroll', scroll, true); };
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (open) list.current?.children[cur]?.scrollIntoView({ block: 'nearest' }); }, [cur, open]);
+  useEffect(() => { if (open) list.current?.children[cur]?.scrollIntoView({ block: 'nearest' }); }, [cur, open, pos]);
 
-  const pick = (v) => { onChange(v); close(); };
+  const pick = (v) => { onChange(v); close(); btn.current?.focus(); };
   const key = (e) => {
     if (!open) { if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) { e.preventDefault(); setOpen(true); } return; }
     if (e.key === 'Escape') { e.preventDefault(); close(); } else if (e.key === 'ArrowDown') { e.preventDefault(); setCur((i) => Math.min(options.length - 1, i + 1)); } else if (e.key === 'ArrowUp') { e.preventDefault(); setCur((i) => Math.max(0, i - 1)); } else if (e.key === 'Home') { e.preventDefault(); setCur(0); } else if (e.key === 'End') { e.preventDefault(); setCur(options.length - 1); } else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(options[cur]); }
   };
   return (
-    <div className="pp-sel" ref={root} dir="ltr">
-      <button type="button" className="pp-sel__btn" aria-haspopup="listbox" aria-expanded={open} aria-label={label} onClick={() => setOpen((o) => !o)} onKeyDown={key}>
-        <span>{value}</span><Icon name="chevron-down" size={14} />
+    <div className="pp-sel" dir="ltr">
+      <button type="button" ref={btn} className="pp-sel__btn" aria-haspopup="listbox" aria-expanded={open} aria-label={label} onClick={() => setOpen((o) => !o)} onKeyDown={key}>
+        <span><b>{value}</b>{LANG_NAMES[value] && <em>{LANG_NAMES[value]}</em>}</span><Icon name="chevron-down" size={14} />
       </button>
-      {open && (
-        <ul className="pp-sel__list" role="listbox" ref={list} aria-label={label}>
-          {options.map((o, i) => (
-            <li key={o} role="option" aria-selected={o === value} className={`pp-sel__opt${o === value ? ' is-on' : ''}${i === cur ? ' is-cur' : ''}`} onMouseEnter={() => setCur(i)} onMouseDown={(e) => { e.preventDefault(); pick(o); }}>
-              <span>{o}</span>{o === value && <Icon name="check" size={14} />}
+      {open && pos && createPortal(
+        <ul className="pp-sel__list is-fixed" dir="ltr" role="listbox" ref={list} aria-label={label} style={pos}>
+          {options.map((o, idx) => (
+            <li key={o} role="option" aria-selected={o === value} className={`pp-sel__opt${o === value ? ' is-on' : ''}${idx === cur ? ' is-cur' : ''}`} onMouseEnter={() => setCur(idx)} onMouseDown={(e) => { e.preventDefault(); pick(o); }}>
+              <span><b>{o}</b>{LANG_NAMES[o] && <em>{LANG_NAMES[o]}</em>}</span>{o === value && <Icon name="check" size={14} />}
             </li>
           ))}
-        </ul>
-      )}
+        </ul>, document.body)}
+    </div>
+  );
+}
+
+/** Code editor for the snippet: line numbers, Tab key, language auto-detect, counters. */
+function CodeEditor({ code, setCode, onAttach, onCancel, tt }) {
+  const ta = useRef(null);
+  const gut = useRef(null);
+  const lines = useMemo(() => code.text.split('\n').length, [code.text]);
+  const rows = Math.min(22, Math.max(9, lines));
+  const nums = useMemo(() => Array.from({ length: Math.max(lines, rows) }, (_, n) => n + 1).join('\n'), [lines, rows]);
+  const change = (text) => setCode((c) => ({ ...c, text, ...(!c.touched ? { ext: detectLang(text) || c.ext } : {}) }));
+  const onKey = (e) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      const el = e.currentTarget; const { selectionStart: a, selectionEnd: b } = el;
+      change(`${code.text.slice(0, a)}  ${code.text.slice(b)}`);
+      requestAnimationFrame(() => { el.selectionStart = a + 2; el.selectionEnd = a + 2; });
+    } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && code.text.trim()) { e.preventDefault(); onAttach(); }
+  };
+  return (
+    <div className="pp-ide">
+      <div className="pp-ide__bar">
+        <span className="pp-ide__dots" aria-hidden="true"><i /><i /><i /></span>
+        <span className="pp-ide__file" dir="ltr">snippet.{code.ext}</span>
+        <span className="pp-sp" />
+        <LangSelect value={code.ext} options={CODE_EXT} label={tt('Language', 'اللغة')} onChange={(ext) => setCode((c) => ({ ...c, ext, touched: true }))} />
+      </div>
+      <p className="pp-ide__hint"><Icon name="play" size={11} /> {tt('Runnable languages get a Run button on the post.', 'اللغات القابلة للتشغيل يظهر لها زر تشغيل.')}</p>
+      <div className="pp-ide__body" dir="ltr">
+        <pre className="pp-ide__ln" ref={gut} aria-hidden="true" style={{ height: `calc(${rows} * 1.65 * 13px + 28px)` }}>{nums}</pre>
+        <textarea ref={ta} className="pp-ide__ta" style={{ '--rows': rows }} rows={rows} wrap="off" spellCheck={false} autoCapitalize="off" autoCorrect="off" autoFocus value={code.text}
+          onChange={(e) => change(e.target.value)} onKeyDown={onKey} onScroll={(e) => { if (gut.current) gut.current.scrollTop = e.currentTarget.scrollTop; }}
+          placeholder={'// ' + tt('Paste or type your code here', 'ألصق الكود أو اكتبه هنا')} aria-label={tt('Code', 'الكود')} />
+      </div>
+      <div className="pp-ide__foot">
+        <small>{lines} {tt('lines', 'سطر')} · {code.text.length.toLocaleString()} {tt('chars', 'حرف')}</small>
+        <span className="pp-sp" />
+        <button type="button" className="pp-btn" onClick={onCancel}>{tt('Cancel', 'إلغاء')}</button>
+        <button type="button" className="pp-btn is-primary" onClick={onAttach} disabled={!code.text.trim()}><Icon name="check" size={14} /> {tt('Attach code', 'إرفاق الكود')}</button>
+      </div>
+    </div>
+  );
+}
+
+const BARS = 40;
+const pickMime = () => {
+  if (typeof MediaRecorder === 'undefined') return '';
+  if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) return 'audio/ogg';
+  if (MediaRecorder.isTypeSupported('audio/webm')) return 'audio/webm';
+  if (MediaRecorder.isTypeSupported('audio/mp4')) return 'audio/mp4';
+  return '';
+};
+const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+/** Voice-note recorder: live level waveform, timer, pause / resume, discard, done. Starts the microphone on mount. */
+function Recorder({ tt, onDone, onCancel, onError }) {
+  const [secs, setSecs] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const wave = useRef(null);
+  const h = useRef({ mr: null, discard: false, ms: 0, t0: 0, paused: false });
+
+  useEffect(() => {
+    const s = h.current;
+    let dead = false; let raf = 0; let ctx = null; let stream = null; let last = 0; let timer = 0;
+    const levels = new Array(BARS).fill(0);
+    (async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+        if (dead) { stream.getTracks().forEach((t) => t.stop()); return; }
+        const mime = pickMime();
+        const mr = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+        const type = mr.mimeType || mime || 'audio/webm';
+        const ext = /ogg/.test(type) ? 'ogg' : /mp4/.test(type) ? 'm4a' : 'weba';
+        const chunks = [];
+        mr.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+        mr.onstop = () => {
+          stream.getTracks().forEach((t) => t.stop());
+          if (s.discard || !chunks.length) return;
+          const total = Math.round((s.ms + (s.t0 ? performance.now() - s.t0 : 0)) / 1000);
+          onDone(new File([new Blob(chunks, { type })], `voice-${Date.now()}.${ext}`, { type }), total);
+        };
+        s.mr = mr; mr.start(250); s.t0 = performance.now(); setReady(true);
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) {
+          ctx = new AC();
+          const an = ctx.createAnalyser(); an.fftSize = 512;
+          ctx.createMediaStreamSource(stream).connect(an);
+          const buf = new Uint8Array(an.fftSize);
+          const loop = (t) => {
+            raf = requestAnimationFrame(loop);
+            if (s.paused || t - last < 70) return;
+            last = t; an.getByteTimeDomainData(buf);
+            let sum = 0; for (let k = 0; k < buf.length; k += 1) { const d = (buf[k] - 128) / 128; sum += d * d; }
+            levels.push(Math.min(1, Math.sqrt(sum / buf.length) * 5)); levels.shift();
+            const kids = wave.current?.children;
+            if (kids) for (let k = 0; k < kids.length; k += 1) kids[k].style.transform = `scaleY(${0.1 + levels[k] * 0.9})`;
+          };
+          raf = requestAnimationFrame(loop);
+        }
+        timer = setInterval(() => { if (!s.paused && s.t0) setSecs(Math.floor((s.ms + performance.now() - s.t0) / 1000)); }, 200);
+      } catch { if (!dead) onError(); }
+    })();
+    return () => {
+      dead = true; cancelAnimationFrame(raf); clearInterval(timer);
+      if (s.mr && s.mr.state !== 'inactive') { s.discard = true; s.mr.stop(); }
+      stream?.getTracks().forEach((t) => t.stop());
+      ctx?.close?.().catch(() => {});
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const togglePause = () => {
+    const s = h.current; if (!s.mr) return;
+    if (s.paused) { s.mr.resume(); s.t0 = performance.now(); s.paused = false; setPaused(false); }
+    else { s.mr.pause(); s.ms += performance.now() - s.t0; s.t0 = 0; s.paused = true; setPaused(true); }
+  };
+  const discard = () => { const s = h.current; s.discard = true; if (s.mr && s.mr.state !== 'inactive') s.mr.stop(); onCancel(); };
+  const finish = () => { const s = h.current; if (!s.mr || saving) return; setSaving(true); s.discard = false; if (s.mr.state !== 'inactive') s.mr.stop(); };
+
+  return (
+    <div className="pp-rec" role="group" aria-label={tt('Voice note recorder', 'تسجيل صوتي')}>
+      <button type="button" className="pp-rec__btn is-discard" onClick={discard} title={tt('Discard', 'حذف التسجيل')} aria-label={tt('Discard', 'حذف التسجيل')}><Icon name="trash" size={18} /></button>
+      <span className={`pp-rec__dot${paused || !ready ? ' is-paused' : ''}`} aria-hidden="true" />
+      <span className="pp-rec__time" dir="ltr">{mmss(secs)}</span>
+      <div className={`pp-rec__wave${paused ? ' is-paused' : ''}`} ref={wave} aria-hidden="true">{Array.from({ length: BARS }, (_, k) => <i key={k} />)}</div>
+      <button type="button" className="pp-rec__btn" onClick={togglePause} disabled={!ready || saving} title={paused ? tt('Resume', 'استكمال') : tt('Pause', 'إيقاف مؤقت')} aria-label={paused ? tt('Resume', 'استكمال') : tt('Pause', 'إيقاف مؤقت')}><Icon name={paused ? 'mic' : 'pause'} size={18} /></button>
+      <button type="button" className="pp-rec__done" onClick={finish} disabled={!ready || saving || secs < 1}><Icon name="check" size={16} /> {tt('Done', 'تم')}</button>
     </div>
   );
 }
@@ -120,16 +336,14 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
   const [more, setMore] = useState(false);
   const [showTitle, setShowTitle] = useState(!!post?.title);
   const [showLink, setShowLink] = useState(!!post?.link_url);
-  const [code, setCode] = useState(null); // { ext, text }
+  const [code, setCode] = useState(null); // { ext, text, touched }
   const [when, setWhen] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const [rec, setRec] = useState(null);   // { mr, chunks, t }
-  const [secs, setSecs] = useState(0);
+  const [recOn, setRecOn] = useState(false);
   const fileRef = useRef(null);
   const ctl = useRef(new Map());
 
-  useEffect(() => { if (!rec) return undefined; const id = setInterval(() => setSecs((s) => s + 1), 1000); return () => clearInterval(id); }, [rec]);
   useEffect(() => () => { ctl.current.forEach((c) => c.abort()); }, []);
 
   const uploading = items.some((i) => i.status === 'up');
@@ -163,18 +377,6 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
     upload(new File([code.text], `snippet.${code.ext}`, { type: 'text/plain' }));
     setCode(null);
   };
-  const startRec = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mime = MediaRecorder.isTypeSupported('audio/ogg;codecs=opus') ? 'audio/ogg' : 'audio/webm';
-      const mr = new MediaRecorder(stream, { mimeType: mime }); const chunks = [];
-      mr.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-      mr.onstop = () => { stream.getTracks().forEach((t) => t.stop()); upload(new File([new Blob(chunks, { type: mime })], `voice-${Date.now()}.${mime === 'audio/ogg' ? 'ogg' : 'weba'}`, { type: mime })); };
-      mr.start(); setSecs(0); setRec({ mr }); setOpen(true);
-    } catch { setErr(tt('Microphone is not available.', 'الميكروفون غير متاح.')); }
-  };
-  const stopRec = () => { rec?.mr.stop(); setRec(null); };
-
   const onPaste = (e) => { const fs = Array.from(e.clipboardData?.files || []); if (fs.length) { e.preventDefault(); addFiles(fs); } };
   const onDrop = (e) => { if (e.dataTransfer?.files?.length) { e.preventDefault(); addFiles(e.dataTransfer.files); } };
 
@@ -209,7 +411,16 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
               {showTitle && <input className="pp-input pp-input--title" maxLength={lim.max_title || 180} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={tt('Title', 'العنوان')} />}
               <textarea className="pp-input" dir="auto" rows={4} autoFocus maxLength={lim.max_body || 6000} value={body} onChange={(e) => setBody(e.target.value)} onPaste={onPaste}
                 placeholder={tt('What do you want to talk about? Use #tags', 'عن ماذا تريد أن تتحدث؟ استخدم #وسوم')} />
-              {showLink && <input className="pp-input" dir="ltr" type="url" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://…" />}
+              {showLink && (
+                <div className="pp-linkfield">
+                  <div className="pp-linkfield__row">
+                    <Icon name="link" size={15} />
+                    <input className="pp-input" dir="ltr" type="url" autoFocus={!link} value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://…" aria-label={tt('Link', 'رابط')} />
+                    <button type="button" className="pp-icon" onClick={() => { setLink(''); setShowLink(false); }} aria-label={tt('Remove link', 'إزالة الرابط')}><Icon name="x" size={15} /></button>
+                  </div>
+                  {parseLink(link) && <LinkCard url={link} compact />}
+                </div>
+              )}
             </div>
           )}
       </div>
@@ -219,46 +430,35 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
           {items.length > 0 && (
             <ul className="pp-files">
               {items.map((i) => (
-                <li key={i.key} className={`pp-files__i is-${i.status}`}>
-                  <Icon name={i.media?.kind === 'image' ? 'image' : i.media?.kind === 'audio' ? 'audio-wave' : i.media?.kind === 'video' ? 'video' : i.media?.kind === 'code' ? 'terminal' : 'file'} size={18} />
-                  <div><strong dir="ltr">{i.name}</strong>
-                    <small>{fmtBytes(i.size)}{i.status === 'up' ? ` · ${i.progress}%` : ''}{i.status === 'err' ? ` · ${i.error}` : ''}</small>
-                    {i.status === 'up' && <i className="pp-bar"><b style={{ width: `${i.progress}%` }} /></i>}</div>
-                  {i.status === 'err' && i.file && <button type="button" className="pp-icon" onClick={() => retry(i)} aria-label="Retry"><Icon name="refresh" size={15} /></button>}
-                  <button type="button" className="pp-icon" onClick={() => remove(i)} aria-label="Remove"><Icon name="x" size={15} /></button>
+                <FileRow key={i.key} i={i} tt={tt} onRemove={remove} onRetry={retry}>
                   {i.status === 'done' && i.media?.kind === 'code' && (
                     <CodeRunBox item={i} tt={tt} allowRun={opts.allow_run} onAllowRun={(v) => setOpts((o) => ({ ...o, allow_run: v }))}
                       onOutput={(text) => setItems((p) => p.map((x) => (x.key === i.key ? { ...x, output: text, outputTouched: true } : x)))} />
                   )}
-                </li>
+                </FileRow>
               ))}
             </ul>
           )}
 
-          {code && (
-            <div className="pp-panel">
-              <div className="pp-row"><LangSelect value={code.ext} options={CODE_EXT} label={tt('Language', 'اللغة')} onChange={(ext) => setCode({ ...code, ext })} />
-                <small className="pp-muted">{tt('Runnable languages get a Run button on the post.', 'اللغات القابلة للتشغيل يظهر لها زر تشغيل.')}</small></div>
-              <textarea className="pp-input pp-input--code" dir="ltr" rows={8} spellCheck={false} value={code.text} onChange={(e) => setCode({ ...code, text: e.target.value })} placeholder="print('hello')" />
-              <div className="pp-row"><button type="button" className="pp-btn is-primary" onClick={addCode} disabled={!code.text.trim()}>{tt('Attach code', 'إرفاق الكود')}</button><button type="button" className="pp-btn" onClick={() => setCode(null)}>{tt('Cancel', 'إلغاء')}</button></div>
+          {code && <CodeEditor code={code} setCode={setCode} onAttach={addCode} onCancel={() => setCode(null)} tt={tt} />}
+
+          {recOn ? (
+            <Recorder tt={tt} onDone={(file) => { upload(file); setRecOn(false); }} onCancel={() => setRecOn(false)} onError={() => { setRecOn(false); setErr(tt('Microphone is not available.', 'الميكروفون غير متاح.')); }} />
+          ) : (
+            <div className="pp-composer__bar">
+              <input ref={fileRef} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
+              <button type="button" className="pp-icon" title={tt('Photos, videos, PDF, slides, files', 'صور، فيديو، PDF، عروض، ملفات')} aria-label={tt('Attach files', 'إرفاق ملفات')} onClick={() => fileRef.current?.click()}><Icon name="paperclip" size={18} /></button>
+              <button type="button" className={`pp-icon${code ? ' is-on' : ''}`} title={tt('Code snippet', 'مقتطف كود')} aria-label={tt('Code snippet', 'مقتطف كود')} onClick={() => setCode(code ? null : { ext: 'py', text: '', touched: false })}><Icon name="terminal" size={18} /></button>
+              <button type="button" className="pp-icon" title={tt('Voice note', 'تسجيل صوتي')} aria-label={tt('Voice note', 'تسجيل صوتي')} onClick={() => { setErr(''); setRecOn(true); setOpen(true); }}><Icon name="mic" size={18} /></button>
+              {!showTitle && <button type="button" className="pp-icon" title={tt('Add title', 'عنوان')} aria-label={tt('Add title', 'عنوان')} onClick={() => setShowTitle(true)}><Icon name="ed-type" size={18} /></button>}
+              {!showLink && <button type="button" className="pp-icon" title={tt('Add link', 'رابط')} aria-label={tt('Add link', 'رابط')} onClick={() => setShowLink(true)}><Icon name="link" size={18} /></button>}
+              <span className="pp-sp" />
+              <select className="pp-input pp-input--sm" value={vis} onChange={(e) => setVis(e.target.value)} aria-label={tt('Audience', 'الجمهور')}>
+                {(config?.visibilities || Object.keys(VIS)).filter((v) => v !== 'selected').map((v) => <option key={v} value={v}>{tt(VIS[v]?.en || v, VIS[v]?.ar || v)}</option>)}
+              </select>
+              <button type="button" className={`pp-icon${more ? ' is-on' : ''}`} title={tt('Settings', 'الإعدادات')} aria-label={tt('Settings', 'الإعدادات')} onClick={() => setMore((m) => !m)}><Icon name="settings" size={18} /></button>
             </div>
           )}
-
-          <div className="pp-composer__bar">
-            <input ref={fileRef} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
-            <button type="button" className="pp-icon" title={tt('Photos, videos, PDF, slides, files', 'صور، فيديو، PDF، عروض، ملفات')} onClick={() => fileRef.current?.click()}><Icon name="paperclip" size={18} /></button>
-            <button type="button" className="pp-icon" title={tt('Code snippet', 'مقتطف كود')} onClick={() => setCode(code ? null : { ext: 'py', text: '' })}><Icon name="terminal" size={18} /></button>
-            {rec
-              ? <button type="button" className="pp-btn is-danger" onClick={stopRec}><Icon name="stop" size={13} /> {Math.floor(secs / 60)}:{String(secs % 60).padStart(2, '0')}</button>
-              : <button type="button" className="pp-icon" title={tt('Voice note', 'تسجيل صوتي')} onClick={startRec}><Icon name="mic" size={18} /></button>}
-            {!showTitle && <button type="button" className="pp-icon" title={tt('Add title', 'عنوان')} onClick={() => setShowTitle(true)}><Icon name="ed-type" size={18} /></button>}
-            {!showLink && <button type="button" className="pp-icon" title={tt('Add link', 'رابط')} onClick={() => setShowLink(true)}><Icon name="link" size={18} /></button>}
-            <span className="pp-sp" />
-            <select className="pp-input pp-input--sm" value={vis} onChange={(e) => setVis(e.target.value)} aria-label={tt('Audience', 'الجمهور')}>
-              {(config?.visibilities || Object.keys(VIS)).filter((v) => v !== 'selected').map((v) => <option key={v} value={v}>{tt(VIS[v]?.en || v, VIS[v]?.ar || v)}</option>)}
-            </select>
-            <button type="button" className={`pp-icon${more ? ' is-on' : ''}`} title={tt('Settings', 'الإعدادات')} onClick={() => setMore((m) => !m)}><Icon name="settings" size={18} /></button>
-          </div>
 
           {more && (
             <div className="pp-panel pp-settings">

@@ -4,9 +4,9 @@ import { postsApi } from '../../api/postsApi';
 import { errorMessage } from '../../api/client';
 import { ago } from '../feed/feedUi';
 import { compact } from '../../lib/postMedia';
-import { safeHref } from '../../lib/safeUrl';
 import { Alert, PAvatar, REACTIONS, REPORT_REASONS, RichText, VIS, useTt } from './shared';
 import PostMedia from './PostMedia';
+import LinkCard from './LinkCard';
 import SaveDialog from './SaveDialog';
 import ShareDialog from './ShareDialog';
 
@@ -126,7 +126,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
           {long && <button type="button" className="pp-link" onClick={() => setExpanded(true)}>{tt('See more', 'عرض المزيد')}</button>}
         </p>
       )}
-      {post.link_url && <a className="pp-linkcard" href={safeHref(post.link_url)} target="_blank" rel="noopener noreferrer nofollow"><Icon name="link" size={16} /><span dir="ltr">{post.link_url}</span></a>}
+      {post.link_url && <LinkCard url={post.link_url} />}
       {post.hashtags?.length > 0 && !post.body?.includes('#') && <div className="pp-tags">{post.hashtags.map((t) => <button key={t} type="button" className="pp-tag" onClick={() => onTag?.(t)}>#{t}</button>)}</div>}
 
       {hiddenMedia && post.media.length > 0 ? (
@@ -159,7 +159,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
               {my ? <span>{my.e}</span> : <Icon name="thumbs-up" size={16} />} {my ? tt(my.en, my.ar) : tt('Like', 'إعجاب')}
             </button>
           </div>
-          <button type="button" className={`pp-act${panel === 'comments' ? ' is-on' : ''}`} onClick={() => setPanel((p) => (p === 'comments' ? null : 'comments'))}><Icon name="message" size={16} /> {tt('Comment', 'تعليق')}</button>
+          <button type="button" className={`pp-act${panel === 'comments' ? ' is-on' : ''}`} onClick={() => setPanel((p) => (p === 'comments' ? null : 'comments'))}><Icon name="message-square" size={16} /> {tt('Comment', 'تعليق')}</button>
           {post.can.repost && <button type="button" className={`pp-act${panel === 'repost' ? ' is-on' : ''}`} onClick={() => setPanel((p) => (p === 'repost' ? null : 'repost'))}><Icon name="refresh" size={16} /> {tt('Repost', 'إعادة نشر')}</button>}
           <button type="button" className="pp-act" onClick={() => setShareOpen(true)}><Icon name="share" size={16} /> {tt('Share', 'مشاركة')}</button>
           <button type="button" className={`pp-act pp-act--end pp-act--save${post.saved ? ' is-on' : ''}`} onClick={() => setSaveOpen(true)} aria-pressed={post.saved} title={post.saved ? tt('Unsave', 'إلغاء الحفظ') : tt('Save', 'حفظ')} aria-label={post.saved ? tt('Unsave', 'إلغاء الحفظ') : tt('Save', 'حفظ')}><Icon name="bookmark" size={16} />{post.saved && <span>{tt('Saved', 'محفوظ')}</span>}</button>
