@@ -130,7 +130,7 @@ export default function SettingsTab({ groups }) {
       const src = m.source === 'panel' ? L('saved from this panel', 'محفوظ من اللوحة') : m.source === 'env' ? L('from .env', 'من ملف .env') : L('not set', 'مش متحدد');
       return (
         <div className="mtc-secret">
-          <input id={`mtc-${k}`} className="form-input" type="password" autoComplete="new-password" spellCheck="false" maxLength={m.max_length || 200}
+          <input id={`mtc-${k}`} className="form-input" type="password" autoComplete="new-password" spellCheck="false" data-allow-clipboard maxLength={m.max_length || 200}
             placeholder={m.masked ? `${m.masked}` : ''} value={v} onChange={(e) => set(k, e.target.value)} />
           <small className="mtc-muted">{src}</small>
         </div>

@@ -160,7 +160,7 @@ export default function AdminChatMedia() {
         <div className="form-group">
           <label className="text-small" style={{ fontWeight: 600 }}>{giphy.configured ? t('Replace the key', 'استبدال المفتاح') : t('Giphy API key', 'مفتاح Giphy (API key)')}</label>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <input type="password" autoComplete="off" className="form-input" style={{ flex: '1 1 260px' }} dir="ltr" value={giphyKey} onChange={(e) => setGiphyKey(e.target.value)} placeholder={giphy.configured ? '••••••••••••' : 'paste the key here'} />
+            <input type="password" autoComplete="off" data-allow-clipboard className="form-input" style={{ flex: '1 1 260px' }} dir="ltr" value={giphyKey} onChange={(e) => setGiphyKey(e.target.value)} placeholder={giphy.configured ? '••••••••••••' : 'paste the key here'} />
             <button type="button" className="btn btn-outline" onClick={test} disabled={testing || (!giphyKey.trim() && !giphy.configured)}>{testing ? t('Testing…', 'جارٍ الاختبار…') : t('Test key', 'اختبار المفتاح')}</button>
           </div>
           <span className="text-caption">{t('Leave empty to keep the current key. Press “Save changes” to store a new one.', 'سيبه فاضي لو عايز تحتفظ بالمفتاح الحالي. دوس “حفظ التغييرات” لتخزين مفتاح جديد.')}</span>

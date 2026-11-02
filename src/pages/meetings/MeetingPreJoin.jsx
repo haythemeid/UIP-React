@@ -49,6 +49,16 @@ function guestKeyFromToken(token) {
   return `guest:${token}`;
 }
 
+function readSaved(key) {
+  try { return sessionStorage.getItem(key) || ''; } catch { return ''; }
+}
+function clearSavedGuest(joinToken) {
+  try {
+    sessionStorage.removeItem(`uip_meeting_guest_token_${joinToken}`);
+    sessionStorage.removeItem(`uip_meeting_guest_name_${joinToken}`);
+  } catch { /* storage blocked: nothing to clear */ }
+}
+
 export default function MeetingPreJoin() {
   const { joinToken } = useParams();
   const t = useTranslations(translations);
@@ -95,6 +105,20 @@ export default function MeetingPreJoin() {
         const data = json?.data;
         if (!data) throw new Error(t('Could not load the meeting. Please try again.'));
         setInfo(data);
+        // Hard refresh while inside the room: the guest token (and name) live in sessionStorage, so go straight back in instead of
+        // asking for the name / device check / host approval again. Only for guests (the name key is saved on the guest path only).
+        const savedToken = readSaved(`uip_meeting_guest_token_${joinToken}`);
+        const savedName = readSaved(`uip_meeting_guest_name_${joinToken}`);
+        if (savedToken && savedName) {
+          if (data.meeting?.status === 'ended' || data.meeting?.status === 'cancelled') {
+            clearSavedGuest(joinToken);
+          } else {
+            setGuestToken(savedToken);
+            setDisplayName(savedName);
+            setPhase('admitted');
+            return;
+          }
+        }
         if (!data.joinable) {
           setPhase('unavailable');
         } else if (data.requires_password) {
@@ -285,6 +309,7 @@ export default function MeetingPreJoin() {
     }
     if (token) {
       sessionStorage.setItem(`uip_meeting_guest_token_${joinToken}`, token);
+      if (displayName.trim()) sessionStorage.setItem(`uip_meeting_guest_name_${joinToken}`, displayName.trim());
       // a guest who was let straight in (no waiting room) never went through setGuestToken — without it the room opened with
       // no identity and showed "You haven't joined this meeting yet".
       setGuestToken(token);
@@ -500,7 +525,7 @@ export default function MeetingPreJoin() {
           // and the live .screen_share.policy.changed broadcast corrects
           // it the moment the host next toggles it (see useMeetingRoom's
           // own docblock for why this is a real gap, not a fetch we skipped).
-          onLeave={() => navigate('/', { replace: true })}
+          onLeave={() => { clearSavedGuest(joinToken); navigate('/', { replace: true }); }}
         />
       )}
 
