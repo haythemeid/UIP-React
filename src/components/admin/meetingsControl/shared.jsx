@@ -108,6 +108,19 @@ export const SETTING_META = {
   default_allow_file_sharing: { en: 'File sharing enabled', ar: 'مشاركة الملفات مفعّلة' },
   default_recording_enabled: { en: 'Recording allowed', ar: 'التسجيل مسموح' },
 
+  sfu_enabled: { en: 'Large-meeting video server (Cloudflare SFU)', ar: 'سيرفر فيديو الاجتماعات الكبيرة (Cloudflare SFU)', hint_en: 'Off = direct connections (mesh) only, exactly like before.', hint_ar: 'مقفول = اتصال مباشر (mesh) بس، زي الأول بالظبط.' },
+  sfu_mode: {
+    en: 'When to use the video server', ar: 'امتى يستخدم سيرفر الفيديو',
+    hint_en: 'Automatic picks mesh for small meetings and the server for big ones or weak connections.', hint_ar: 'تلقائي: mesh للاجتماعات الصغيرة، والسيرفر للكبيرة أو لما الشبكة تضعف.',
+    options: { auto: { en: 'Automatic (recommended)', ar: 'تلقائي (موصى به)' }, sfu: { en: 'Always the video server', ar: 'دايمًا سيرفر الفيديو' }, mesh: { en: 'Never (direct only)', ar: 'أبدًا (مباشر بس)' } },
+  },
+  sfu_min_participants: { en: 'Switch to the server from', ar: 'التحويل للسيرفر من عدد', hint_en: 'Number of people in the meeting (including you). It always switches above the "Max participants" mesh limit.', hint_ar: 'عدد الحاضرين (شاملك). وبيتحول دايمًا لو العدد عدّى حد الـ mesh في "أقصى عدد مشاركين".', unit: 'people' },
+  sfu_max_video_subscriptions: { en: 'Max videos each person receives', ar: 'أقصى فيديوهات بيستقبلها كل مشارك', hint_en: 'Voices always reach everyone; extra videos beyond this are skipped to protect weak devices.', hint_ar: 'الصوت بيوصل للكل دايمًا؛ الفيديوهات الزيادة بتتخطى عشان تحمي الأجهزة الضعيفة.', unit: 'video' },
+  sfu_block_seconds: { en: 'Pause the server after failures', ar: 'إيقاف السيرفر بعد الفشل', hint_en: 'If it fails for many people, meetings fall back to direct connections for this long.', hint_ar: 'لو فشل عند ناس كتير، الاجتماعات بترجع للاتصال المباشر المدة دي.', unit: 'sec' },
+  sfu_min_dwell_seconds: { en: 'Minimum time between switches', ar: 'أقل وقت بين تحويلين', hint_en: 'Prevents flip-flopping between direct and server.', hint_ar: 'يمنع التحويل المتكرر بين المباشر والسيرفر.', unit: 'sec' },
+  sfu_app_id: { en: 'Cloudflare App ID', ar: 'Cloudflare App ID', hint_en: 'Empty = use CF_SFU_APP_ID from the server .env.', hint_ar: 'فاضي = استخدم CF_SFU_APP_ID من ملف .env.' },
+  sfu_app_secret: { en: 'Cloudflare App Secret', ar: 'Cloudflare App Secret', hint_en: 'Stored encrypted and never shown again. Type a new one to replace it.', hint_ar: 'بيتخزن مشفّر ومابيظهرش تاني. اكتب واحد جديد عشان تغيّره.' },
+
   recording_max_kb: { en: 'Max recording size', ar: 'أقصى حجم للتسجيل', hint_en: 'In kilobytes (512000 ≈ 500 MB).', hint_ar: 'بالكيلوبايت (512000 ≈ 500 ميجا).', unit: 'KB' },
   recording_process_inline: { en: 'Process recordings immediately', ar: 'معالجة التسجيل فورًا', hint_en: 'Off = needs a running queue worker.', hint_ar: 'مقفول = محتاج queue worker شغال.' },
 };
@@ -120,6 +133,7 @@ export const GROUP_META = {
   features: { en: 'Feature switches', ar: 'مفاتيح الميزات', icon: 'settings' },
   defaults: { en: 'Defaults for new meetings', ar: 'افتراضيات الاجتماع الجديد', icon: 'video' },
   recording: { en: 'Recording storage', ar: 'تخزين التسجيل', icon: 'record-dot' },
+  video: { en: 'Video servers (Cloudflare SFU)', ar: 'سيرفرات الفيديو (Cloudflare SFU)', icon: 'video' },
 };
 
 export const ROLE_LABELS = {

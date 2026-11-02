@@ -25,6 +25,7 @@ export default function AdminMeetingsControl() {
     ['meetings', L('Meetings', 'الاجتماعات'), 'video'],
     ['features', L('Features & system', 'المفاتيح والنظام'), 'shield'],
     ['rules', L('Rules & limits', 'القواعد والحدود'), 'settings'],
+    ['video', L('Video servers', 'سيرفرات الفيديو'), 'video'],
     ['users', L('Blocked creators', 'المحظورين'), 'user-x'],
     ['audit', L('Activity log', 'سجل النشاط'), 'clock'],
   ];
@@ -51,6 +52,7 @@ export default function AdminMeetingsControl() {
         {tab === 'meetings' && <MeetingsTab />}
         {tab === 'features' && <SettingsTab key="features" groups={['system', 'features']} />}
         {tab === 'rules' && <SettingsTab key="rules" groups={['creation', 'limits', 'access', 'defaults', 'recording']} />}
+        {tab === 'video' && <SettingsTab key="video" groups={['video']} />}
         {tab === 'users' && <UsersTab />}
         {tab === 'audit' && <AuditTab />}
       </div>

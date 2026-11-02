@@ -115,3 +115,9 @@
 /* clickable event rows */
 .mtc-row-click { cursor: pointer; }
 .mtc-row-click:hover td, .mtc-row-click:focus-visible td { background: color-mix(in srgb, var(--primary, #4f46e5) 6%, transparent); }
+
+/* Video servers (Cloudflare SFU) tab */
+.mtc-sfu-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.mtc-secret { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mtc-ok { color: var(--success, #15803d); font-size: 0.85rem; }
+.mtc-bad { color: var(--danger, #b91c1c); font-size: 0.85rem; }
