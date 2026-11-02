@@ -7,6 +7,7 @@ import { compact } from '../../lib/postMedia';
 import { safeHref } from '../../lib/safeUrl';
 import { Alert, PAvatar, REACTIONS, REPORT_REASONS, RichText, VIS, useTt } from './shared';
 import PostMedia from './PostMedia';
+import SaveDialog from './SaveDialog';
 
 const Comments = lazy(() => import('./Comments'));
 const BODY_CLAMP = 420;
@@ -28,7 +29,7 @@ function ReportBox({ post, onDone, tt }) {
 }
 
 /** One post: header, text, attachments, reactions, comments, repost / share / save, and the author / reader menu. */
-export default function PostCard({ post: initial, onChange, onRemoved, onTag, onEdit, onOpenAuthor, compactView = false }) {
+export default function PostCard({ post: initial, onChange, onRemoved, onTag, onEdit, onOpenAuthor, onSavedRemoved, compactView = false }) {
   const { tt, locale } = useTt();
   const [post, setPost] = useState(initial);
   const [panel, setPanel] = useState(null); // comments | report | repost
@@ -39,6 +40,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
   const [note, setNote] = useState('');
   const [err, setErr] = useState('');
   const [quote, setQuote] = useState('');
+  const [saveOpen, setSaveOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => setPost(initial), [initial]);
 
@@ -62,7 +64,12 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
     const r = await postsApi.react(post.id, next);
     patch({ my_reaction: r.my_reaction, reaction_breakdown: r.breakdown, counts: post.counts ? { ...post.counts, reactions: r.reactions_count } : post.counts });
   });
-  const save = () => run(async () => { const r = await postsApi.save(post.id); patch({ saved: r.saved, counts: post.counts ? { ...post.counts, saves: r.saves_count } : post.counts }); });
+  const saveDone = (r) => {
+    setSaveOpen(false);
+    patch({ saved: r.saved, saved_collection_id: r.collection_id ?? null, counts: post.counts ? { ...post.counts, saves: r.saves_count } : post.counts });
+    setNote(!r.saved ? tt('Removed from saved.', 'تم إلغاء الحفظ.') : r.moved ? tt('Moved.', 'تم النقل.') : r.folder ? tt(`Saved to “${r.folder}”.`, `تم الحفظ في «${r.folder}».`) : tt('Saved.', 'تم الحفظ.'));
+    if (!r.saved && onSavedRemoved) onSavedRemoved(post);
+  };
   const share = () => run(async () => {
     const url = `${window.location.origin}${window.location.pathname}?post=${post.id}`;
     try { if (navigator.share) await navigator.share({ url, title: post.title || undefined }); else await navigator.clipboard.writeText(url); setNote(tt('Link copied', 'تم نسخ الرابط')); } catch { /* cancelled */ }
@@ -157,7 +164,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
           <button type="button" className={`pp-act${panel === 'comments' ? ' is-on' : ''}`} onClick={() => setPanel((p) => (p === 'comments' ? null : 'comments'))}><Icon name="message" size={16} /> {tt('Comment', 'تعليق')}</button>
           {post.can.repost && <button type="button" className={`pp-act${panel === 'repost' ? ' is-on' : ''}`} onClick={() => setPanel((p) => (p === 'repost' ? null : 'repost'))}><Icon name="refresh" size={16} /> {tt('Repost', 'إعادة نشر')}</button>}
           <button type="button" className="pp-act" onClick={share}><Icon name="share" size={16} /> {tt('Share', 'مشاركة')}</button>
-          <button type="button" className={`pp-act pp-act--end${post.saved ? ' is-on' : ''}`} onClick={save} aria-pressed={post.saved} title={tt('Save', 'حفظ')}><Icon name="bookmark" size={16} /></button>
+          <button type="button" className={`pp-act pp-act--end pp-act--save${post.saved ? ' is-on' : ''}`} onClick={() => setSaveOpen(true)} aria-pressed={post.saved} title={post.saved ? tt('Unsave', 'إلغاء الحفظ') : tt('Save', 'حفظ')} aria-label={post.saved ? tt('Unsave', 'إلغاء الحفظ') : tt('Save', 'حفظ')}><Icon name="bookmark" size={16} />{post.saved && <span>{tt('Saved', 'محفوظ')}</span>}</button>
         </div>
       )}
       {(post.status === 'draft' || post.status === 'scheduled') && post.author.is_me && (
@@ -165,6 +172,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
           {post.scheduled_at && <small className="pp-muted"><Icon name="clock" size={12} /> {post.scheduled_at}</small>}</div>
       )}
 
+      {saveOpen && <SaveDialog post={post} onClose={() => setSaveOpen(false)} onDone={saveDone} />}
       {note && <small className="pp-ok">{note}</small>}
       {err && <Alert tt={tt}>{err}</Alert>}
       {panel === 'repost' && (

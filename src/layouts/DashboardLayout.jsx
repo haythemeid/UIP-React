@@ -19,6 +19,8 @@ import { ExamLockProvider, useExamLock } from '../context/ExamLockContext';
 import { useBackLayer, useSeedBackStack } from '../lib/backStack';
 import { roleHome } from '../config/roleHome';
 import { VirtualGuard } from '../virtual/virtualMode';
+import { isEmbedded } from '../lib/embed';
+import '../styles/css/embed.css';
 
 // "UIP / DASHBOARD" eyebrow shown above every Insight-portal page title.
 function useEyebrow(role, enabled) {
@@ -143,6 +145,19 @@ function DashboardShell() {
           <main className="app-shell__main app-shell__main--exam-lock">
             <Outlet />
           </main>
+        </div>
+      </PageMetaProvider>
+    );
+  }
+
+  // Floating-chat drawer: the page alone, no sidebar / topbar / bottom bar / assistant.
+  if (isEmbedded) {
+    return (
+      <PageMetaProvider>
+        <div data-portal={user?.role} className="app-shell app-shell--insight app-shell--embed">
+          <div className="app-shell__content">
+            <main className="app-shell__main">{blocked ? <NoPermission permission={navItem.perm} /> : <Outlet />}</main>
+          </div>
         </div>
       </PageMetaProvider>
     );
