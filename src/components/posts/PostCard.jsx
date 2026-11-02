@@ -8,6 +8,7 @@ import { safeHref } from '../../lib/safeUrl';
 import { Alert, PAvatar, REACTIONS, REPORT_REASONS, RichText, VIS, useTt } from './shared';
 import PostMedia from './PostMedia';
 import SaveDialog from './SaveDialog';
+import ShareDialog from './ShareDialog';
 
 const Comments = lazy(() => import('./Comments'));
 const BODY_CLAMP = 420;
@@ -41,6 +42,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
   const [err, setErr] = useState('');
   const [quote, setQuote] = useState('');
   const [saveOpen, setSaveOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => setPost(initial), [initial]);
 
@@ -70,11 +72,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
     setNote(!r.saved ? tt('Removed from saved.', 'تم إلغاء الحفظ.') : r.moved ? tt('Moved.', 'تم النقل.') : r.folder ? tt(`Saved to “${r.folder}”.`, `تم الحفظ في «${r.folder}».`) : tt('Saved.', 'تم الحفظ.'));
     if (!r.saved && onSavedRemoved) onSavedRemoved(post);
   };
-  const share = () => run(async () => {
-    const url = `${window.location.origin}${window.location.pathname}?post=${post.id}`;
-    try { if (navigator.share) await navigator.share({ url, title: post.title || undefined }); else await navigator.clipboard.writeText(url); setNote(tt('Link copied', 'تم نسخ الرابط')); } catch { /* cancelled */ }
-    await postsApi.share(post.id, 'link'); bumpCount('shares', 1);
-  });
+  const shared = (kind) => bumpCount(kind === 'repost' ? 'reposts' : 'shares', 1);
   const repost = () => run(async () => { await postsApi.repost(post.id, quote.trim() || undefined); setPanel(null); setQuote(''); bumpCount('reposts', 1); setNote(tt('Reposted to your profile', 'تمت إعادة النشر')); });
   const follow = () => run(async () => { const r = post.author.is_following ? await postsApi.unfollow(post.author.id) : await postsApi.follow(post.author.id); patch({ author: { ...post.author, is_following: r?.following ?? !post.author.is_following } }); });
   const del = () => run(async () => { if (!window.confirm(tt('Delete this post?', 'حذف هذا المنشور؟'))) return; await postsApi.remove(post.id); onRemoved?.(post); });
@@ -163,7 +161,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
           </div>
           <button type="button" className={`pp-act${panel === 'comments' ? ' is-on' : ''}`} onClick={() => setPanel((p) => (p === 'comments' ? null : 'comments'))}><Icon name="message" size={16} /> {tt('Comment', 'تعليق')}</button>
           {post.can.repost && <button type="button" className={`pp-act${panel === 'repost' ? ' is-on' : ''}`} onClick={() => setPanel((p) => (p === 'repost' ? null : 'repost'))}><Icon name="refresh" size={16} /> {tt('Repost', 'إعادة نشر')}</button>}
-          <button type="button" className="pp-act" onClick={share}><Icon name="share" size={16} /> {tt('Share', 'مشاركة')}</button>
+          <button type="button" className="pp-act" onClick={() => setShareOpen(true)}><Icon name="share" size={16} /> {tt('Share', 'مشاركة')}</button>
           <button type="button" className={`pp-act pp-act--end pp-act--save${post.saved ? ' is-on' : ''}`} onClick={() => setSaveOpen(true)} aria-pressed={post.saved} title={post.saved ? tt('Unsave', 'إلغاء الحفظ') : tt('Save', 'حفظ')} aria-label={post.saved ? tt('Unsave', 'إلغاء الحفظ') : tt('Save', 'حفظ')}><Icon name="bookmark" size={16} />{post.saved && <span>{tt('Saved', 'محفوظ')}</span>}</button>
         </div>
       )}
@@ -172,6 +170,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
           {post.scheduled_at && <small className="pp-muted"><Icon name="clock" size={12} /> {post.scheduled_at}</small>}</div>
       )}
 
+      {shareOpen && <ShareDialog post={post} onClose={() => setShareOpen(false)} onShared={shared} />}
       {saveOpen && <SaveDialog post={post} onClose={() => setSaveOpen(false)} onDone={saveDone} />}
       {note && <small className="pp-ok">{note}</small>}
       {err && <Alert tt={tt}>{err}</Alert>}
