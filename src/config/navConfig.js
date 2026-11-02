@@ -420,10 +420,11 @@ function withPosts(sections, prefix) {
   const all = Object.values(sections).flat();
   if (all.some((i) => i.key === 'posts')) return sections;
   const item = { key: 'posts', en: 'Posts', ar: 'المنشورات', icon: 'megaphone', route: `/${prefix}/posts`, perm: 'posts.use', built: true };
+  const network = { key: 'network', en: 'My network', ar: 'شبكتي', icon: 'network', route: `/${prefix}/network`, perm: 'posts.use', built: true };
   const out = {};
   for (const [k, items] of Object.entries(sections)) {
     const i = items.findIndex((x) => x.key === 'my-library');
-    out[k] = i >= 0 ? [...items.slice(0, i + 1), item, ...items.slice(i + 1)] : items;
+    out[k] = i >= 0 ? [...items.slice(0, i + 1), item, network, ...items.slice(i + 1)] : items;
   }
   return out;
 }

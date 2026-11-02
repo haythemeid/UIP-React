@@ -193,6 +193,7 @@ const MyLibrary = lazy(() => import('./pages/MyLibrary'));
 const PostsFeed = lazy(() => import('./pages/posts/PostsFeed'));
 const PublicPost = lazy(() => import('./pages/posts/PublicPost'));
 const AdminPosts = lazy(() => import('./pages/posts/AdminPosts'));
+const Network = lazy(() => import('./pages/network/Network'));
 /** The classic "My PC" view has no lock screen of its own: while the desktop is locked (or never unlocked in this tab) send the person back to the lock screen. */
 function ClassicLockGuard({ children }) {
   const { user } = useAuth();
@@ -434,6 +435,8 @@ export default function App() {
                 ])}
                 {/* Social posts live in every portal: /student/posts, /faculty/posts, … (the API enforces posts.use). */}
                 {MY_PC_PREFIXES.map((px) => <Route key={`${px}-posts`} path={`/${px}/posts`} element={<PostsFeed />} />)}
+                {/* "My network" (شبكتي): connections, follow requests and people search in every portal — notification links point at /{portal}/network?tab=… */}
+                {MY_PC_PREFIXES.map((px) => <Route key={`${px}-network`} path={`/${px}/network`} element={<Network />} />)}
                 <Route path="/admin/posts-control" element={<AdminPosts />} />
                 <Route path="/student/graduation" element={<StudentGraduation />} />
                 <Route path="/student/group-chat" element={<StudentGroupChat />} />

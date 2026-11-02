@@ -15,6 +15,7 @@ export const REACTIONS = {
 };
 export const VIS = {
   public: { icon: 'globe', en: 'Everyone', ar: 'الجميع' }, followers: { icon: 'users', en: 'Followers', ar: 'المتابعون' },
+  connections: { icon: 'user-check', en: 'My connections', ar: 'اتصالاتي' },
   contacts: { icon: 'message', en: 'Chat contacts', ar: 'جهات الاتصال' }, university: { icon: 'building', en: 'My university', ar: 'جامعتي' },
   faculty: { icon: 'graduation-cap', en: 'My faculty', ar: 'كليتي' }, selected: { icon: 'user', en: 'Selected people', ar: 'أشخاص محددون' },
   private: { icon: 'lock', en: 'Only me', ar: 'أنا فقط' },
