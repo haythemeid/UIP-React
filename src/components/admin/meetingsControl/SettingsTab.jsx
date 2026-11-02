@@ -78,7 +78,12 @@ export default function SettingsTab({ groups }) {
       const j = await api.post(`${BASE}/sfu/test`, {});
       const code = j.data?.code || 'error';
       const msg = SFU_TEST_TEXT[code] || SFU_TEST_TEXT.error;
-      setSfuTest({ ok: !!j.data?.ok, text: msg[ar ? 1 : 0] });
+      let text = msg[ar ? 1 : 0];
+      if (!j.data?.ok && code === 'error') {
+        const extra = [j.data?.status ? `HTTP ${j.data.status}` : '', j.data?.detail || ''].filter(Boolean).join(' — ');
+        if (extra) text += ` (${extra})`;
+      }
+      setSfuTest({ ok: !!j.data?.ok, text });
     } catch (e) { setSfuTest({ ok: false, text: errorMessage(e) }); }
   }
 
