@@ -265,6 +265,7 @@ const RAW_CONFIGS = {
       { key: 'ai-conversations', en: 'AI Conversations', ar: 'محادثات الـ AI', icon: 'message-square', route: '/admin/messaging/ai', built: true },
       { key: 'meetings-monitoring', en: 'Meetings Monitoring', ar: 'مراقبة الاجتماعات', icon: 'video-off', route: '/admin/meetings/monitoring', built: true },
       { key: 'messaging-analytics', en: 'Messaging Analytics', ar: 'تحليلات الرسائل', icon: 'trend', route: '/admin/messaging/analytics', built: true },
+      { key: 'posts-control', en: 'Posts Control', ar: 'التحكم في المنشورات', icon: 'megaphone', route: '/admin/posts-control', perm: 'posts.moderate', built: true },
       { key: 'messaging-settings', en: 'Messaging Settings', ar: 'إعدادات الرسائل', icon: 'wrench', route: '/admin/messaging/settings', built: true },
       { key: 'chat-media', en: 'Chat Media (GIF & Stickers)', ar: 'وسائط الشات (GIF وستيكرز)', icon: 'image', route: '/admin/messaging/media', built: true },
       { key: 'notification-settings', en: 'Notification Settings', ar: 'إعدادات الإشعارات', icon: 'mail', route: '/admin/notifications/settings', built: true },
@@ -414,13 +415,26 @@ function withLibrary(sections, prefix) {
   return out;
 }
 
+/** "Posts" (المنشورات) — the social feed, available in every portal right after My Library (gated by the posts.use permission). */
+function withPosts(sections, prefix) {
+  const all = Object.values(sections).flat();
+  if (all.some((i) => i.key === 'posts')) return sections;
+  const item = { key: 'posts', en: 'Posts', ar: 'المنشورات', icon: 'megaphone', route: `/${prefix}/posts`, perm: 'posts.use', built: true };
+  const out = {};
+  for (const [k, items] of Object.entries(sections)) {
+    const i = items.findIndex((x) => x.key === 'my-library');
+    out[k] = i >= 0 ? [...items.slice(0, i + 1), item, ...items.slice(i + 1)] : items;
+  }
+  return out;
+}
+
 /** Returns { main: [...], <groups>..., account: [...] } for a role.
  *  Section order = the order written in RAW_CONFIGS; `account` is always
  *  appended last (personal extras first, then Messages/Notifications/Settings). */
 export function getNavConfig(role, can) {
   const { account: accountExtras = [], ...rawSections } = RAW_CONFIGS[role] || RAW_CONFIGS.student;
   const prefix = portalPrefix(role);
-  const sections = withLibrary(withMyPc(rawSections, role, prefix), prefix);
+  const sections = withPosts(withLibrary(withMyPc(rawSections, role, prefix), prefix), prefix);
   const overrides = ACCOUNT_ITEM_OVERRIDES[role] || {};
   const common = COMMON_ACCOUNT_ITEMS.map((item) => ({
     ...item,
