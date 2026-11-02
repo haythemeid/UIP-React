@@ -90,7 +90,7 @@ export function createSfuClient({ api, iceServers = [], maxVideoSubs = 25, onRem
       if (!res.sessionDescription) throw new Error('SFU: no answer for publish');
       await pc.setRemoteDescription(res.sessionDescription);
       specs.forEach((s) => { pub.mids[s.trackName] = s.t.mid; });
-      const ok = await waitForIce(pc, 10000);
+      const ok = await waitForIce(pc, 6000);
       if (!ok) throw new Error('SFU: publisher ICE did not connect');
       await tuneUplink().catch(() => {});
       return { sessionId: pub.sessionId, tracks: specs.map((s) => ({ trackName: s.trackName, kind: s.kind })) };
