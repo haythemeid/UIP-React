@@ -1200,6 +1200,15 @@ export default function ThreadPanel({
   const isDirect = !!conversation && !conversation.is_group && !conversation.is_saved && !peerDeleted && !dmBlock;
   const msgClosed = isDirect && (conversation.send_block === 'peer_no_messages' || conversation.peer_accepts_messages === false);
   const callsClosed = isDirect && conversation.peer_accepts_calls === false;
+  // closed because of THEIR availability timer (not because they turned it off): say when they are reachable
+  const peerHours = (() => {
+    const sc = conversation?.peer_schedule;
+    if (!sc) return '';
+    const f = (hhmm) => { const [h, m] = String(hhmm).split(':').map(Number); return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? (ar ? 'ص' : 'AM') : (ar ? 'م' : 'PM')}`; };
+    return `${f(sc.start)} – ${f(sc.end)}`;
+  })();
+  const msgBySchedule = msgClosed && conversation.peer_messages_reason === 'schedule';
+  const callsBySchedule = callsClosed && conversation.peer_calls_reason === 'schedule';
   const canSend = peerDeleted || dmBlock || msgClosed ? false : (!grp || grp.can_send !== false);
   // Voice calls: direct chats only, and not with a deleted account or when either side blocked the other.
   const canCall = !!conversation && !conversation.is_group && !conversation.is_saved && !peerDeleted && !dmBlock && !callsClosed && call.available;
@@ -1411,7 +1420,7 @@ export default function ThreadPanel({
   let lastTs = 0;
 
   return (
-    <section className="msg-thread" data-thread-panel>
+    <section className={`msg-thread${isSavedChat ? ' msg-thread--saved' : ''}`} data-thread-panel>
       <div
         className="msg-thread__active"
         data-thread-active
@@ -1505,7 +1514,7 @@ export default function ThreadPanel({
             </button>}
             {callsClosed && call.available && (
               <button type="button" className="msg-icon-btn msg-call-btn msg-call-btn--off" disabled aria-disabled="true"
-                title={t('This person is not accepting calls', 'هذا الشخص لا يستقبل مكالمات')} aria-label={t('Calls are turned off by this person', 'المكالمات مغلقة من هذا الشخص')}>
+                title={callsBySchedule ? t(`Calls are available ${peerHours}`, `المكالمات متاحة ${peerHours}`) : t('This person is not accepting calls', 'هذا الشخص لا يستقبل مكالمات')} aria-label={t('Calls are turned off by this person', 'المكالمات مغلقة من هذا الشخص')}>
                 <Icon name="phone" size={18} />
                 <span className="msg-call-btn__slash" aria-hidden="true" />
               </button>
@@ -1604,25 +1613,37 @@ export default function ThreadPanel({
         {callsClosed && !msgClosed && call.available && (
           <div className="msg-calls-off" role="status">
             <Icon name="phone" size={14} />
-            <span>{t('This person turned calls off — you can only message them.', 'هذا الشخص أغلق المكالمات — تقدر تراسله فقط.')}</span>
+            <span>{callsBySchedule
+              ? t(`Calls are available ${peerHours}.`, `المكالمات متاحة ${peerHours}.`)
+              : t('This person turned calls off — you can only message them.', 'هذا الشخص أغلق المكالمات — تقدر تراسله فقط.')}</span>
           </div>
         )}
 
         {isSavedChat && messages.length > 0 && (
-          <div className="savp-filters" role="tablist" aria-label={t('Filter saved items', 'تصفية المحفوظات')}>
-            {[
-              ['all', t('All', 'الكل'), messages.length],
-              ['media', t('Media', 'وسائط'), savedCounts.media],
-              ['files', t('Files', 'ملفات'), savedCounts.files],
-              ['links', t('Links', 'روابط'), savedCounts.links],
-              ['voice', t('Voice', 'صوتيات'), savedCounts.voice],
-              ['starred', t('Starred', 'مميّزة'), savedCounts.starred],
-            ].map(([id, label, n]) => (
-              <button key={id} type="button" role="tab" aria-selected={savedFilter === id}
-                className={`savp-filter${savedFilter === id ? ' is-on' : ''}`} onClick={() => setSavedFilter(id)}>
-                {label}{n > 0 && id !== 'all' ? <b>{n}</b> : null}
-              </button>
-            ))}
+          <div className="savp-bar">
+            <div className="savp-bar__top">
+              <span className="savp-bar__ic"><Icon name="bookmark" size={15} /></span>
+              <span className="savp-bar__title">{t('My saved items', 'محفوظاتي')}</span>
+              <span className="savp-bar__count">{messages.filter((m) => !m.is_deleted && m.message_type !== 'system').length}</span>
+              <span className="savp-bar__priv"><Icon name="lock" size={12} />{t('Only you', 'خاصة بيك')}</span>
+            </div>
+            <div className="savp-filters" role="tablist" aria-label={t('Filter saved items', 'تصفية المحفوظات')}>
+              {[
+                ['all', t('All', 'الكل'), messages.length, 'layers'],
+                ['media', t('Media', 'وسائط'), savedCounts.media, 'image'],
+                ['files', t('Files', 'ملفات'), savedCounts.files, 'file'],
+                ['links', t('Links', 'روابط'), savedCounts.links, 'link'],
+                ['voice', t('Voice', 'صوتيات'), savedCounts.voice, 'mic'],
+                ['starred', t('Starred', 'مميّزة'), savedCounts.starred, 'star'],
+              ].map(([id, label, n, ic]) => (
+                <button key={id} type="button" role="tab" aria-selected={savedFilter === id}
+                  className={`savp-filter${savedFilter === id ? ' is-on' : ''}`} onClick={() => setSavedFilter(id)}>
+                  <Icon name={ic} size={14} />
+                  <span>{label}</span>
+                  {n > 0 && id !== 'all' ? <b>{n}</b> : null}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -1822,8 +1843,10 @@ export default function ThreadPanel({
           <div className="grp-locked grp-locked--privacy" role="status">
             <Icon name="lock" size={16} />
             <span>
-              <strong>{t('This person is not accepting messages from you.', 'هذا الشخص لا يستقبل رسائل منك.')}</strong>{' '}
-              {callsClosed
+              <strong>{msgBySchedule
+                ? t(`This person is available ${peerHours}.`, `هذا الشخص متاح ${peerHours}.`)
+                : t('This person is not accepting messages from you.', 'هذا الشخص لا يستقبل رسائل منك.')}</strong>{' '}
+              {msgBySchedule ? t('The chat opens again then. You can still read the conversation.', 'الشات بيفتح تاني وقتها. تقدر تقرأ المحادثة في الوقت ده.') : callsClosed
                 ? t('Calls are turned off too. You can still read the conversation.', 'والمكالمات مغلقة كمان. تقدر تقرأ المحادثة فقط.')
                 : t('You can still read the conversation.', 'تقدر تقرأ المحادثة فقط.')}
             </span>
@@ -1942,7 +1965,7 @@ export default function ThreadPanel({
               enterKeyHint={enterToSend ? 'send' : 'enter'}
               ref={composerInputRef}
               onPaste={onPaste}
-              placeholder={typeOk('text') ? t('Type a message…', 'اكتب رسالة…') : t('Text messages are turned off in this group', 'الرسائل النصية متوقفة في هذه المجموعة')}
+              placeholder={typeOk('text') ? (isSavedChat ? t('Write a note to yourself…', 'اكتب ملاحظة لنفسك…') : t('Type a message…', 'اكتب رسالة…')) : t('Text messages are turned off in this group', 'الرسائل النصية متوقفة في هذه المجموعة')}
               disabled={!typeOk('text')}
               rows={1}
               value={text}

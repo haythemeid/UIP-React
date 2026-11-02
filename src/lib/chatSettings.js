@@ -15,13 +15,15 @@ import { useAuth } from '../context/AuthContext';
 const PATH = '/api/v1/messaging/settings';
 
 export const AUDIENCES = ['everyone', 'contacts', 'contacts_except', 'only', 'nobody'];
-export const PRIVACY_FIELDS = ['avatar', 'bio', 'last_seen', 'stories', 'messages', 'calls', 'groups'];
+export const PRIVACY_FIELDS = ['avatar', 'bio', 'last_seen', 'stories', 'messages', 'calls', 'groups', 'messages_contacts', 'calls_contacts'];
 
 const open = { audience: 'everyone', ids: [] };
 export const DEFAULT_SETTINGS = {
   privacy: {
-    avatar: open, bio: open, last_seen: open, stories: { audience: 'contacts', ids: [] }, messages: open, calls: open, groups: open,
+    avatar: open, bio: open, last_seen: open, stories: { audience: 'contacts', ids: [] }, messages: open, calls: open, groups: open, messages_contacts: open, calls_contacts: open,
   },
+  // availability timer: others can reach me only inside these hours (applies_to: new | contacts | all)
+  schedule: { enabled: false, days: [0, 1, 2, 3, 4], start: '09:00', end: '16:00', tz: 'Africa/Cairo', applies_to: 'all', affects: { messages: true, calls: true } },
   read_receipts_enabled: true,
   typing_indicator: true,
   discoverable: true,
@@ -50,6 +52,7 @@ const snapshot = () => state;
 function normalize(d) {
   const data = { ...DEFAULT_SETTINGS, ...(d || {}) };
   data.privacy = { ...DEFAULT_SETTINGS.privacy, ...(d?.privacy || {}) };
+  data.schedule = { ...DEFAULT_SETTINGS.schedule, ...(d?.schedule || {}), affects: { ...DEFAULT_SETTINGS.schedule.affects, ...(d?.schedule?.affects || {}) } };
   const per = d?.wallpaper?.per_chat;
   data.wallpaper = { ...DEFAULT_SETTINGS.wallpaper, ...(d?.wallpaper || {}), per_chat: per && !Array.isArray(per) ? per : {} };
   data.people = d?.people && !Array.isArray(d.people) ? d.people : {};
@@ -63,6 +66,8 @@ function mergePatch(cur, patch) {
     if (k === 'privacy') {
       next.privacy = { ...cur.privacy };
       Object.keys(patch.privacy).forEach((f) => { next.privacy[f] = { ...cur.privacy[f], ...patch.privacy[f] }; });
+    } else if (k === 'schedule') {
+      next.schedule = { ...cur.schedule, ...patch.schedule, affects: { ...cur.schedule.affects, ...(patch.schedule.affects || {}) } };
     } else if (k === 'wallpaper') {
       const w = { ...cur.wallpaper, per_chat: { ...cur.wallpaper.per_chat } };
       if ('default' in patch.wallpaper) w.default = patch.wallpaper.default;

@@ -118,3 +118,36 @@
   html body.msg-center-active .cs-page .cs-chatlist { max-height: none; }
   html body.msg-center-active .cs-page .cs-seg { flex-wrap: wrap; }
 }
+
+/* ---------- availability timer ---------- */
+.cs-sched { display: flex; flex-direction: column; gap: 0; }
+.cs-sched__top { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+.cs-sched__top .cs-row__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cs-sched__state { padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 800; color: #c0353a; background: rgba(229, 72, 77, .12); }
+.cs-sched__state.is-open { color: #0d7a4f; background: rgba(16, 185, 129, .16); }
+.cs-sched__body { display: flex; flex-direction: column; gap: 10px; padding: 4px 16px 16px; border-top: 1px solid var(--border-subtle); }
+.cs-sched__label { margin-top: 8px; font-size: 12px; font-weight: 800; color: var(--text-secondary); }
+.cs-sched__days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cs-sched__days button { height: 38px; border-radius: 12px; border: 1px solid var(--border-subtle); background: var(--bg-canvas); color: var(--text-secondary); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.cs-sched__days button.is-on { color: #fff; border-color: transparent; background: linear-gradient(135deg, var(--color-primary), #7c5cff); box-shadow: 0 6px 14px -8px rgba(var(--color-primary-rgb), .8); }
+.cs-sched__presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.cs-sched__presets button, .cs-sched__tz button { padding: 5px 12px; border-radius: 999px; border: 1px dashed var(--border-subtle); background: none; color: var(--color-primary); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.cs-sched__times { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cs-sched__times label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-secondary); }
+.cs-sched__times input, .cs-sched__tz select { height: 40px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary); font: inherit; font-size: 14px; font-weight: 700; }
+.cs-sched__bar { position: relative; height: 12px; margin: 6px 0 16px; border-radius: 999px; background: var(--bg-canvas); border: 1px solid var(--border-subtle); }
+.cs-sched__bar i { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: linear-gradient(90deg, var(--color-primary), #7c5cff); }
+.cs-sched__bar em { position: absolute; top: 15px; font-style: normal; font-size: 10px; color: var(--text-secondary); transform: translateX(-50%); }
+.cs-sched__bar em:nth-of-type(1) { left: 0; transform: none; } .cs-sched__bar em:nth-of-type(2) { left: 25%; } .cs-sched__bar em:nth-of-type(3) { left: 50%; } .cs-sched__bar em:nth-of-type(4) { left: 75%; } .cs-sched__bar em:nth-of-type(5) { left: auto; right: 0; transform: none; }
+.cs-sched__sum { margin: 0; font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.cs-sched__tz { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cs-sched__tz select { flex: 1; min-width: 180px; }
+.cs-sched__scopes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.cs-sched__scopes button { display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: 14px; border: 1px solid var(--border-subtle); background: var(--bg-canvas); color: var(--text-primary); font: inherit; text-align: start; cursor: pointer; }
+.cs-sched__scopes button small { font-size: 11px; color: var(--text-secondary); }
+.cs-sched__scopes button.is-on { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), .14); }
+.cs-sched__affects { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; font-weight: 600; }
+.cs-sched__affects label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.cs-sched__foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border-subtle); background: color-mix(in srgb, var(--color-primary) 5%, var(--bg-surface)); }
+.cs-sched .mc-alert { margin: 0 16px 12px; }
+@media (max-width: 520px) { .cs-sched__scopes { grid-template-columns: 1fr; } }

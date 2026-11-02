@@ -69,8 +69,11 @@ const FIELD_META = {
   bio: { icon: 'note', options: ['everyone', 'contacts', 'contacts_except', 'only', 'nobody'] },
   last_seen: { icon: 'clock', options: ['everyone', 'contacts', 'contacts_except', 'only', 'nobody'] },
   stories: { icon: 'sparkles', options: ['everyone', 'contacts', 'contacts_except', 'only'] },
-  messages: { icon: 'message', options: ['everyone', 'contacts', 'only', 'nobody'] },
-  calls: { icon: 'phone', options: ['everyone', 'contacts', 'contacts_except', 'only', 'nobody'] },
+  // messages / calls = NEW people (nobody has talked to me and been answered yet); *_contacts = people I already replied to
+  messages: { icon: 'message', options: ['everyone', 'only', 'nobody'] },
+  calls: { icon: 'phone', options: ['everyone', 'only', 'nobody'] },
+  messages_contacts: { icon: 'message', options: ['everyone', 'contacts_except', 'only', 'nobody'] },
+  calls_contacts: { icon: 'phone', options: ['everyone', 'contacts_except', 'only', 'nobody'] },
   groups: { icon: 'users', options: ['everyone', 'contacts', 'contacts_except', 'only', 'nobody'] },
 };
 
@@ -82,8 +85,10 @@ function useCopy() {
     bio: [t('Who can see my bio', 'مين يشوف البايو بتاعي'), t('The short text under your name in chats.', 'النص القصير اللي تحت اسمك في المحادثات.')],
     last_seen: [t('Who can see my last seen & online status', 'مين يشوف آخر ظهور وحالة الاتصال'), t('Others will see no status at all.', 'الباقي مش هيشوفوا أي حالة اتصال.')],
     stories: [t('Who can see my stories', 'مين يشوف الاستوري بتاعتي'), t('This also sets the default audience for new stories.', 'ده كمان بيحدد الجمهور الافتراضي للاستوري الجديدة.')],
-    messages: [t('Who can start a chat with me', 'مين يقدر يبدأ معايا محادثة'), t('Chats that already exist keep working.', 'المحادثات الموجودة بالفعل بتفضل شغالة.')],
-    calls: [t('Who can call me', 'مين يقدر يتصل بيا'), t('Voice calls from everyone else are refused.', 'مكالمات أي حد تاني بتترفض.')],
+    messages: [t('Who can message me', 'مين يقدر يراسلني'), t('Applies to new people only — nobody you have answered yet.', 'للناس الجديدة بس — أي حد لسه ما رديتش عليه.')],
+    calls: [t('Who can call me', 'مين يقدر يتصل بيا'), t('Applies to new people only. Their call is refused.', 'للناس الجديدة بس. مكالمتهم بتترفض.')],
+    messages_contacts: [t('Who can message me', 'مين يقدر يراسلني'), t('People you already replied to. If off, their chat with you is locked.', 'الناس اللي رديت عليهم بالفعل. لو قفلتها شاتهم معاك بيتقفل.')],
+    calls_contacts: [t('Who can call me', 'مين يقدر يتصل بيا'), t('People you already replied to.', 'الناس اللي رديت عليهم بالفعل.')],
     groups: [t('Who can add me to groups', 'مين يقدر يضيفني لمجموعات'), t('Others can still invite you with a link.', 'ممكن يدعوك بالرابط برضه.')],
   };
   const aud = (field) => ({
@@ -91,9 +96,11 @@ function useCopy() {
     contacts: field === 'messages'
       ? [t('Only people I already chat with', 'اللي بتكلمهم بالفعل بس'), t('No new chats from strangers', 'مفيش محادثات جديدة من غرباء')]
       : [t('My contacts', 'جهات اتصالي'), t('People you have a direct chat with', 'الناس اللي بينك وبينهم محادثة مباشرة')],
-    contacts_except: [t('My contacts except…', 'جهات اتصالي ما عدا…'), t('Contacts, minus the people you pick', 'جهات الاتصال ما عدا ناس تختارهم')],
+    contacts_except: field === 'messages_contacts' || field === 'calls_contacts'
+      ? [t('Everyone except…', 'الكل ما عدا…'), t('All of them, minus the people you pick', 'كلهم ما عدا ناس تختارهم')]
+      : [t('My contacts except…', 'جهات اتصالي ما عدا…'), t('Contacts, minus the people you pick', 'جهات الاتصال ما عدا ناس تختارهم')],
     only: [t('Only share with…', 'ناس محددين فقط…'), t('Just the people you pick', 'الناس اللي تختارهم بس')],
-    nobody: field === 'messages' ? [t('No one new', 'لا أحد جديد'), t('Nobody can start a new chat with me', 'محدش يقدر يبدأ معايا محادثة جديدة')] : [t('Nobody', 'لا أحد'), t('Only you', 'أنت فقط')],
+    nobody: field === 'messages' || field === 'calls' ? [t('No new people', 'لا أحد جديد'), t('New people cannot reach me', 'الناس الجديدة مش هتقدر توصلّي')] : [t('Nobody', 'لا أحد'), t('Only you', 'أنت فقط')],
   });
   return { t, fields, aud };
 }
@@ -103,7 +110,7 @@ function summary(p, t) {
   switch (p.audience) {
     case 'everyone': return t('Everyone', 'الجميع');
     case 'contacts': return t('My contacts', 'جهات اتصالي');
-    case 'contacts_except': return n ? t(`Contacts except ${n}`, `جهات اتصالي ما عدا ${n}`) : t('My contacts', 'جهات اتصالي');
+    case 'contacts_except': return n ? t(`Everyone except ${n}`, `الكل ما عدا ${n}`) : t('Everyone', 'الجميع');
     case 'only': return t(`${n} selected`, `${n} محدد`);
     default: return t('Nobody', 'لا أحد');
   }
@@ -243,6 +250,137 @@ function ProfileSection({ settings, save, openAudience }) {
   );
 }
 
+
+/* ------------------------------------------------------------------ availability timer */
+
+const DAY_NAMES = (t) => [t('Sun', 'أحد'), t('Mon', 'اثنين'), t('Tue', 'ثلاثاء'), t('Wed', 'أربعاء'), t('Thu', 'خميس'), t('Fri', 'جمعة'), t('Sat', 'سبت')];
+const toMin = (hhmm) => { const [h, m] = String(hhmm).split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+const fmt12 = (hhmm, ar) => { const [h, m] = String(hhmm).split(':').map(Number); const hh = h % 12 || 12; return `${hh}:${String(m).padStart(2, '0')} ${h < 12 ? (ar ? 'ص' : 'AM') : (ar ? 'م' : 'PM')}`; };
+const zones = () => { try { return Intl.supportedValuesOf('timeZone'); } catch { return ['Africa/Cairo', 'Asia/Riyadh', 'Asia/Dubai', 'Europe/London', 'UTC']; } };
+
+/** Same rule as the server: is "now" (in the schedule's time zone) inside the open window? (overnight windows supported) */
+function isOpenNow(sch) {
+  if (!sch.enabled) return true;
+  let parts;
+  try { parts = new Intl.DateTimeFormat('en-US', { timeZone: sch.tz, weekday: 'short', hour: 'numeric', minute: 'numeric', hourCycle: 'h23' }).formatToParts(new Date()); } catch { return true; }
+  const get = (ty) => parts.find((p) => p.type === ty)?.value;
+  const dow = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(get('weekday'));
+  const mins = Number(get('hour')) * 60 + Number(get('minute'));
+  const s = toMin(sch.start); const e = toMin(sch.end);
+  const has = (d) => sch.days.includes(d);
+  if (s < e) return has(dow) && mins >= s && mins < e;
+  if (mins >= s) return has(dow);
+  if (mins < e) return has((dow + 6) % 7);
+  return false;
+}
+
+function ScheduleCard({ settings, save }) {
+  const { t } = useCopy();
+  const { locale } = useLanguage();
+  const ar = locale === 'ar';
+  const saved = settings.schedule;
+  const [d, setD] = useState(saved);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  useEffect(() => { setD(saved); }, [JSON.stringify(saved)]); // eslint-disable-line react-hooks/exhaustive-deps
+  const dirty = JSON.stringify(d) !== JSON.stringify(saved);
+  const names = DAY_NAMES(t);
+  const set = (p) => { setErr(''); setD((x) => ({ ...x, ...p })); };
+  const toggleDay = (i) => set({ days: d.days.includes(i) ? d.days.filter((x) => x !== i) : [...d.days, i].sort() });
+  const tzList = useMemo(() => { const z = zones(); return z.includes(d.tz) ? z : [d.tz, ...z]; }, [d.tz]);
+  const browserTz = useMemo(() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return ''; } }, []);
+
+  const s = toMin(d.start); const e = toMin(d.end);
+  const overnight = s > e;
+  const open = isOpenNow(saved);
+  const scopes = [
+    ['new', t('New people', 'الناس الجديدة'), t('Nobody you have answered yet', 'أي حد ما رديتش عليه')],
+    ['contacts', t('People I chat with', 'اللي بكلمهم'), t('People you already replied to', 'اللي رديت عليهم بالفعل')],
+    ['all', t('Everyone', 'الكل'), t('New and current', 'الجديد والحالي')],
+  ];
+
+  async function onSave() {
+    setBusy(true); setErr('');
+    try { await save({ schedule: d }); } catch (ex) { setErr(errorMessage(ex)); } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="cs-sched">
+      <div className="cs-sched__top">
+        <span className="cs-row__icon"><Icon name="clock" size={18} /></span>
+        <span className="cs-row__text">
+          <strong>{t('Open my chat only during set hours', 'افتح الشات في ساعات محددة بس')}</strong>
+          <small>{saved.enabled
+            ? (open ? t('Open right now', 'مفتوح دلوقتي') : t('Closed right now', 'مقفول دلوقتي'))
+            : t('Off — people can reach you any time', 'مقفول — الناس توصلك في أي وقت')}</small>
+        </span>
+        {saved.enabled && <span className={`cs-sched__state${open ? ' is-open' : ''}`}>{open ? t('Open', 'مفتوح') : t('Closed', 'مقفول')}</span>}
+        <Switch on={d.enabled} onChange={(v) => set({ enabled: v })} label={t('Availability timer', 'تايمر التواصل')} />
+      </div>
+
+      {d.enabled && (
+        <div className="cs-sched__body">
+          <div className="cs-sched__label">{t('Days', 'الأيام')}</div>
+          <div className="cs-sched__days" role="group" aria-label={t('Days', 'الأيام')}>
+            {names.map((n, i) => (
+              <button key={i} type="button" className={d.days.includes(i) ? 'is-on' : ''} aria-pressed={d.days.includes(i)} onClick={() => toggleDay(i)}>{n}</button>
+            ))}
+          </div>
+          <div className="cs-sched__presets">
+            <button type="button" onClick={() => set({ days: [0, 1, 2, 3, 4] })}>{t('Sun–Thu', 'الأحد–الخميس')}</button>
+            <button type="button" onClick={() => set({ days: [1, 2, 3, 4, 5] })}>{t('Mon–Fri', 'الاثنين–الجمعة')}</button>
+            <button type="button" onClick={() => set({ days: [0, 1, 2, 3, 4, 5, 6] })}>{t('Every day', 'كل الأيام')}</button>
+          </div>
+
+          <div className="cs-sched__label">{t('Hours', 'الساعات')}</div>
+          <div className="cs-sched__times">
+            <label><span>{t('From', 'من')}</span><input type="time" value={d.start} onChange={(ev) => set({ start: ev.target.value || '09:00' })} /></label>
+            <label><span>{t('To', 'إلى')}</span><input type="time" value={d.end} onChange={(ev) => set({ end: ev.target.value || '16:00' })} /></label>
+          </div>
+          <div className="cs-sched__bar" aria-hidden="true" dir="ltr">
+            {overnight ? (<><i style={{ left: 0, width: `${(e / 1440) * 100}%` }} /><i style={{ left: `${(s / 1440) * 100}%`, right: 0 }} /></>) : <i style={{ left: `${(s / 1440) * 100}%`, width: `${((e - s) / 1440) * 100}%` }} />}
+            <em>0</em><em>6</em><em>12</em><em>18</em><em>24</em>
+          </div>
+          <p className="cs-sched__sum">
+            {t('Open', 'مفتوح')} {fmt12(d.start, ar)} → {fmt12(d.end, ar)}{overnight ? ` ${t('(next day)', '(لليوم التالي)')}` : ''}
+          </p>
+
+          <div className="cs-sched__label">{t('Time zone', 'المنطقة الزمنية')}</div>
+          <div className="cs-sched__tz">
+            <select value={d.tz} onChange={(ev) => set({ tz: ev.target.value })} aria-label={t('Time zone', 'المنطقة الزمنية')}>
+              {tzList.map((z) => <option key={z} value={z}>{z}</option>)}
+            </select>
+            {browserTz && browserTz !== d.tz && <button type="button" onClick={() => set({ tz: browserTz })}>{t('Use my device', 'استخدم جهازي')}</button>}
+          </div>
+
+          <div className="cs-sched__label">{t('Who does it apply to?', 'ينطبق على مين؟')}</div>
+          <div className="cs-sched__scopes" role="radiogroup">
+            {scopes.map(([id, label, sub]) => (
+              <button key={id} type="button" role="radio" aria-checked={d.applies_to === id} className={d.applies_to === id ? 'is-on' : ''} onClick={() => set({ applies_to: id })}>
+                <strong>{label}</strong><small>{sub}</small>
+              </button>
+            ))}
+          </div>
+
+          <div className="cs-sched__label">{t('What closes outside the hours?', 'إيه اللي بيتقفل خارج الساعات؟')}</div>
+          <div className="cs-sched__affects">
+            <label><input type="checkbox" checked={d.affects.messages} onChange={(ev) => set({ affects: { ...d.affects, messages: ev.target.checked } })} /> {t('Messages (chat is locked)', 'الرسائل (الشات بيتقفل)')}</label>
+            <label><input type="checkbox" checked={d.affects.calls} onChange={(ev) => set({ affects: { ...d.affects, calls: ev.target.checked } })} /> {t('Calls', 'المكالمات')}</label>
+          </div>
+        </div>
+      )}
+
+      {err && <p className="mc-alert" role="alert">{err}</p>}
+      {dirty && (
+        <div className="cs-sched__foot">
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setD(saved); setErr(''); }} disabled={busy}>{t('Discard', 'تراجع')}</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={onSave} disabled={busy}>{busy ? t('Saving…', 'جارٍ الحفظ…') : t('Save timer', 'حفظ التايمر')}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PrivacySection({ settings, save, openAudience, base }) {
   const { t } = useCopy();
   return (
@@ -253,10 +391,17 @@ function PrivacySection({ settings, save, openAudience, base }) {
         <AudienceRow field="last_seen" settings={settings} onOpen={openAudience} />
         <AudienceRow field="stories" settings={settings} onOpen={openAudience} />
       </Group>
-      <Group title={t('Who can contact me', 'مين يقدر يتواصل معايا')}>
+      <Group title={t('New people', 'الناس الجديدة')} hint={t("Anyone who hasn't chatted with you yet, or you haven't answered.", 'أي حد لسه ما اتكلمش معاك، أو إنت ما رديتش عليه.')}>
         <AudienceRow field="messages" settings={settings} onOpen={openAudience} />
         <AudienceRow field="calls" settings={settings} onOpen={openAudience} />
         <AudienceRow field="groups" settings={settings} onOpen={openAudience} />
+      </Group>
+      <Group title={t('People I already chat with', 'اللي بتكلمهم بالفعل')} hint={t('People who messaged you and you replied. Their settings are separate from the new-people ones above.', 'الناس اللي راسلوك ورديت عليهم. إعداداتهم منفصلة عن إعدادات الناس الجديدة فوق.')}>
+        <AudienceRow field="messages_contacts" settings={settings} onOpen={openAudience} />
+        <AudienceRow field="calls_contacts" settings={settings} onOpen={openAudience} />
+      </Group>
+      <Group title={t('Availability timer', 'تايمر التواصل')} hint={t('Open and close your chat on a schedule — outside these hours people cannot message or call you.', 'افتح وقفل الشات بمواعيد — خارج الساعات دي محدش يقدر يراسلك أو يتصل بيك.')}>
+        <ScheduleCard settings={settings} save={save} />
       </Group>
       <Group title={t('Activity', 'النشاط')}>
         <Row icon="check-circle" title={t('Read receipts', 'إشعارات القراءة')} hint={t("Let others see when you've read their messages (and stories). If you turn it off you won't see theirs either.", 'خلّي الناس تعرف إنك قرأت رسايلهم (والاستوري). لو قفلتها مش هتشوف بتوعهم.')}>
