@@ -191,6 +191,7 @@ const StudentMyPC = lazy(() => import('./pages/student/StudentMyPC'));
 const DesktopOS = lazy(() => import('./desktop/DesktopOS'));
 const MyLibrary = lazy(() => import('./pages/MyLibrary'));
 const PostsFeed = lazy(() => import('./pages/posts/PostsFeed'));
+const PublicPost = lazy(() => import('./pages/posts/PublicPost'));
 const AdminPosts = lazy(() => import('./pages/posts/AdminPosts'));
 /** The classic "My PC" view has no lock screen of its own: while the desktop is locked (or never unlocked in this tab) send the person back to the lock screen. */
 function ClassicLockGuard({ children }) {
@@ -345,6 +346,8 @@ export default function App() {
             <Route path="/403" element={<Forbidden />} />
             <Route path="/500" element={<ServerError />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            {/* Shared post link — open to everyone (no sign-in); the API only serves visibility=public posts. /p/ is the portfolio, so this is /post/. */}
+            <Route path="/post/:id" element={<PublicPost />} />
             <Route path="/verify-certificate" element={<VerifyCertificate />} />
             {/* My PC share link — public, no sign-in (GET /api/v1/public/drive-share/{token}) */}
             <Route path="/s/:token" element={<SharedItem />} />

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from '../Icon';
 import { useLanguage } from '../../context/LanguageContext';
-import { fetchMediaBlob, useMediaUrl } from '../../lib/postMedia';
+import { fetchMediaBlob, mediaBaseOf, useMediaUrl } from '../../lib/postMedia';
 import { pdfjsAssetOptions } from '../../lib/pdfjsOptions';
 
 /**
@@ -28,7 +28,7 @@ export default function PdfCarousel({ media, previewOf = false, onOpenFull }) {
     if (pdfRef.current || busy) return;
     setBusy(true); setErr('');
     try {
-      const blob = await fetchMediaBlob(media.id, src);
+      const blob = await fetchMediaBlob(media.id, src, mediaBaseOf(media));
       const pdfjs = await import('pdfjs-dist');
       const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
       pdfjs.GlobalWorkerOptions.workerSrc = worker.default;

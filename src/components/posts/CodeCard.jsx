@@ -5,7 +5,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { api } from '../../api/client';
 import { postsApi } from '../../api/postsApi';
 import { useSandbox } from '../zipbench/runner/useSandbox';
-import { fmtBytes } from '../../lib/postMedia';
+import { fmtBytes, mediaBaseOf } from '../../lib/postMedia';
 import { highlight } from './highlight';
 
 const SandboxTerminal = lazy(() => import('./SandboxTerminal'));
@@ -35,7 +35,7 @@ export default function CodeCard({ media, onRunStart }) {
 
   useEffect(() => {
     let dead = false;
-    postsApi.mediaText(media.id).then((d) => { if (!dead) { setData(d); textRef.current = d.text; } }).catch(() => { if (!dead) setErr(tt('Could not load the code.', 'تعذّر تحميل الكود.')); });
+    postsApi.mediaText(media.id, mediaBaseOf(media)).then((d) => { if (!dead) { setData(d); textRef.current = d.text; } }).catch(() => { if (!dead) setErr(tt('Could not load the code.', 'تعذّر تحميل الكود.')); });
     return () => { dead = true; };
   }, [media.id]); // eslint-disable-line react-hooks/exhaustive-deps
 

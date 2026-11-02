@@ -51,7 +51,10 @@ export const postsApi = {
   mute: (uid) => api.post(`${P}/authors/${uid}/mute`),
   unmute: (uid) => api.del(`${P}/authors/${uid}/mute`),
 
-  mediaText: (id) => api.get(`${P}/media/${id}/text`).then(d),
+  mediaText: (id, base = `${P}/media`) => api.get(`${base}/${id}/text`).then(d),
+  /** Public post page (no sign-in): only visibility=public posts; anything else is a 404. */
+  publicPost: (id) => api.get(`/api/v1/public/posts/${id}`).then(d),
+  publicComments: (id, page = 1) => api.get(`/api/v1/public/posts/${id}/comments`, { page }).then((r) => ({ items: r.data || [], meta: r.meta || {} })),
   deleteMedia: (id) => api.del(`${P}/media/${id}`),
   /** Small files: one multipart request. Big files (>= 4 MB): 3 MB pieces via the shared chunked-upload service, then POST /media {upload_id}. */
   async uploadMedia(file, { onProgress, signal } = {}) {

@@ -8,17 +8,20 @@ import { attachmentUrl } from '../components/messaging/format';
  *  - <video> / <audio>             -> cannot send the token, so they play from a short-lived signed link (resolveSignedUrl)
  */
 const BASE = '/api/v1/posts/media';
+const PUBLIC_BASE = '/api/v1/public/posts/media';
+/** Media of the public post page (/post/:id) arrive with urls under /api/v1/public/posts/media (no sign-in needed); everything else uses the signed-in endpoints. */
+export const mediaBaseOf = (media) => (typeof media?.urls?.file === 'string' && media.urls.file.startsWith(PUBLIC_BASE) ? PUBLIC_BASE : BASE);
 
-export async function fetchMediaBlob(id, variant = 'file') {
-  const res = await api.blob(`${BASE}/${id}/${variant}`);
+export async function fetchMediaBlob(id, variant = 'file', base = BASE) {
+  const res = await api.blob(`${base}/${id}/${variant}`);
   return res.blob();
 }
 
 const blobCache = new Map(); // `${id}/${variant}` -> Promise<string objectURL>
-export function cachedBlobUrl(id, variant) {
-  const key = `${id}/${variant}`;
+export function cachedBlobUrl(id, variant, base = BASE) {
+  const key = `${base}/${id}/${variant}`;
   if (!blobCache.has(key)) {
-    const p = fetchMediaBlob(id, variant).then((b) => URL.createObjectURL(b)).catch((e) => { blobCache.delete(key); throw e; });
+    const p = fetchMediaBlob(id, variant, base).then((b) => URL.createObjectURL(b)).catch((e) => { blobCache.delete(key); throw e; });
     blobCache.set(key, p);
     if (blobCache.size > 150) blobCache.delete(blobCache.keys().next().value); // forget (not revoke): a card on screen may still hold it
   }
@@ -32,7 +35,7 @@ export function useMediaUrl(media, variant = 'file', { enabled = true } = {}) {
   useEffect(() => {
     if (!has || !enabled) { setState({ url: null, error: false }); return undefined; }
     let dead = false;
-    cachedBlobUrl(media.id, variant)
+    cachedBlobUrl(media.id, variant, mediaBaseOf(media))
       .then((url) => { if (!dead) setState({ url, error: false }); })
       .catch(() => { if (!dead) setState({ url: null, error: true }); });
     return () => { dead = true; };
@@ -42,12 +45,12 @@ export function useMediaUrl(media, variant = 'file', { enabled = true } = {}) {
 
 const links = new Map(); // `${id}/${variant}` -> { url, at } | Promise
 const LINK_TTL = 8 * 60 * 1000;
-export async function resolveSignedUrl(id, variant = 'file') {
-  const key = `${id}/${variant}`;
+export async function resolveSignedUrl(id, variant = 'file', base = BASE) {
+  const key = `${base}/${id}/${variant}`;
   const cur = links.get(key);
   if (cur && !(cur instanceof Promise) && Date.now() - cur.at < LINK_TTL) return cur.url;
   if (cur instanceof Promise) return cur;
-  const p = api.get(`${BASE}/${id}/link`, { variant })
+  const p = api.get(`${base}/${id}/link`, { variant })
     .then((r) => { const u = attachmentUrl(r.data.url); links.set(key, { url: u, at: Date.now() }); return u; })
     .catch((e) => { links.delete(key); throw e; });
   links.set(key, p);
@@ -59,7 +62,7 @@ export function useSignedUrl(media, variant = 'file', enabled = true) {
   useEffect(() => {
     if (!media || !enabled) return undefined;
     let dead = false;
-    resolveSignedUrl(media.id, variant)
+    resolveSignedUrl(media.id, variant, mediaBaseOf(media))
       .then((url) => { if (!dead) setState({ url, error: false }); })
       .catch(() => { if (!dead) setState({ url: null, error: true }); });
     return () => { dead = true; };
