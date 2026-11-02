@@ -1155,6 +1155,9 @@ export default function ThreadPanel({
     };
   }, [conversation]);
 
+  // must stay above the `if (!conversation)` early return below (hook order, React error #310)
+  useEffect(() => { if (pendingFiles.length === 0) { setReviewOpen(false); setHd(false); } }, [pendingFiles.length]);
+
   if (!conversation) {
     return (
       <section className="msg-thread" data-thread-panel>
@@ -1271,7 +1274,6 @@ export default function ThreadPanel({
     setHd(on);
     pendingFiles.forEach((pf) => { if (on) pf.file.uipHD = true; else delete pf.file.uipHD; });
   };
-  useEffect(() => { if (pendingFiles.length === 0) { setReviewOpen(false); setHd(false); } }, [pendingFiles.length]);
 
   const hasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes('Files');
   const onDragEnter = (e) => {
