@@ -58,27 +58,42 @@
 .pinbar__n { display: none; }
 @media (max-width: 760px) { html body.msg-page-active .msg-app .pinbar__n { display: inline; } }
 
-/* ---------- Bio note: floats over the top of the messages, comes and goes (all screen sizes) ---------- */
+/* ---------- Bio note: WhatsApp-style thought bubble hanging under the header beside the contact's photo (all screen sizes) ----------
+   --bio-start / --bio-av = where the photo sits, measured in BioNote.jsx. Two little dots lead from the bubble up to the photo. */
 html body .msg-app .bio-float { position: relative; flex: none; height: 0; z-index: 8; pointer-events: none; }
 html body .msg-app .bio-float .bio-hdr {
-  position: absolute; top: 10px; inset-inline: 12px; padding: 0; display: flex; justify-content: center;
-  background: transparent; pointer-events: none;
-  opacity: 0; visibility: hidden; transform: translateY(-12px) scale(.94);
-  transition: opacity .38s ease, transform .38s cubic-bezier(.2, .9, .3, 1.15), visibility 0s linear .38s;
+  position: absolute; top: 0; inset-inline: 0; padding: 0; display: block; background: transparent; pointer-events: none;
+  opacity: 0; visibility: hidden; transform: translateY(-6px) scale(.9);
+  transform-origin: calc(var(--bio-start, 52px) + var(--bio-av, 40px) / 2) 0;
+  transition: opacity .3s ease, transform .34s cubic-bezier(.2, .9, .3, 1.15), visibility 0s linear .3s;
   animation: none;
 }
-html body .msg-app .bio-float .bio-hdr.is-in {
-  opacity: 1; visibility: visible; transform: none;
-  transition: opacity .38s ease, transform .38s cubic-bezier(.2, .9, .3, 1.15), visibility 0s;
+[dir="rtl"] html body .msg-app .bio-float .bio-hdr, html body[dir="rtl"] .msg-app .bio-float .bio-hdr, html[dir="rtl"] body .msg-app .bio-float .bio-hdr {
+  transform-origin: calc(100% - var(--bio-start, 52px) - var(--bio-av, 40px) / 2) 0;
 }
+html body .msg-app .bio-float .bio-hdr.is-in { opacity: 1; visibility: visible; transform: none; transition: opacity .3s ease, transform .34s cubic-bezier(.2, .9, .3, 1.15), visibility 0s; }
 html body .msg-app .bio-float .bio-hdr.is-in .bio-hdr__bubble { pointer-events: auto; }
+html body .msg-app .bio-float .bio-hdr__row {
+  display: flex; padding-top: 13px; padding-inline-end: 10px;
+  padding-inline-start: max(8px, calc(var(--bio-start, 52px) - 6px));
+}
 html body .msg-app .bio-float .bio-hdr__bubble {
-  max-width: min(100%, 420px); padding: 6px 14px; border-radius: 18px; font-size: 13.5px; line-height: 1.45;
-  box-shadow: 0 10px 28px -10px rgba(20, 28, 70, .5), 0 2px 6px rgba(20, 28, 70, .12);
+  display: inline-flex; align-items: center; gap: 8px; max-width: min(100%, 340px); min-width: 0;
+  padding: 8px 14px; border-radius: 18px; font-size: 13.5px; line-height: 1.45; font-weight: 500; overflow: visible;
+  box-shadow: 0 6px 20px -8px rgba(15, 23, 42, .38), 0 1px 3px rgba(15, 23, 42, .14);
 }
+html body .msg-app .bio-float .bio-hdr__bubble.is-emoji { padding: 5px 14px; font-size: 22px; line-height: 1.25; border-radius: 20px; }
 html body .msg-app .bio-float .bio-hdr__bubble .bio-b__text {
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: normal;
 }
+html body .msg-app .bio-float .bio-hdr__bubble .bio-b__pen { order: 2; flex: none; opacity: .5; }
+/* the two dots that lead up to the photo */
+html body .msg-app .bio-float .bio-dot {
+  position: absolute; border-radius: 50%; background: var(--bio-tail); border: 1px solid var(--bio-bd); box-shadow: 0 1px 3px rgba(15, 23, 42, .2);
+  --bio-cx: calc(var(--bio-start, 52px) + var(--bio-av, 40px) / 2 - max(8px, calc(var(--bio-start, 52px) - 6px)));
+}
+html body .msg-app .bio-float .bio-dot--a { width: 10px; height: 10px; top: -11px; inset-inline-start: calc(var(--bio-cx) - 5px); }
+html body .msg-app .bio-float .bio-dot--b { width: 6px; height: 6px; top: -20px; inset-inline-start: calc(var(--bio-cx) - 3px); }
 @media (prefers-reduced-motion: reduce) {
   html body .msg-app .bio-float .bio-hdr, html body .msg-app .bio-float .bio-hdr.is-in { transform: none; transition: opacity .2s linear; }
 }

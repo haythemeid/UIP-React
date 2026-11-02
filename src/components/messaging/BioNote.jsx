@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import EmojiPicker from './EmojiPicker';
 import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/css/messaging-bio.css';
@@ -7,7 +7,8 @@ import '../../styles/css/messaging-bio.css';
  * Bio notes: a short line (emoji welcome) shown in a speech bubble hanging under the chat header, pointing at the
  * contact's photo, in the design its owner picked.
  *   BioBubble      – the bubble itself (header, contact info, live preview)
- *   HeaderBio      – the bubble in the chat header; floats over the chat, appears now and then, tap to tuck it away
+ *   HeaderBio      – WhatsApp-style note: a bubble hanging right under the chat header beside the contact's photo (two small
+ *                    dots lead up to the photo); it comes and goes, tap to tuck it away (your own note: tap to edit)
  *   BioEditor      – text + emoji picker + quick statuses + counter + design picker + live preview + save
  * Style ids must match ChatSettingsService::BIO_STYLES on the server.
  */
@@ -24,6 +25,8 @@ export const BIO_STYLES = [
 ];
 export const bioStyleId = (id) => (BIO_STYLES.some((s) => s.id === id) ? id : 'classic');
 const cpLen = (s) => Array.from(s || '').length;
+// a note that is only a few emoji (no letters / digits) is shown larger and compact
+const isEmojiOnly = (s) => { const x = String(s || '').replace(/\s/g, ''); return !!x && cpLen(x) <= 6 && !/[\p{L}\p{N}]/u.test(x); };
 
 const PRESETS = [
   { en: '📚 Studying', ar: '📚 بذاكر' },
@@ -52,9 +55,10 @@ export function BioBubble({ text, styleId, className = '', tail = true, children
 export function HeaderBio({ conversationId, text, styleId, own, onEdit }) {
   const t = useT();
   const [shown, setShown] = useState(false);
+  const [pos, setPos] = useState({ start: 52, size: 40 }); // where the contact's photo sits (distance from the inline-start edge)
+  const boxRef = useRef(null);
 
-  // The note floats over the top of the chat (it takes no room) and comes and goes: it fades in, stays long enough to read,
-  // fades out, and returns after a pause. Tap it to tuck it away until the next round.
+  // The note comes and goes: it fades in, stays long enough to read, fades out, and returns after a pause.
   useEffect(() => {
     if (!text) { setShown(false); return undefined; }
     const visibleMs = Math.min(12000, 5000 + cpLen(text) * 70);
@@ -70,15 +74,45 @@ export function HeaderBio({ conversationId, text, styleId, own, onEdit }) {
     return () => { cancelled = true; clearTimeout(timer); };
   }, [conversationId, text, styleId]);
 
+  // line the bubble up under the photo, whatever the screen size / language direction
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    if (!box) return undefined;
+    const measure = () => {
+      const av = box.parentElement?.querySelector('.msg-thread__peer .msg-avatar');
+      if (!av) return;
+      const b = box.getBoundingClientRect();
+      const r = av.getBoundingClientRect();
+      if (!b.width || !r.width) return;
+      const rtl = getComputedStyle(box).direction === 'rtl';
+      const start = Math.round(rtl ? b.right - r.right : r.left - b.left);
+      const size = Math.round(r.width);
+      setPos((p) => (p.start === start && p.size === size ? p : { start, size }));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    ro?.observe(box);
+    return () => { window.removeEventListener('resize', measure); ro?.disconnect(); };
+  }, [conversationId, shown, text]);
+
   if (!text) return null;
+  const editable = !!(own && onEdit);
+  const act = editable ? () => onEdit() : () => setShown(false);
   return (
-    <div className="bio-float">
+    <div className="bio-float" ref={boxRef} style={{ '--bio-start': `${pos.start}px`, '--bio-av': `${pos.size}px` }}>
       <div className={`bio-hdr${shown ? ' is-in' : ''}`} role="note" aria-hidden={!shown} aria-label={t('Bio', 'البايو')}>
-        <BioBubble text={text} styleId={styleId} tail={false} className="bio-hdr__bubble" onClick={() => setShown(false)} title={t('Tap to hide', 'اضغط للإخفاء')}>
-          {own && onEdit ? (
-            <button type="button" className="bio-b__edit" onClick={(e) => { e.stopPropagation(); onEdit(); }} aria-label={t('Edit bio', 'تعديل البايو')}>✎</button>
-          ) : null}
-        </BioBubble>
+        <div className="bio-hdr__row">
+          <BioBubble text={text} styleId={styleId} tail={false} className={`bio-hdr__bubble${isEmojiOnly(text) ? ' is-emoji' : ''}`}
+            onClick={act} title={editable ? t('Tap to edit', 'اضغط للتعديل') : t('Tap to hide', 'اضغط للإخفاء')}
+            {...(editable ? { role: 'button', tabIndex: shown ? 0 : -1, onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit(); } } } : {})}>
+            {editable ? (
+              <svg className="bio-b__pen" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+            ) : null}
+            <i className="bio-dot bio-dot--a" aria-hidden="true" />
+            <i className="bio-dot bio-dot--b" aria-hidden="true" />
+          </BioBubble>
+        </div>
       </div>
     </div>
   );
