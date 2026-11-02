@@ -9,6 +9,7 @@ import PersonCard, { ROLE_LABEL } from '../../components/network/PersonCard';
 import PersonProfile from '../../components/network/PersonProfile';
 import '../../styles/css/posts.css';
 import '../../styles/css/posts-pro.css';
+import '../../styles/css/posts-engage.css';
 import '../../styles/css/network.css';
 
 const FILTER_ROLES = ['student', 'academic_staff', 'faculty', 'university', 'supervisor', 'data_analyst'];

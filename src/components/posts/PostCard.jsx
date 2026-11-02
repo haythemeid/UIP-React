@@ -10,6 +10,8 @@ import LinkCard from './LinkCard';
 import SaveDialog from './SaveDialog';
 import ShareDialog from './ShareDialog';
 import InsightsDialog from './InsightsDialog';
+import RepostDialog from './RepostDialog';
+import { useDialogs } from './Dialogs';
 
 const Comments = lazy(() => import('./Comments'));
 const BODY_CLAMP = 420;
@@ -41,9 +43,10 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
   const [sensitiveOk, setSensitiveOk] = useState(false);
   const [note, setNote] = useState('');
   const [err, setErr] = useState('');
-  const [quote, setQuote] = useState('');
   const [saveOpen, setSaveOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [repostOpen, setRepostOpen] = useState(false);
+  const dialogs = useDialogs();
   const [insights, setInsights] = useState(null); // null | 'reactions' | 'shares' | 'reposts' | 'views'
   const ref = useRef(null);
   useEffect(() => setPost(initial), [initial]);
@@ -74,10 +77,22 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
     setNote(!r.saved ? tt('Removed from saved.', 'تم إلغاء الحفظ.') : r.moved ? tt('Moved.', 'تم النقل.') : r.folder ? tt(`Saved to “${r.folder}”.`, `تم الحفظ في «${r.folder}».`) : tt('Saved.', 'تم الحفظ.'));
     if (!r.saved && onSavedRemoved) onSavedRemoved(post);
   };
+  const repostWhy = () => (post.visibility !== 'public' ? tt('Only public posts can be reposted.', 'يمكن إعادة نشر المنشورات العامة فقط.')
+    : post.author.is_me ? tt('You can’t repost your own post.', 'لا يمكنك إعادة نشر منشورك.')
+    : tt('The author turned reposting off for this post.', 'قام صاحب المنشور بإيقاف إعادة النشر.'));
   const shared = (kind) => bumpCount(kind === 'repost' ? 'reposts' : 'shares', 1);
-  const repost = () => run(async () => { await postsApi.repost(post.id, quote.trim() || undefined); setPanel(null); setQuote(''); bumpCount('reposts', 1); setNote(tt('Reposted to your profile', 'تمت إعادة النشر')); });
+  const repostDone = () => { bumpCount('reposts', 1); setNote(tt('Reposted to your profile', 'تمت إعادة النشر')); };
   const follow = () => run(async () => { const r = post.author.is_following ? await postsApi.unfollow(post.author.id) : await postsApi.follow(post.author.id); patch({ author: { ...post.author, is_following: r?.following ?? !post.author.is_following } }); });
-  const del = () => run(async () => { if (!window.confirm(tt('Delete this post?', 'حذف هذا المنشور؟'))) return; await postsApi.remove(post.id); onRemoved?.(post); });
+  const del = async () => {
+    setMenu(false);
+    const ok = await dialogs.confirm({
+      title: tt('Delete post?', 'حذف المنشور؟'),
+      message: tt('This post, its comments and reactions will be permanently deleted. This can’t be undone.', 'سيتم حذف المنشور وتعليقاته وتفاعلاته نهائيًا ولا يمكن التراجع عن ذلك.'),
+      confirmLabel: tt('Delete', 'حذف'),
+      run: () => postsApi.remove(post.id),
+    });
+    if (ok) onRemoved?.(post);
+  };
   const pin = () => run(async () => { await (post.is_pinned ? postsApi.unpin(post.id) : postsApi.pin(post.id)); patch({ is_pinned: !post.is_pinned }); setMenu(false); });
   const archive = () => run(async () => { await postsApi.archive(post.id); onRemoved?.(post); });
   const publish = () => run(async () => { const n = await postsApi.publish(post.id); patch(n && n.id ? n : { status: 'published' }); });
@@ -167,7 +182,8 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
             </button>
           </div>
           <button type="button" className={`pp-act${panel === 'comments' ? ' is-on' : ''}`} onClick={() => setPanel((p) => (p === 'comments' ? null : 'comments'))}><Icon name="message-square" size={16} /> {tt('Comment', 'تعليق')}</button>
-          {post.can.repost && <button type="button" className={`pp-act${panel === 'repost' ? ' is-on' : ''}`} onClick={() => setPanel((p) => (p === 'repost' ? null : 'repost'))}><Icon name="refresh" size={16} /> {tt('Repost', 'إعادة نشر')}</button>}
+          <button type="button" className={`pp-act${post.can.repost ? '' : ' is-disabled'}`} aria-disabled={!post.can.repost} title={post.can.repost ? undefined : repostWhy()}
+            onClick={() => (post.can.repost ? setRepostOpen(true) : setNote(repostWhy()))}><Icon name="refresh" size={16} /> {tt('Repost', 'إعادة نشر')}</button>
           <button type="button" className="pp-act" onClick={() => setShareOpen(true)}><Icon name="share" size={16} /> {tt('Share', 'مشاركة')}</button>
           <button type="button" className={`pp-act pp-act--end pp-act--save${post.saved ? ' is-on' : ''}`} onClick={() => setSaveOpen(true)} aria-pressed={post.saved} title={post.saved ? tt('Unsave', 'إلغاء الحفظ') : tt('Save', 'حفظ')} aria-label={post.saved ? tt('Unsave', 'إلغاء الحفظ') : tt('Save', 'حفظ')}><Icon name="bookmark" size={16} />{post.saved && <span>{tt('Saved', 'محفوظ')}</span>}</button>
         </div>
@@ -178,14 +194,12 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
       )}
 
       {insights && <InsightsDialog post={post} tab={insights} onClose={() => setInsights(null)} onOpenComments={() => setPanel('comments')} onOpenAuthor={onOpenAuthor} />}
+      {repostOpen && <RepostDialog post={post} onClose={() => setRepostOpen(false)} onDone={repostDone} />}
+      {dialogs.dialogs}
       {shareOpen && <ShareDialog post={post} onClose={() => setShareOpen(false)} onShared={shared} />}
       {saveOpen && <SaveDialog post={post} onClose={() => setSaveOpen(false)} onDone={saveDone} />}
       {note && <small className="pp-ok">{note}</small>}
       {err && <Alert tt={tt}>{err}</Alert>}
-      {panel === 'repost' && (
-        <div className="pp-panel"><textarea className="pp-input" rows={2} maxLength={1000} value={quote} onChange={(e) => setQuote(e.target.value)} placeholder={tt('Add your thoughts (optional)', 'أضف رأيك (اختياري)')} />
-          <div className="pp-row"><button type="button" className="pp-btn is-primary" onClick={repost}>{tt('Repost', 'إعادة نشر')}</button><button type="button" className="pp-btn" onClick={() => setPanel(null)}>{tt('Cancel', 'إلغاء')}</button></div></div>
-      )}
       {panel === 'report' && <ReportBox post={post} tt={tt} onDone={() => { setPanel(null); setNote(tt('Thanks — your report was sent.', 'شكرًا — تم إرسال البلاغ.')); }} />}
       {panel === 'comments' && <Suspense fallback={<div className="pp-skel" style={{ height: 60 }} />}><Comments post={post} onCount={(d) => bumpCount('comments', d)} /></Suspense>}
     </article>

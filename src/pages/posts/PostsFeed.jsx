@@ -11,6 +11,8 @@ import Composer from '../../components/posts/Composer';
 import FloatingChat from '../../components/posts/FloatingChat';
 import '../../styles/css/posts.css';
 import '../../styles/css/posts-pro.css';
+import '../../styles/css/posts-engage.css';
+import { useDialogs } from '../../components/posts/Dialogs';
 
 const TABS = [
   ['for_you', 'For you', 'لك', 'ai-spark'], ['following', 'Following', 'المتابَعون', 'users'], ['latest', 'Latest', 'الأحدث', 'clock'],
@@ -42,6 +44,7 @@ function Side({ tt, onTag, onFollow }) {
 export default function PostsFeed() {
   const { tt } = useTt();
   const { user } = useAuth();
+  const dialogs = useDialogs();
   const [params, setParams] = useSearchParams();
   usePageMeta(tt('Posts', 'المنشورات'));
   const [config, setConfig] = useState(null);
@@ -101,19 +104,20 @@ export default function PostsFeed() {
   };
   const unsavedHere = (p) => { if (effMode === 'saved') { setItems((prev) => prev.filter((x) => x.id !== p.id)); loadCols(); } };
   const newFolder = async () => {
-    const name = window.prompt(tt('Folder name', 'اسم المجلد'));
-    if (!name || !name.trim()) return;
+    const name = await dialogs.ask({ title: tt('New folder', 'مجلد جديد'), label: tt('Folder name', 'اسم المجلد'), confirmLabel: tt('Create', 'إنشاء') });
+    if (!name) return;
     setColBusy(true);
-    try { const c = await postsApi.createCollection(name.trim()); loadCols(); setCol(String(c.id)); } catch (e) { setErr(errorMessage(e)); } finally { setColBusy(false); }
+    try { const c = await postsApi.createCollection(name); loadCols(); setCol(String(c.id)); } catch (e) { setErr(errorMessage(e)); } finally { setColBusy(false); }
   };
   const renameFolder = async (c) => {
-    const name = window.prompt(tt('Rename folder', 'إعادة تسمية المجلد'), c.name);
-    if (!name || !name.trim() || name.trim() === c.name) return;
+    const name = await dialogs.ask({ title: tt('Rename folder', 'إعادة تسمية المجلد'), label: tt('Folder name', 'اسم المجلد'), initial: c.name, confirmLabel: tt('Save', 'حفظ') });
+    if (!name || name === c.name) return;
     setColBusy(true);
     try { await postsApi.renameCollection(c.id, name.trim()); loadCols(); } catch (e) { setErr(errorMessage(e)); } finally { setColBusy(false); }
   };
   const deleteFolder = async (c) => {
-    if (!window.confirm(tt(`Delete the folder “${c.name}”? The posts inside stay in your saved items.`, `حذف المجلد «${c.name}»؟ المنشورات التي بداخله تبقى في المحفوظات.`))) return;
+    const ok = await dialogs.confirm({ title: tt('Delete folder?', 'حذف المجلد؟'), message: tt(`“${c.name}” will be deleted. The posts inside stay in your saved items.`, `سيتم حذف «${c.name}». المنشورات التي بداخله تبقى في المحفوظات.`), confirmLabel: tt('Delete', 'حذف') });
+    if (!ok) return;
     setColBusy(true);
     try { await postsApi.deleteCollection(c.id); setCol(''); loadCols(); } catch (e) { setErr(errorMessage(e)); } finally { setColBusy(false); }
   };
@@ -177,6 +181,7 @@ export default function PostsFeed() {
         {!single && <Side tt={tt} onTag={pickTag} />}
       </div>
       <FloatingChat />
+      {dialogs.dialogs}
     </div>
   );
 }

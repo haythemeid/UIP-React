@@ -4,6 +4,8 @@ import { postsApi } from '../../api/postsApi';
 import { errorMessage } from '../../api/client';
 import { usePageMeta } from '../../context/PageMetaContext';
 import { Alert, Empty, REPORT_REASONS, useTt } from '../../components/posts/shared';
+import '../../styles/css/posts-engage.css';
+import { useDialogs } from '../../components/posts/Dialogs';
 import PostCard from '../../components/posts/PostCard';
 import '../../styles/css/posts.css';
 
@@ -78,12 +80,13 @@ function Reports({ tt }) {
 }
 
 function Pending({ tt }) {
+  const dialogs = useDialogs();
   const [items, setItems] = useState(null);
   const [err, setErr] = useState('');
   useEffect(() => { postsApi.admin.pending().then((r) => setItems(r.items)).catch((e) => setErr(errorMessage(e))); }, []);
   const act = async (p, ok) => {
     try {
-      if (ok) await postsApi.admin.approve(p.id); else { const reason = window.prompt(tt('Reason (optional)', 'السبب (اختياري)')); if (reason === null) return; await postsApi.admin.reject(p.id, reason || undefined); }
+      if (ok) await postsApi.admin.approve(p.id); else { const reason = await dialogs.ask({ title: tt('Reject post', 'رفض المنشور'), label: tt('Reason (optional)', 'السبب (اختياري)'), allowEmpty: true, maxLength: 300, confirmLabel: tt('Reject', 'رفض'), icon: 'x' }); if (reason === null) return; await postsApi.admin.reject(p.id, reason || undefined); }
       setItems((l) => l.filter((x) => x.id !== p.id));
     } catch (e) { setErr(errorMessage(e)); }
   };
@@ -91,9 +94,12 @@ function Pending({ tt }) {
   if (!items) return <div className="pp-skel" style={{ height: 120 }} />;
   if (!items.length) return <Empty icon="check-circle" title={tt('Nothing waiting for approval', 'لا شيء بانتظار الموافقة')} />;
   return (
+    <>
     <ul className="pp-stack">{items.map((p) => (
       <li key={p.id}><PostCard post={p} compactView />
         <div className="pp-row pp-pad"><button type="button" className="pp-btn is-primary" onClick={() => act(p, true)}>{tt('Approve', 'موافقة')}</button><button type="button" className="pp-btn is-danger" onClick={() => act(p, false)}>{tt('Reject', 'رفض')}</button></div></li>))}</ul>
+    {dialogs.dialogs}
+    </>
   );
 }
 

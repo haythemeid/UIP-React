@@ -4,6 +4,7 @@ import Icon from '../Icon';
 import { networkApi } from '../../api/networkApi';
 import { errorMessage } from '../../api/client';
 import { useTt } from '../posts/shared';
+import { useDialogs } from '../posts/Dialogs';
 
 /** Optional note shown to the person with a connection request. */
 function ConnectNote({ person, onSend, onCancel, busy, tt }) {
@@ -44,6 +45,7 @@ export default function PersonActions({ p, mode = 'default', onPatch, onRemove, 
   const [note, setNote] = useState(false);
   const [menu, setMenu] = useState(false);
   const box = useRef(null);
+  const dialogs = useDialogs();
 
   useEffect(() => {
     if (!menu) return undefined;
@@ -63,16 +65,18 @@ export default function PersonActions({ p, mode = 'default', onPatch, onRemove, 
   const accept = () => run('accept', () => networkApi.accept(p.connection_id), (r) => { patch(r); if (mode === 'received') onRemove?.(p.id, 'accepted'); });
   const decline = () => run('decline', () => networkApi.decline(p.connection_id), (r) => { patch(r); if (mode === 'received') onRemove?.(p.id, 'declined'); });
   const withdraw = () => run('withdraw', () => networkApi.withdraw(p.connection_id), (r) => { patch(r); if (mode === 'sent') onRemove?.(p.id, 'withdrawn'); });
-  const removeConn = () => {
-    if (!window.confirm(tt(`Remove ${p.full_name} from your connections?`, `إزالة ${p.full_name} من اتصالاتك؟`))) return;
+  const removeConn = async () => {
+    setMenu(false);
+    if (!(await dialogs.confirm({ title: tt('Remove connection?', 'إزالة الاتصال؟'), message: tt(`${p.full_name} will no longer be one of your connections. You can send a new request later.`, `لن يعود ${p.full_name} ضمن اتصالاتك. يمكنك إرسال طلب جديد لاحقًا.`), confirmLabel: tt('Remove', 'إزالة'), icon: 'user-minus' }))) return;
     run('remove', () => networkApi.removeConnection(p.id), (r) => { patch(r); if (mode === 'connections') onRemove?.(p.id, 'removed'); });
   };
   const toggleFollow = () => run('follow', () => (p.is_following || p.follow_requested ? networkApi.unfollow(p.id) : networkApi.follow(p.id)),
     (r) => { patch({ is_following: r.is_following, follow_requested: r.follow_requested }); if (mode === 'following' && !r.is_following) onRemove?.(p.id, 'unfollowed'); });
   const acceptFollow = () => run('accept', () => networkApi.acceptFollow(p.id), (r) => { patch(r); onRemove?.(p.id, 'accepted'); });
   const declineFollow = () => run('decline', () => networkApi.declineFollow(p.id), () => onRemove?.(p.id, 'declined'));
-  const removeFollower = () => {
-    if (!window.confirm(tt(`Remove ${p.full_name} from your followers?`, `إزالة ${p.full_name} من متابعيك؟`))) return;
+  const removeFollower = async () => {
+    setMenu(false);
+    if (!(await dialogs.confirm({ title: tt('Remove follower?', 'إزالة المتابِع؟'), message: tt(`${p.full_name} will stop following you and won’t see your posts that are for followers.`, `سيتوقف ${p.full_name} عن متابعتك ولن يرى منشوراتك الخاصة بالمتابعين.`), confirmLabel: tt('Remove', 'إزالة'), icon: 'user-x' }))) return;
     run('remove', () => networkApi.removeFollower(p.id), (r) => { patch(r); if (mode === 'followers') onRemove?.(p.id, 'removed'); });
   };
   const message = () => run('msg', () => networkApi.openChat(p.id), (id) => { if (id) nav(`/${portal}/messages/${id}`); });
@@ -133,6 +137,7 @@ export default function PersonActions({ p, mode = 'default', onPatch, onRemove, 
       </span>
       {note && <ConnectNote person={p} busy={busy === 'connect'} tt={tt} onCancel={() => setNote(false)} onSend={connect} />}
       {err && <small className="nw-err">{err}</small>}
+      {dialogs.dialogs}
     </div>
   );
 }
