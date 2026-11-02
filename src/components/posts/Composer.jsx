@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from '../Icon';
 import { postsApi } from '../../api/postsApi';
 import { errorMessage } from '../../api/client';
@@ -7,6 +7,46 @@ import { Alert, COMMENT_MODES, PAvatar, VIS, useTt } from './shared';
 
 const CODE_EXT = ['py', 'js', 'ts', 'html', 'css', 'php', 'java', 'c', 'cpp', 'cs', 'go', 'rb', 'sh', 'sql', 'json', 'yml', 'md'];
 let seq = 0;
+
+/** Language picker: a styled listbox instead of the browser's native <select> popup (which ignores the app theme and shows an OS scrollbar). */
+function LangSelect({ value, options, onChange, label }) {
+  const [open, setOpen] = useState(false);
+  const [cur, setCur] = useState(0);
+  const root = useRef(null);
+  const list = useRef(null);
+  const close = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    setCur(Math.max(0, options.indexOf(value)));
+    const down = (e) => { if (root.current && !root.current.contains(e.target)) close(); };
+    document.addEventListener('mousedown', down);
+    return () => document.removeEventListener('mousedown', down);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (open) list.current?.children[cur]?.scrollIntoView({ block: 'nearest' }); }, [cur, open]);
+
+  const pick = (v) => { onChange(v); close(); };
+  const key = (e) => {
+    if (!open) { if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) { e.preventDefault(); setOpen(true); } return; }
+    if (e.key === 'Escape') { e.preventDefault(); close(); } else if (e.key === 'ArrowDown') { e.preventDefault(); setCur((i) => Math.min(options.length - 1, i + 1)); } else if (e.key === 'ArrowUp') { e.preventDefault(); setCur((i) => Math.max(0, i - 1)); } else if (e.key === 'Home') { e.preventDefault(); setCur(0); } else if (e.key === 'End') { e.preventDefault(); setCur(options.length - 1); } else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(options[cur]); }
+  };
+  return (
+    <div className="pp-sel" ref={root} dir="ltr">
+      <button type="button" className="pp-sel__btn" aria-haspopup="listbox" aria-expanded={open} aria-label={label} onClick={() => setOpen((o) => !o)} onKeyDown={key}>
+        <span>{value}</span><Icon name="chevron-down" size={14} />
+      </button>
+      {open && (
+        <ul className="pp-sel__list" role="listbox" ref={list} aria-label={label}>
+          {options.map((o, i) => (
+            <li key={o} role="option" aria-selected={o === value} className={`pp-sel__opt${o === value ? ' is-on' : ''}${i === cur ? ' is-cur' : ''}`} onMouseEnter={() => setCur(i)} onMouseDown={(e) => { e.preventDefault(); pick(o); }}>
+              <span>{o}</span>{o === value && <Icon name="check" size={14} />}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 /** Create (or edit, when `post` is given) a post: text, files of any kind (chunked when big), code snippet, voice note, audience & settings, schedule, draft. */
 export default function Composer({ config, me, post, onSaved, onCancel }) {
@@ -136,7 +176,7 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
 
           {code && (
             <div className="pp-panel">
-              <div className="pp-row"><select className="pp-input" dir="ltr" value={code.ext} onChange={(e) => setCode({ ...code, ext: e.target.value })}>{CODE_EXT.map((x) => <option key={x}>{x}</option>)}</select>
+              <div className="pp-row"><LangSelect value={code.ext} options={CODE_EXT} label={tt('Language', 'اللغة')} onChange={(ext) => setCode({ ...code, ext })} />
                 <small className="pp-muted">{tt('Runnable languages get a Run button on the post.', 'اللغات القابلة للتشغيل يظهر لها زر تشغيل.')}</small></div>
               <textarea className="pp-input pp-input--code" dir="ltr" rows={8} spellCheck={false} value={code.text} onChange={(e) => setCode({ ...code, text: e.target.value })} placeholder="print('hello')" />
               <div className="pp-row"><button type="button" className="pp-btn is-primary" onClick={addCode} disabled={!code.text.trim()}>{tt('Attach code', 'إرفاق الكود')}</button><button type="button" className="pp-btn" onClick={() => setCode(null)}>{tt('Cancel', 'إلغاء')}</button></div>

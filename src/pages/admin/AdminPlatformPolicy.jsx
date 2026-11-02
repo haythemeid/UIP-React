@@ -254,7 +254,7 @@ function StaffCodeModal({ group, info, limits, onClose, onSaved, t }) {
         <p className="adm-modal-text">{t('The current code is never shown. Set a new one — the old one stops working and open access sessions of this group must enter the new code.')}</p>
         <div className="adm-field" style={{ marginBottom: 'var(--space-3)' }}>
           <label className="adm-field__label" htmlFor="pp-gate-code">{t('New access code')}</label>
-          <div className="pp-code">
+          <div className="ppol-code">
             <input id="pp-gate-code" className="form-input" dir="ltr" type={show ? 'text' : 'password'} value={code} autoComplete="off" spellCheck={false}
               maxLength={limits.code_max} onChange={(e) => setCode(e.target.value.replace(/[^A-Za-z0-9]/g, ''))} autoFocus />
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShow((v) => !v)} aria-label={show ? t('Hide code') : t('Show code')}><Icon name={show ? 'eye-off' : 'eye'} size={16} /></button>
@@ -557,7 +557,7 @@ function ValuesPanel({ values, onSaved, t, fields = VALUE_FIELDS, title = 'Gener
                 <label className="adm-policy__title" htmlFor={`pp-val-${f.key}`}><span className="adm-policy__icon"><Icon name={f.icon} size={16} /></span>{t(f.title)}</label>
                 <span className={`badge ${meta.overridden ? 'badge-primary' : 'badge-neutral'}`}>{meta.overridden ? t('Set from dashboard') : (f.secret ? t('Not set') : t('Server default'))}</span>
               </div>
-              <div className="pp-code">
+              <div className="ppol-code">
                 {f.textarea ? (
                   <textarea id={`pp-val-${f.key}`} className="form-input pp-textarea" dir="ltr" rows={4}
                     value={form[f.key] ?? ''} maxLength={f.maxLength} spellCheck={false}
