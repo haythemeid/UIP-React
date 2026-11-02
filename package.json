@@ -11,7 +11,7 @@
     "build:native": "vite build --mode native && node scripts/slim-native.mjs",
     "android:sync": "npm run build:native && cap sync android && node scripts/patch-android.mjs",
     "android:open": "cap open android",
-    "android:icons": "capacitor-assets generate --android --assetPath resources --iconBackgroundColor \"#F4F6FF\" --splashBackgroundColor \"#F4F6FF\"",
+    "android:icons": "npx --yes @capacitor/assets@3.0.5 generate --android --assetPath resources --iconBackgroundColor \"#F4F6FF\" --splashBackgroundColor \"#F4F6FF\"",
     "android:patch": "node scripts/patch-android.mjs",
     "predev": "node scripts/copy-ocr-assets.mjs",
     "prebuild": "node scripts/copy-ocr-assets.mjs",
@@ -83,7 +83,6 @@
     "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
     "@tesseract.js-data/ara": "^1.0.0",
     "@tesseract.js-data/eng": "^1.0.0",
     "@types/react": "^19.2.17",
@@ -92,6 +91,9 @@
     "oxlint": "^1.75.0",
     "typescript": "^7.0.2",
     "vite": "^8.2.0"
+  },
+  "overrides": {
+    "uuid": "^11.1.0"
   },
   "engines": {
     "node": "24.x"
