@@ -9,6 +9,7 @@ import PostMedia from './PostMedia';
 import LinkCard from './LinkCard';
 import SaveDialog from './SaveDialog';
 import ShareDialog from './ShareDialog';
+import InsightsDialog from './InsightsDialog';
 
 const Comments = lazy(() => import('./Comments'));
 const BODY_CLAMP = 420;
@@ -43,6 +44,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
   const [quote, setQuote] = useState('');
   const [saveOpen, setSaveOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [insights, setInsights] = useState(null); // null | 'reactions' | 'shares' | 'reposts' | 'views'
   const ref = useRef(null);
   useEffect(() => setPost(initial), [initial]);
 
@@ -140,13 +142,18 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
         </div>
       )}
 
-      {c && (c.reactions > 0 || c.comments > 0 || c.reposts > 0 || c.views > 0) && (
+      {c && (c.reactions > 0 || c.comments > 0 || c.reposts > 0 || c.shares > 0 || (post.author.is_me && (c.views > 0 || c.saves > 0))) && (
         <div className="pp-stats">
-          <span>{top.map(([k]) => REACTIONS[k]?.e).join('')} {c.reactions > 0 && compact(c.reactions)}</span>
-          <span>
-            {c.comments > 0 && <button type="button" className="pp-plain" onClick={() => setPanel('comments')}>{compact(c.comments)} {tt('comments', 'تعليق')}</button>}
-            {c.reposts > 0 && <> · {compact(c.reposts)} {tt('reposts', 'إعادة نشر')}</>}
-            {post.author.is_me && c.views > 0 && <> · {compact(c.views)} {tt('views', 'مشاهدة')}</>}
+          {c.reactions > 0
+            ? <button type="button" className="pp-stats__b pp-stats__react" onClick={() => setInsights('reactions')} title={tt('Who reacted', 'مين تفاعل')}>
+              <span className="pp-stats__emo">{top.map(([k]) => <i key={k}>{REACTIONS[k]?.e}</i>)}</span><b>{compact(c.reactions)}</b></button>
+            : <span />}
+          <span className="pp-stats__right">
+            {c.comments > 0 && <button type="button" className="pp-stats__b" onClick={() => setPanel('comments')}>{compact(c.comments)} {tt('comments', 'تعليق')}</button>}
+            {c.reposts > 0 && <button type="button" className="pp-stats__b" onClick={() => setInsights('reposts')}>{compact(c.reposts)} {tt('reposts', 'إعادة نشر')}</button>}
+            {c.shares > 0 && <button type="button" className="pp-stats__b" onClick={() => setInsights('shares')}>{compact(c.shares)} {tt('shares', 'مشاركة')}</button>}
+            {post.author.is_me && c.saves > 0 && <button type="button" className="pp-stats__b" onClick={() => setInsights('saves')}>{compact(c.saves)} {tt('saves', 'حفظ')}</button>}
+            {post.author.is_me && c.views > 0 && <button type="button" className="pp-stats__b" onClick={() => setInsights('views')}><Icon name="eye" size={13} /> {compact(c.views)} {tt('views', 'مشاهدة')}</button>}
           </span>
         </div>
       )}
@@ -170,6 +177,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
           {post.scheduled_at && <small className="pp-muted"><Icon name="clock" size={12} /> {post.scheduled_at}</small>}</div>
       )}
 
+      {insights && <InsightsDialog post={post} tab={insights} onClose={() => setInsights(null)} onOpenComments={() => setPanel('comments')} onOpenAuthor={onOpenAuthor} />}
       {shareOpen && <ShareDialog post={post} onClose={() => setShareOpen(false)} onShared={shared} />}
       {saveOpen && <SaveDialog post={post} onClose={() => setSaveOpen(false)} onDone={saveDone} />}
       {note && <small className="pp-ok">{note}</small>}

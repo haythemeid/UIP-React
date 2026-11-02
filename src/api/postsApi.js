@@ -21,6 +21,8 @@ export const postsApi = {
 
   react: (id, type) => api.post(`${P}/${id}/react`, { type }).then(d),
   reactors: (id, type, page = 1) => api.get(`${P}/${id}/reactions`, { type, page }).then(d),
+  sharers: (id, kind = 'all', page = 1) => api.get(`${P}/${id}/shares`, { kind, page }).then(d),
+  viewers: (id, page = 1) => api.get(`${P}/${id}/viewers`, { page }).then(d),
   save: (id) => api.post(`${P}/${id}/save`).then(d),
   saveTo: (id, collection_id = null) => api.post(`${P}/${id}/save`, { action: 'save', collection_id }).then(d),
   unsave: (id) => api.post(`${P}/${id}/save`, { action: 'unsave' }).then(d),
