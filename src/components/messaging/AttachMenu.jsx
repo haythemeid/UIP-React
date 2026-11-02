@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import '../../styles/css/chat-picker.css';
+import AttachSheet from './AttachSheet';
 
 /**
  * WhatsApp-style attachment menu: Document / Photos & videos / Camera / Audio / Poll / Location / New sticker.
@@ -30,20 +31,29 @@ function Item({ color, icon, label, onClick, delay }) {
 
 export default function AttachMenu({
   ar, canFiles, canMedia, canPoll, canLocation, canAudio, canSticker,
-  onPickFiles, onPickMedia, onPickCamera, onPickAudio, onPoll, onLocation, onNewSticker, title,
+  onPickFiles, onPickMedia, onPickCamera, onPickAudio, onPoll, onLocation, onNewSticker, onGalleryFiles, title,
 }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef(null);
+  // phones get the WhatsApp-style bottom sheet (actions + gallery); desktop keeps the compact popover
+  const [phone, setPhone] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 760px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia?.('(max-width: 760px)');
+    if (!mq) return undefined;
+    const on = () => setPhone(mq.matches);
+    mq.addEventListener?.('change', on);
+    return () => mq.removeEventListener?.('change', on);
+  }, []);
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open || phone) return undefined;
     const away = (e) => { if (!wrap.current?.contains(e.target)) setOpen(false); };
     const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
     document.addEventListener('mousedown', away);
     document.addEventListener('touchstart', away, { passive: true });
     document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('mousedown', away); document.removeEventListener('touchstart', away); document.removeEventListener('keydown', esc); };
-  }, [open]);
+  }, [open, phone]);
 
   const run = (fn) => () => { setOpen(false); fn?.(); };
   const items = [
@@ -61,7 +71,18 @@ export default function AttachMenu({
       <button type="button" className={`msg-icon-btn${open ? ' is-active' : ''}`} title={title} aria-label={title} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? 'rotate(45deg)' : 'none', transition: 'transform .18s' }}><path d="M12 5v14M5 12h14" /></svg>
       </button>
-      {open && (
+      {open && phone && (
+        <AttachSheet
+          ar={ar}
+          canMedia={!!canMedia}
+          actions={items.filter((it) => it.k !== 'media' && it.k !== 'camera').map((it) => ({ k: it.k, color: it.color, icon: it.icon, label: it.label, run: run(it.fn) }))}
+          onClose={() => setOpen(false)}
+          onCamera={run(onPickCamera)}
+          onSystemPicker={run(onPickMedia)}
+          onGalleryFiles={(files, opts) => { setOpen(false); onGalleryFiles?.(files, opts); }}
+        />
+      )}
+      {open && !phone && (
         <>
           <div className="att-scrim" aria-hidden="true" />
           <div className="att-menu" role="menu">

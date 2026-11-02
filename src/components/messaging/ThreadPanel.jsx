@@ -34,6 +34,7 @@ import StickerMaker from './StickerMaker';
 import StickerMedia from './StickerMedia';
 import StickerSheet from './StickerSheet';
 import AttachMenu from './AttachMenu';
+import MediaReview from './MediaReview';
 import { createMySticker, toSticker } from '../../lib/stickerStore';
 import CameraCaptureModal from './CameraCaptureModal';
 import ViewOnceMedia from './ViewOnceMedia';
@@ -1002,6 +1003,8 @@ export default function ThreadPanel({
   const [groupCallBusy, setGroupCallBusy] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [showMaker, setShowMaker] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false); // several photos / videos picked together -> review screen (MediaReview)
+  const [hd, setHd] = useState(false);                 // "HD": photos keep their full quality instead of being shrunk before upload
   const [stickersRev, setStickersRev] = useState(0);
   const [showLocation, setShowLocation] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -1259,9 +1262,16 @@ export default function ThreadPanel({
     if (blocked.length) blockedNotice(blocked.map(fileKind));
     const arr = incoming.filter((f) => typeOk(fileKind(f)));
     if (!arr.length) return;
+    if (hd) arr.forEach((f) => { f.uipHD = true; });
     onAddFiles(arr);
     if (arr.length === 1 && isEditableMedia(arr[0])) setEditIdx(pendingFiles.length);
+    else if (arr.filter((f) => /^(image|video)\//.test(f.type || '')).length >= 2) setReviewOpen(true);
   };
+  const toggleHd = (on) => {
+    setHd(on);
+    pendingFiles.forEach((pf) => { if (on) pf.file.uipHD = true; else delete pf.file.uipHD; });
+  };
+  useEffect(() => { if (pendingFiles.length === 0) { setReviewOpen(false); setHd(false); } }, [pendingFiles.length]);
 
   const hasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes('Files');
   const onDragEnter = (e) => {
@@ -1821,6 +1831,7 @@ export default function ThreadPanel({
                 onNewSticker={() => setShowMaker(true)}
                 onPickFiles={() => fileInputRef.current?.click()}
                 onPickMedia={() => mediaInputRef.current?.click()}
+                onGalleryFiles={(files) => handleFiles(files)}
                 onPickCamera={() => {
                   if (navigator.mediaDevices?.getUserMedia) setShowCamera(true);
                   else cameraInputRef.current?.click();
@@ -1975,6 +1986,24 @@ export default function ThreadPanel({
         )}
       </div>
 
+      {reviewOpen && pendingFiles.length > 0 && (
+        <MediaReview
+          ar={ar}
+          files={pendingFiles}
+          caption={text}
+          setCaption={setText}
+          canHd={pendingFiles.some((pf) => /^image\//.test(pf.file.type || '') && !pf.file.uipShrunk)}
+          paused={editIdx != null}
+          hd={hd}
+          setHd={toggleHd}
+          onClose={() => setReviewOpen(false)}
+          onRemove={onRemoveFile}
+          onEdit={(i) => setEditIdx(i)}
+          onAddMore={() => mediaInputRef.current?.click()}
+          onSend={() => { setReviewOpen(false); handleSend(); }}
+        />
+      )}
+
       {editPf && (
         <MediaEditorModal
           key={`${editIdx}-${editPf.file.name}-${editPf.file.size}`}
@@ -1991,6 +2020,7 @@ export default function ThreadPanel({
             if (editPf.file.uipView && f.uipView === undefined) f.uipView = editPf.file.uipView;
             const files = pendingFiles.map((p, i) => (i === editIdx ? f : p.file));
             setEditIdx(null);
+            setReviewOpen(false);
             setText('');
             setShowEmoji(false);
             onSend(cap, files);

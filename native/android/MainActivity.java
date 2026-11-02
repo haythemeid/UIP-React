@@ -19,6 +19,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NativePrintPlugin.class);
         registerPlugin(NativeLinksPlugin.class);
         registerPlugin(NativeFilesPlugin.class);
+        registerPlugin(NativeGalleryPlugin.class);
         super.onCreate(savedInstanceState);
         try {
             android.util.Log.i("UIP-PUSH", "FirebaseApp initialised: " + !com.google.firebase.FirebaseApp.getApps(this).isEmpty());

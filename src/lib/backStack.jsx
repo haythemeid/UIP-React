@@ -27,7 +27,7 @@ import { Link, useLocation, useNavigate, useNavigationType } from 'react-router-
 // (The mobile sidebar drawer is registered with useBackLayer in DashboardLayout.)
 const OVERLAY_SELECTOR = [
   '.modal-overlay', '.sec-modal-overlay', '.st-modal-overlay', '.ua-sheet-overlay',
-  '.msg-modal-backdrop', '.msg-lightbox', '.pp-lightbox', '.gr-modal', '.ex-modal-scrim',
+  '.msg-modal-backdrop', '.msg-lightbox', '.pp-lightbox', '.gr-modal', '.ex-modal-scrim', '.ags-overlay', '.mr-overlay',
 ].join(',');
 
 // Never touch history on these screens: the exam lock-down already owns Back there.

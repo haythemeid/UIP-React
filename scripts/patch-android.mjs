@@ -28,7 +28,7 @@ if (!existsSync(androidDir)) {
 const javaDir = join(androidDir, 'app', 'src', 'main', 'java', ...pkg.split('.'));
 mkdirSync(javaDir, { recursive: true });
 
-for (const file of ['ExamLockPlugin.java', 'ScreenCapturePlugin.java', 'NativePrintPlugin.java', 'NativeLinksPlugin.java', 'NativeFilesPlugin.java', 'UipMessagingService.java', 'UipCallActionReceiver.java', 'IncomingCallActivity.java', 'MainActivity.java']) {
+for (const file of ['ExamLockPlugin.java', 'ScreenCapturePlugin.java', 'NativePrintPlugin.java', 'NativeLinksPlugin.java', 'NativeFilesPlugin.java', 'NativeGalleryPlugin.java', 'UipMessagingService.java', 'UipCallActionReceiver.java', 'IncomingCallActivity.java', 'MainActivity.java']) {
   const src = readFileSync(join(root, 'native', 'android', file), 'utf8').replaceAll('__PACKAGE__', pkg);
   writeFileSync(join(javaDir, file), src);
   console.log(`[patch-android] wrote ${pkg}.${file.replace('.java', '')}`);
@@ -65,6 +65,11 @@ if (existsSync(manifestPath)) {
     if (!xml.includes(`"${f}"`)) add.push(`    <uses-feature android:name="${f}" android:required="false" />`);
   }
   // Chat media auto-save into Pictures/Movies/Documents/UIP: only Android 9 and older need this (10+ uses MediaStore).
+  // Chat attach sheet: the phone's photo / video gallery (native/android/NativeGalleryPlugin.java).
+  if (!xml.includes('"android.permission.READ_MEDIA_IMAGES"')) add.push('    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />');
+  if (!xml.includes('"android.permission.READ_MEDIA_VIDEO"')) add.push('    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />');
+  if (!xml.includes('"android.permission.READ_MEDIA_VISUAL_USER_SELECTED"')) add.push('    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />'); // Android 14+: "selected photos only"
+  if (!xml.includes('"android.permission.READ_EXTERNAL_STORAGE"')) add.push('    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />');
   if (!xml.includes('"android.permission.WRITE_EXTERNAL_STORAGE"')) {
     add.push('    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />');
   }

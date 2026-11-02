@@ -34,6 +34,7 @@ import { playSound } from '../lib/notificationSound';
 import { startShare, stopShare, resumeShares } from '../lib/liveLocation';
 import { applyChatStyle } from '../lib/chatStyle';
 import { uploadChunked, forgetUpload, CHUNKED_MIN_BYTES } from '../lib/chunkedUpload';
+import { needsShrink, shrinkImages } from '../lib/shrinkImage';
 import { autoSaveAvailable, autoSaveMessages, isAutoSaveOn, setAutoSaveOn } from '../lib/autoSaveMedia';
 
 /**
@@ -810,6 +811,12 @@ export default function Messages() {
     const job = uploadsRef.current[tmpId];
     if (!job) return;
     if (job.send) { runSend(tmpId); return; }
+    // Photos are shrunk once, right before the first upload attempt (lib/shrinkImage.js); Retry reuses the result.
+    if (!job.shrunk) {
+      job.shrunk = true;
+      if (job.files.some(needsShrink)) { try { job.files = await shrinkImages(job.files); } catch { /* send the originals */ } }
+      if (!uploadsRef.current[tmpId]) return; // cancelled while shrinking
+    }
     const { convId, body, files, parentId, denoise } = job;
     // Big files (> 4 MB) go up in 3 MB pieces first (lib/chunkedUpload.js), then the message is sent with their ids; small ones
     // stay in the normal request. The message lists the small files first, then the big ones (denoise[] follows that order).
@@ -836,23 +843,31 @@ export default function Messages() {
     job.ctrl = ctrl;
     try {
       if (bigIdx.length) {
+        // big files go up two at a time (each one already sends 3 pieces at once); ids are appended in file order afterwards
         job.uploadedIds = job.uploadedIds || {};
-        let doneBig = 0;
-        for (const i of bigIdx) {
-          if (!job.uploadedIds[i]) {
-            const before = doneBig;
-            job.uploadedIds[i] = await uploadChunked(files[i], {
-              base: BASE,
-              signal: ctrl.signal,
-              onProgress: (sent) => {
-                const pct = Math.min(99, Math.round(((before + sent) / allBytes) * 100));
-                if (pct !== lastPct) { lastPct = pct; patchTmp(tmpId, { upload_progress: pct }); }
-              },
-            });
+        const sent = {};
+        bigIdx.forEach((i) => { sent[i] = job.uploadedIds[i] ? files[i].size : 0; });
+        const report = () => {
+          const total = Object.values(sent).reduce((n, b) => n + b, 0);
+          const pct = Math.min(99, Math.round((total / allBytes) * 100));
+          if (pct !== lastPct) { lastPct = pct; patchTmp(tmpId, { upload_progress: pct }); }
+        };
+        let cursor = 0;
+        let failure = null;
+        const worker = async () => {
+          while (!failure && cursor < bigIdx.length) {
+            const i = bigIdx[cursor]; cursor += 1;
+            if (job.uploadedIds[i]) continue;
+            try {
+              job.uploadedIds[i] = await uploadChunked(files[i], { base: BASE, signal: ctrl.signal, onProgress: (b) => { sent[i] = b; report(); } });
+              sent[i] = files[i].size;
+              report();
+            } catch (e) { failure = failure || e; }
           }
-          doneBig += files[i].size;
-          fd.append('uploaded_ids[]', job.uploadedIds[i]);
-        }
+        };
+        await Promise.all(Array.from({ length: Math.min(2, bigIdx.length) }, worker));
+        if (failure) throw failure;
+        bigIdx.forEach((i) => fd.append('uploaded_ids[]', job.uploadedIds[i]));
       }
       const res = await api.postFormProgress(BASE + '/conversations/' + convId + '/messages', fd, (pct) => {
         const shown = bigIdx.length ? Math.min(99, Math.round(bigShare * 100 + (pct * (1 - bigShare)))) : pct;
