@@ -1,6 +1,7 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 import { api, getTokens } from '../api/client';
+import { getReverbConfig } from './reverbConfig';
 
 /**
  * Round 3 (Signaling) + Round 4 (WebRTC Core). Reverb speaks the Pusher
@@ -82,11 +83,9 @@ export function leaveOnUnload(meetingUuid, guestToken) {
   } catch { /* the server's session timeout is the fallback */ }
 }
 
-export function createMeetingEcho(meetingUuid, guestToken) {
-  const key = import.meta.env.VITE_REVERB_APP_KEY || '';
-  const host = import.meta.env.VITE_REVERB_HOST || window.location.hostname;
-  const port = Number(import.meta.env.VITE_REVERB_PORT) || 8080;
-  const scheme = import.meta.env.VITE_REVERB_SCHEME || 'http';
+export async function createMeetingEcho(meetingUuid, guestToken) {
+  const { key, host, port, scheme } = await getReverbConfig();
+  const tls = scheme === 'https';
 
   return new Echo({
     broadcaster: 'reverb',
@@ -94,8 +93,8 @@ export function createMeetingEcho(meetingUuid, guestToken) {
     wsHost: host,
     wsPort: port,
     wssPort: port,
-    forceTLS: scheme === 'https',
-    enabledTransports: scheme === 'https' ? ['ws', 'wss'] : ['ws'],
+    forceTLS: tls,
+    enabledTransports: tls ? ['ws', 'wss'] : ['ws'],
     authorizer: (channel) => ({
       authorize: (socketId, callback) => {
         api.post(`/api/v1/meetings/${meetingUuid}/signaling/auth`, {

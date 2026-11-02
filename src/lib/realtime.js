@@ -1,6 +1,7 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 import { api } from '../api/client';
+import { getReverbConfig } from './reverbConfig';
 
 /**
  * ONE WebSocket for the whole app (Laravel Reverb), subscribed to the person's own
@@ -49,18 +50,21 @@ function handlePing(payload) {
   emit(topic, data);
 }
 
-export function startRealtime(userId) {
+let startSeq = 0;
+let starting = false;
+
+export async function startRealtime(userId) {
   if (!userId) return;
-  if (echo && currentUid === userId) return;
+  if (currentUid === userId && (echo || starting)) return;
   stopRealtime();
 
-  const key = import.meta.env.VITE_REVERB_APP_KEY || '';
-  if (!key) return; // not configured: the polling fallback keeps everything working
-  const host = import.meta.env.VITE_REVERB_HOST || window.location.hostname;
-  const port = Number(import.meta.env.VITE_REVERB_PORT) || 443;
-  const scheme = import.meta.env.VITE_REVERB_SCHEME || 'https';
-
-  currentUid = userId;
+  currentUid = userId; // claim the slot first so two quick calls don't open two sockets
+  const mySeq = ++startSeq;
+  starting = true;
+  const { key, host, port, scheme } = await getReverbConfig();
+  if (mySeq !== startSeq) return; // stopped / switched user while we were looking the config up
+  starting = false;
+  if (!key) { currentUid = null; return; } // not configured: the polling fallback keeps everything working
   echo = new Echo({
     broadcaster: 'reverb',
     key,
@@ -68,7 +72,7 @@ export function startRealtime(userId) {
     wsPort: port,
     wssPort: port,
     forceTLS: scheme === 'https',
-    enabledTransports: ['ws', 'wss'],
+    enabledTransports: scheme === 'https' ? ['ws', 'wss'] : ['ws'],
     // fast failure detection on flaky mobile networks
     activityTimeout: 25000,
     pongTimeout: 8000,
@@ -107,7 +111,8 @@ export function startRealtime(userId) {
 }
 
 export function stopRealtime() {
-  if (!echo) return;
+  startSeq++; starting = false;
+  if (!echo) { currentUid = null; return; }
   try {
     document.removeEventListener('visibilitychange', echo.__wake);
     window.removeEventListener('online', echo.__wake);

@@ -966,8 +966,14 @@ export function useMeetingRoom({
 
       if (cancelled) return;
 
-      const echo = createMeetingEcho(meetingUuid, guestToken);
+      const echo = await createMeetingEcho(meetingUuid, guestToken);
+      if (cancelled) { try { echo.disconnect(); } catch { /* ignore */ } return; }
       echoRef.current = echo;
+      try {
+        const conn = echo.connector?.pusher?.connection;
+        conn?.bind('state_change', (st) => dbg('socket', st.previous, '->', st.current));
+        conn?.bind('error', (err) => dbg('socket error', JSON.stringify(err?.error || err || {}).slice(0, 200)));
+      } catch { /* diagnostics only */ }
       const channel = echo.join(presenceChannelName(meetingUuid));
       channelRef.current = channel;
 
