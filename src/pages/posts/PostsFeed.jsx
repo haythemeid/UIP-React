@@ -8,7 +8,9 @@ import { usePageMeta } from '../../context/PageMetaContext';
 import { Alert, Empty, PAvatar, useTt } from '../../components/posts/shared';
 import PostCard from '../../components/posts/PostCard';
 import Composer from '../../components/posts/Composer';
+import FloatingChat from '../../components/posts/FloatingChat';
 import '../../styles/css/posts.css';
+import '../../styles/css/posts-pro.css';
 
 const TABS = [
   ['for_you', 'For you', 'لك', 'ai-spark'], ['following', 'Following', 'المتابَعون', 'users'], ['latest', 'Latest', 'الأحدث', 'clock'],
@@ -94,6 +96,21 @@ export default function PostsFeed() {
 
   return (
     <div className="pp-page">
+      {!single && (
+        <section className="pp-hero">
+          <div className="pp-hero__txt">
+            <span className="pp-hero__eyebrow"><Icon name="ai-spark" size={13} /> {tt('Community feed', 'مجتمع الجامعة')}</span>
+            <h1>{tt(`Hi ${(user?.full_name || '').split(' ')[0] || 'there'}, what's new today?`, `أهلًا ${(user?.full_name || '').split(' ')[0] || ''}، إيه الجديد النهاردة؟`)}</h1>
+            <p>{tt('Share ideas, files and code with your university and discover what others are building.', 'شارك أفكارك وملفاتك وأكوادك مع جامعتك واكتشف مشاريع زمايلك.')}</p>
+            {(tag || q) && <button type="button" className="pp-hero__chip" onClick={reset}>{tag ? `#${tag}` : q} <Icon name="x" size={11} /></button>}
+          </div>
+          <form className="pp-hero__search" onSubmit={(e) => { e.preventDefault(); setTag(''); setQ(qIn.trim()); }}>
+            <Icon name="search" size={16} />
+            <input value={qIn} onChange={(e) => setQIn(e.target.value)} placeholder={tt('Search posts, people, #tags', 'ابحث في المنشورات والوسوم')} aria-label={tt('Search', 'بحث')} />
+            <button type="submit">{tt('Search', 'بحث')}</button>
+          </form>
+        </section>
+      )}
       <div className="pp-layout">
         <main className="pp-main">
           {!single && config && !editing && <Composer config={config} me={{ full_name: user?.full_name }} onSaved={saved} />}
@@ -102,13 +119,11 @@ export default function PostsFeed() {
 
           {single ? <button type="button" className="pp-btn" onClick={reset}><Icon name="arrow-left" size={14} /> {tt('Back to feed', 'العودة للموجز')}</button> : (
             <>
-              <div className="pp-tabs" role="tablist">
-                {TABS.map(([k, en, ar, ic]) => <button key={k} type="button" role="tab" aria-selected={!tag && !q && mode === k} className={!tag && !q && mode === k ? 'is-on' : ''} onClick={() => { setMode(k); setTag(''); setQ(''); setQIn(''); }}><Icon name={ic} size={14} /> {tt(en, ar)}</button>)}
+              <div className="pp-bar-wrap">
+                <div className="pp-tabs" role="tablist">
+                  {TABS.map(([k, en, ar, ic]) => <button key={k} type="button" role="tab" aria-selected={!tag && !q && mode === k} className={!tag && !q && mode === k ? 'is-on' : ''} onClick={() => { setMode(k); setTag(''); setQ(''); setQIn(''); }}><Icon name={ic} size={14} /> {tt(en, ar)}</button>)}
+                </div>
               </div>
-              <form className="pp-search" onSubmit={(e) => { e.preventDefault(); setTag(''); setQ(qIn.trim()); }}>
-                <Icon name="search" size={15} /><input className="pp-input" value={qIn} onChange={(e) => setQIn(e.target.value)} placeholder={tt('Search posts, people, #tags', 'ابحث في المنشورات والوسوم')} />
-                {(tag || q) && <button type="button" className="pp-chip is-on" onClick={reset}>{tag ? `#${tag}` : q} <Icon name="x" size={11} /></button>}
-              </form>
               {effMode === 'mine' && <div className="pp-seg">{MINE.map(([k, en, ar]) => <button key={k} type="button" className={status === k ? 'is-on' : ''} onClick={() => setStatus(k)}>{tt(en, ar)}</button>)}</div>}
             </>
           )}
@@ -125,6 +140,7 @@ export default function PostsFeed() {
         </main>
         {!single && <Side tt={tt} onTag={pickTag} />}
       </div>
+      <FloatingChat />
     </div>
   );
 }
