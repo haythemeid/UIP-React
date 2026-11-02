@@ -90,6 +90,8 @@ export function createCallEngine(deps) {
     setLocalVideo = () => {}, setRemoteVideo = () => {}, makeStream = (tracks) => ({ getTracks: () => tracks }),
     videoMaxBitrate = 2500000, createFx = null, getDisplayMedia = null, countCameras = async () => 1, listCameras = null, onPref = () => {}, initialNoise = true,
     base = '/api/v1/messaging/calls',
+    // group calls ringing on this user's screen (the poll carries them; the host app owns the UI)
+    onGroupIncoming = () => {},
     timers = {
       setTimeout: (...a) => setTimeout(...a), clearTimeout: (...a) => clearTimeout(...a),
       setInterval: (...a) => setInterval(...a), clearInterval: (...a) => clearInterval(...a),
@@ -866,6 +868,7 @@ export function createCallEngine(deps) {
       const res = await api.get(`${base}/poll`, q);
       if (stopped) return;
       failures = 0;
+      try { onGroupIncoming((res && res.data && res.data.group_incoming) || []); } catch { /* ui only */ }
       if (!st.available || st.noAccess) { st.noAccess = false; set({ available: true }); getIce().catch(() => {}); }
       await applyPoll((res && res.data) || {}, callId);
     } catch (e) {

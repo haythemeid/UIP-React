@@ -20,6 +20,12 @@ export function callLine(meta, myUserId, ar) {
   const mine = String(m.caller_id) === String(myUserId); // I started this call
   const kind = video ? (ar ? 'مكالمة فيديو' : 'Video call') : (ar ? 'مكالمة صوتية' : 'Voice call');
   const base = { video, incoming: !mine };
+  if (m.group) {
+    // group call card: one line for everybody (nobody "declines" or "misses" a group call)
+    const gkind = video ? (ar ? 'مكالمة فيديو جماعية' : 'Group video call') : (ar ? 'مكالمة صوتية جماعية' : 'Group voice call');
+    if (m.outcome === 'live') return { ...base, group: true, live: true, tone: 'ok', text: `${gkind} · ${ar ? 'جارية الآن' : 'in progress'}` };
+    return { ...base, group: true, live: false, tone: 'info', text: `${gkind} · ${fmtCallDuration(m.duration)}` };
+  }
   switch (m.outcome) {
     case 'completed':
       return { ...base, text: `${kind} · ${fmtCallDuration(m.duration)}`, tone: 'ok' };

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api, getTokens, MUTATION_EVENT } from '../api/client';
 import { useAuth } from './AuthContext';
 import { useLanguage } from './LanguageContext';
@@ -8,6 +9,8 @@ import { attachNoiseSuppressor, noiseSuppressSupported } from '../lib/calls/nois
 import { attachEchoGate, echoGateEnabled, setRemoteAudio } from '../lib/calls/echoGate';
 import { createVideoFx } from '../lib/calls/videoFx';
 import CallUI from '../components/calls/CallUI';
+import GroupCallRing from '../components/calls/GroupCallRing';
+import { joinGroupCall as joinGroupCallFlow, startGroupCallRequest } from '../lib/calls/groupCall';
 import { CallCtx, IDLE, useCall } from './callCtx';
 
 export { useCall };
@@ -171,6 +174,10 @@ export function CallProvider({ children }) {
   const [state, setState] = useState(IDLE);
   const [media, setMedia] = useState({ local: null, remote: null }); // live MediaStreams for the <video> tags
   const [audioBlocked, setAudioBlocked] = useState(false); // the browser refused to start the other person's voice until the user taps
+  const navigate = useNavigate();
+  const [groupRing, setGroupRing] = useState([]); // live group calls ringing on this screen (from the poll)
+  const dismissedGroup = useRef(new Set());       // meeting uuids I closed the ring for (until reload)
+  const groupToneOn = useRef(false);
   const engineRef = useRef(null);
   const audioRef = useRef(null);
   const arRef = useRef(locale === 'ar');
@@ -292,6 +299,10 @@ export function CallProvider({ children }) {
           });
         }
       },
+      onGroupIncoming: (list) => {
+        const next = (list || []).filter((c) => c && c.meeting_uuid && !dismissedGroup.current.has(c.meeting_uuid));
+        setGroupRing((prev) => (prev.length === next.length && prev.every((p, i) => p.meeting_uuid === next[i].meeting_uuid) ? prev : next));
+      },
       onChange: setState,
       onFinished: () => {
         // The log message (and the inbox preview) changed on the server: let chat pages refetch right away.
@@ -364,8 +375,17 @@ export function CallProvider({ children }) {
       setState(IDLE);
       setMedia({ local: null, remote: null });
       setAudioBlocked(false);
+      setGroupRing([]);
     };
   }, [enabled, userId]);
+
+  // Ring while a group call is waiting for me (and I'm not in a 1:1 call). The 1:1 engine owns the tone once a direct call comes in.
+  useEffect(() => {
+    const should = groupRing.length > 0 && state.phase === 'idle';
+    if (should && !groupToneOn.current) { groupToneOn.current = true; startTone('incoming'); }
+    else if (!should && groupToneOn.current) { groupToneOn.current = false; if (state.phase === 'idle') stopTone(); }
+  }, [groupRing, state.phase]);
+  useEffect(() => () => { if (groupToneOn.current) { groupToneOn.current = false; stopTone(); } }, []);
 
   const actions = useMemo(() => ({
     startCall: (conversationId, peer, opts) => { primeAudio(); return engineRef.current ? engineRef.current.startCall(conversationId, peer, opts) : Promise.resolve(false); },
@@ -385,7 +405,34 @@ export function CallProvider({ children }) {
     dismissNotice: () => engineRef.current && engineRef.current.dismissNotice(),
   }), []);
 
-  const value = useMemo(() => ({ ...state, ...actions, localVideo: media.local, remoteVideo: media.remote, audioBlocked }), [state, actions, media, audioBlocked]);
+  const role = user && user.role;
+  const groupActions = useMemo(() => ({
+    dismissGroupRing: (uuid) => {
+      if (uuid) dismissedGroup.current.add(uuid);
+      setGroupRing((prev) => prev.filter((c) => c.meeting_uuid !== uuid));
+    },
+    /** Join a live group call (from the ring or the chat card). Throws a readable error when not allowed / already over. */
+    joinGroupCall: async (call) => {
+      primeAudio();
+      if (call && call.meeting_uuid) {
+        dismissedGroup.current.add(call.meeting_uuid);
+        setGroupRing((prev) => prev.filter((c) => c.meeting_uuid !== call.meeting_uuid));
+      }
+      await joinGroupCallFlow(api, navigate, role, call);
+      return true;
+    },
+    /** Start the group's call, or join the one already live, and go straight into the room. */
+    startGroupCall: async (conversationId, opts = {}) => {
+      primeAudio();
+      const call = await startGroupCallRequest(api, BASE, conversationId, opts.video ? 'video' : 'audio');
+      dismissedGroup.current.add(call.meeting_uuid);
+      await joinGroupCallFlow(api, navigate, role, call);
+      return true;
+    },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [navigate, role]);
+
+  const value = useMemo(() => ({ ...state, ...actions, ...groupActions, groupRing, localVideo: media.local, remoteVideo: media.remote, audioBlocked }), [state, actions, groupActions, groupRing, media, audioBlocked]);
 
   return (
     <CallCtx.Provider value={value}>
@@ -394,6 +441,7 @@ export function CallProvider({ children }) {
       {/* not display:none - some WebViews / Safari pause media elements that are not rendered */}
       <audio ref={audioRef} data-persist-media="1" autoPlay playsInline style={{ position: 'fixed', width: 1, height: 1, opacity: 0, pointerEvents: 'none', left: 0, top: 0 }} />
       {enabled && <CallUI />}
+      {enabled && <GroupCallRing />}
     </CallCtx.Provider>
   );
 }

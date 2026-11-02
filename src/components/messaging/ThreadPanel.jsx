@@ -2,9 +2,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { api, errorMessage } from '../../api/client';
-import { useAuth } from '../../context/AuthContext';
-import { portalPrefix } from '../../config/navConfig';
-import { publicOrigin } from '../../config/siteUrl';
 import Icon from '../Icon';
 import VideoPlayer from '../VideoPlayer';
 import ChatFile from './ChatFile';
@@ -998,8 +995,6 @@ export default function ThreadPanel({
   const [text, setText] = useState('');
   const call = useCall(); // before the `if (!conversation)` early return below (hook order)
   const { settings: myChatSettings } = useChatSettings(); // same: must stay above the early return
-  const navigate = useNavigate();
-  const { user: authUser } = useAuth();
   const [groupCallBusy, setGroupCallBusy] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [showMaker, setShowMaker] = useState(false);
@@ -1218,34 +1213,15 @@ export default function ThreadPanel({
     call.startCall(conversation.id, { id: conversation.peer_id || others[0]?.id || null, name: peerLabel(conversation), avatar: peerDeleted ? null : others[0]?.avatar_path }, { video: video === true && !!call.videoEnabled });
   };
   const callBack = canCall && !callBusy ? startCall : undefined;
-  // Group voice / video calls ride on the meetings system: an instant meeting (no waiting room, no guests) is created for the
-  // group, every member is invited, a "join" card is posted in the chat, and the starter goes straight into the room.
+  // Group voice / video calls ride on the meetings system (server: GroupCallService): one live call per group, every member rings,
+  // a "Join" card is posted in the chat, and mesh/SFU is chosen by the meeting settings like any meeting.
   const canGroupCall = !!conversation && !!conversation.is_group && others.length > 0 && canSend;
   const startGroupCall = async (video) => {
     if (!canGroupCall || groupCallBusy || callBusy) return;
     setGroupCallBusy(true);
     try {
-      const title = peerLabel(conversation);
-      const created = await api.post('/api/v1/meetings', {
-        title,
-        type: 'instant',
-        waiting_room_enabled: false,
-        allow_guests: false,
-        settings: { camera_on_entry: video === true, mute_on_entry: false },
-      });
-      const meeting = created.data;
-      await api.post(`/api/v1/meetings/${meeting.uuid}/start`);
-      const memberIds = others.map((o) => o.id).filter(Boolean);
-      if (memberIds.length) {
-        // best effort: members who can't be invited (other university, deleted...) can still use the link in the chat
-        try { await api.post(`/api/v1/meetings/${meeting.uuid}/invitations/bulk`, { targets: [{ type: 'users', user_ids: memberIds }], message: title }); } catch { /* ignore */ }
-      }
-      const joinToken = meeting.join_url ? String(meeting.join_url).split('/').filter(Boolean).pop() : null;
-      if (joinToken) {
-        const head = video ? t('📹 Group video call', '📹 مكالمة فيديو جماعية') : t('📞 Group voice call', '📞 مكالمة صوتية جماعية');
-        try { await onSend(`${head}\n${publicOrigin()}/join/${joinToken}`); } catch { /* the call still starts */ }
-      }
-      navigate(`/${portalPrefix(authUser?.role)}/meetings/${meeting.uuid}/room`);
+      // server: start the group's call (or return the live one), ring every member, post the card in this chat; then we enter the room
+      await call.startGroupCall(conversation.id, { video: video === true });
     } catch (err) {
       if (onError) onError(errorMessage(err));
     } finally {
