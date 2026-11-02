@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
 import { attachmentUrl } from '../components/messaging/format';
 import { absolutizeForNative } from '../native';
+import { setWallStyle } from './wallStyle';
 
 /**
  * Personal chat backgrounds (the person's own photos) — shared by the people-to-people messenger and the AI assistant.
@@ -81,7 +82,7 @@ const serverItems = (json) => ((json && json.data && json.data.wallpapers) || []
  * const wp = useCustomWallpapers();
  * wp.items            [{ id, url }]   the library (object URLs, revoked automatically)
  * wp.urlFor('img:ab') -> url | null    for the currently selected background
- * wp.add(file)        -> id            throws Error('not_image' | 'too_big' | 'limit' | 'storage')
+ * wp.add(file, style?) -> id            throws Error('not_image' | 'too_big' | 'limit' | 'storage')
  * wp.remove(id)
  * wp.ready            false until the library was read once (so a saved selection isn't judged "missing" too early)
  */
@@ -139,9 +140,10 @@ export function useCustomWallpapers() {
 
   useEffect(() => () => { urls.current.forEach((u) => URL.revokeObjectURL(u)); urls.current = new Map(); }, []);
 
-  const add = useCallback(async (file) => {
+  const add = useCallback(async (file, style) => {
     const blob = await shrink(file);
     const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    if (style) setWallStyle(id, style); // how the photo is laid out (fill / whole / width + position), chosen in the preview
     if (serverOk.current) {
       try {
         const fd = new FormData();

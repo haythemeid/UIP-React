@@ -313,7 +313,7 @@ function ChatWallModal({ chat, settings, wp, save, onClose }) {
         onChange={setOwn}
         onUseDefault={() => setOwn(null)}
         customWalls={wp.items}
-        onAddCustomWall={async (f) => { const id = await wp.add(f); await setOwn(`img:${id}`); }}
+        onAddCustomWall={async (f, st) => { const id = await wp.add(f, st); await setOwn(`img:${id}`); }}
         onRemoveCustomWall={async (id) => { await wp.remove(id); if (own === `img:${id}`) await setOwn(null); }}
       />
     </Modal>
@@ -340,7 +340,7 @@ function ChatsSection({ settings, save, wp }) {
             value={defWall}
             onChange={setDefault}
             customWalls={wp.items}
-            onAddCustomWall={async (f) => { const id = await wp.add(f); await setDefault(`img:${id}`); }}
+            onAddCustomWall={async (f, st) => { const id = await wp.add(f, st); await setDefault(`img:${id}`); }}
             onRemoveCustomWall={async (id) => { await wp.remove(id); if (defWall === `img:${id}`) await setDefault('dots'); }}
             anim={settings.wallpaper.anim}
             onAnim={(v) => save({ wallpaper: { anim: v } })}

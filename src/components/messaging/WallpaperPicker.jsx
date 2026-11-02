@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
 import Icon from '../Icon';
+import WallpaperEditor from './WallpaperEditor';
+import { getWallStyle, setWallStyle } from '../../lib/wallStyle';
 import { useLanguage } from '../../context/LanguageContext';
 
 export const WALLPAPERS = ['dots', 'aurora', 'lagoon', 'forest', 'rose', 'amber', 'graphite', 'midnight'];
@@ -20,28 +22,43 @@ export default function WallpaperPicker({
   const fileRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [draft, setDraft] = useState(null); // { file, src } picked photo waiting in the preview
+  const [editing, setEditing] = useState(null); // { id, src } saved photo being re-adjusted
 
   const labels = {
     dots: t('Classic', 'كلاسيك'), aurora: t('Aurora', 'أورورا'), lagoon: t('Lagoon', 'لاجون'), forest: t('Forest', 'غابة'),
     rose: t('Rose', 'وردي'), amber: t('Amber', 'عنبري'), graphite: t('Graphite', 'جرافيت'), midnight: t('Midnight', 'منتصف الليل'),
   };
 
-  async function pickFile(e) {
+  const errorText = (err) => {
+    const code = err && err.message;
+    return code === 'not_image' ? t('Choose an image file.', 'اختار ملف صورة.')
+      : code === 'too_big' ? t('This image is larger than 15 MB.', 'الصورة أكبر من 15 ميجا.')
+        : code === 'limit' ? t('You reached the limit of 12 saved backgrounds — delete one first.', 'وصلت للحد الأقصى (12 خلفية محفوظة) — امسح واحدة الأول.')
+          : t('Could not save this image.', 'مقدرتش أحفظ الصورة.');
+  };
+
+  // picking a file opens the preview first; nothing is uploaded until the person confirms
+  function pickFile(e) {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!file || !onAddCustomWall) return;
+    setError(null);
+    if (!file.type.startsWith('image/')) { setError(t('Choose an image file.', 'اختار ملف صورة.')); return; }
+    if (file.size > 15 * 1024 * 1024) { setError(t('This image is larger than 15 MB.', 'الصورة أكبر من 15 ميجا.')); return; }
+    setDraft({ file, src: URL.createObjectURL(file) });
+  }
+  const closeDraft = () => { if (draft) URL.revokeObjectURL(draft.src); setDraft(null); };
+  async function confirmDraft(style) {
+    if (!draft) return;
     setBusy(true);
     setError(null);
     try {
-      await onAddCustomWall(file);
+      await onAddCustomWall(draft.file, style);
+      closeDraft();
     } catch (err) {
-      const code = err && err.message;
-      setError(
-        code === 'not_image' ? t('Choose an image file.', 'اختار ملف صورة.')
-          : code === 'too_big' ? t('This image is larger than 15 MB.', 'الصورة أكبر من 15 ميجا.')
-            : code === 'limit' ? t('You reached the limit of 12 saved backgrounds — delete one first.', 'وصلت للحد الأقصى (12 خلفية محفوظة) — امسح واحدة الأول.')
-              : t('Could not save this image.', 'مقدرتش أحفظ الصورة.'),
-      );
+      closeDraft();
+      setError(errorText(err));
     } finally { setBusy(false); }
   }
 
@@ -72,6 +89,9 @@ export default function WallpaperPicker({
             {customWalls.map((w) => (
               <div key={w.id} className="msg-wall-mine__item">
                 <button type="button" className="msg-wall-mine__pick" aria-pressed={!usingDefault && value === `img:${w.id}`} aria-label={t('Use this photo', 'استخدم الصورة دي')} onClick={() => onChange(`img:${w.id}`)} style={{ backgroundImage: `url("${w.url}")` }} />
+                <button type="button" className="msg-wall-mine__edit" aria-label={t('Adjust this photo', 'اضبط الصورة دي')} title={t('Preview / adjust', 'معاينة / ضبط')} onClick={() => setEditing({ id: w.id, src: w.url })}>
+                  <Icon name="edit" size={11} />
+                </button>
                 {onRemoveCustomWall && (
                   <button type="button" className="msg-wall-mine__del" aria-label={t('Delete this photo', 'امسح الصورة دي')} title={t('Delete this photo', 'امسح الصورة دي')} onClick={() => onRemoveCustomWall(w.id)}>
                     <Icon name="x" size={11} />
@@ -88,6 +108,11 @@ export default function WallpaperPicker({
           <span>{t('Animated background', 'خلفية متحركة')}</span>
           <button type="button" className={`msg-switch${anim ? ' is-on' : ''}`} onClick={() => onAnim(!anim)} aria-pressed={!!anim} aria-label={t('Animated background', 'خلفية متحركة')} />
         </div>
+      )}
+      {draft && <WallpaperEditor src={draft.src} initial={null} busy={busy} onSave={confirmDraft} onCancel={closeDraft} />}
+      {editing && (
+        <WallpaperEditor src={editing.src} initial={getWallStyle(editing.id)}
+          onSave={(st) => { setWallStyle(editing.id, st); setEditing(null); }} onCancel={() => setEditing(null)} />
       )}
     </div>
   );

@@ -10,6 +10,7 @@ import ThreadPanel from '../components/messaging/ThreadPanel';
 import InfoPanel from '../components/messaging/InfoPanel';
 import InfoResizer, { INFO_W_KEY, INFO_W_DEFAULT, RAIL_W_KEY, readInfoWidth, readRailWidth } from '../components/messaging/InfoResizer';
 import { useCustomWallpapers, isCustomWall, customWallId } from '../lib/customWallpapers';
+import { useWallStyle, wallStyleVars } from '../lib/wallStyle';
 import { useChatSettings, wallFor } from '../lib/chatSettings';
 import GroupSettingsModal from '../components/messaging/GroupSettingsModal';
 import { PinDurationModal, PinnedMessagesModal } from '../components/messaging/PinnedUi';
@@ -235,8 +236,9 @@ export default function Messages() {
   // The person's own photos: stay in the library until deleted, whichever theme is selected.
   const wallpapers = useCustomWallpapers();
   const customWallUrl = wallpapers.urlFor(wall);
+  const customWallStyle = useWallStyle(customWallId(wall));
   const shownWall = isCustomWall(wall) ? (customWallUrl ? 'custom' : 'dots') : wall; // photo missing on this device -> default look (the saved choice is kept)
-  const addCustomWall = useCallback(async (file) => { const id = await wallpapers.add(file); onWall(`img:${id}`); }, [wallpapers, onWall]);
+  const addCustomWall = useCallback(async (file, style) => { const id = await wallpapers.add(file, style); onWall(`img:${id}`); }, [wallpapers, onWall]);
   const removeCustomWall = useCallback(async (id) => {
     await wallpapers.remove(id);
     // every place that used the deleted photo falls back (default -> classic, chats -> default)
@@ -1643,10 +1645,10 @@ export default function Messages() {
 
   return (
     <>
-    <div className={`msg-app${infoOpen && activeConversation ? ' has-info' : ''}${activeId ? ' thread-open' : ''}${railCollapsed && activeId ? ' rail-collapsed' : ''}${fullView ? ' is-full' : ''}`} data-msg-app data-wall={shownWall} data-wall-anim={wallAnim ? 'on' : 'off'} data-font={chatSettings.font_size} ref={appRef} style={{ '--msg-info-w': `${infoW}px`, ...(railW && !(railCollapsed && activeId) ? { '--msg-rail-w': `${railW}px` } : null), ...(customWallUrl && shownWall === 'custom' ? { '--msg-wall-img': `url("${customWallUrl}")` } : null) }}>
+    <div className={`msg-app${infoOpen && activeConversation ? ' has-info' : ''}${activeId ? ' thread-open' : ''}${railCollapsed && activeId ? ' rail-collapsed' : ''}${fullView ? ' is-full' : ''}`} data-msg-app data-wall={shownWall} data-wall-anim={wallAnim ? 'on' : 'off'} data-font={chatSettings.font_size} ref={appRef} style={{ '--msg-info-w': `${infoW}px`, ...(railW && !(railCollapsed && activeId) ? { '--msg-rail-w': `${railW}px` } : null), ...(customWallUrl && shownWall === 'custom' ? { '--msg-wall-img': `url("${customWallUrl}")`, ...wallStyleVars(customWallStyle) } : null) }}>
       {shownWall === 'custom' && (
         /* The person's own photo. Delivered from JS (not only from the stylesheet) with !important so no other wallpaper rule can paint over it. */
-        <style>{`html body .msg-app[data-msg-app][data-wall="custom"] .msg-thread{background:linear-gradient(var(--wall-veil,transparent),var(--wall-veil,transparent)),var(--msg-wall-img) center / cover no-repeat,var(--bg-canvas)!important}`}</style>
+        <style>{`html body .msg-app[data-msg-app][data-wall="custom"] .msg-thread{background:linear-gradient(var(--wall-veil,transparent),var(--wall-veil,transparent)),var(--msg-wall-img) var(--msg-wall-pos,center) / var(--msg-wall-size,cover) no-repeat,var(--msg-wall-bgc,var(--bg-canvas))!important}`}</style>
       )}
       <ConversationRail
         onDeleteConversations={requestDelete}
