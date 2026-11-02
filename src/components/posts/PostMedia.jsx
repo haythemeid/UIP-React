@@ -98,7 +98,7 @@ function FileCard({ m, canDownload }) {
 }
 
 /** Renders a post's attachments by kind: image grid + lightbox, video, audio, PDF/Office carousel, runnable code, other files. */
-export default function PostMedia({ media = [], canDownload = true }) {
+export default function PostMedia({ media = [], canDownload = true, canRun = true }) {
   const [lb, setLb] = useState(null);
   const [full, setFull] = useState(null);
   if (!media.length) return null;
@@ -121,7 +121,7 @@ export default function PostMedia({ media = [], canDownload = true }) {
         if (m.kind === 'video') return <Video key={m.id} m={m} />;
         if (m.kind === 'audio') return <Audio key={m.id} m={m} />;
         if (m.kind === 'pdf' || (m.has_preview && m.kind === 'document')) return <PdfCarousel key={m.id} media={m} onOpenFull={(mm, p) => setFull({ media: mm, page: p })} />;
-        if (m.kind === 'code' || m.is_text) return <CodeCard key={m.id} media={{ ...m, urls: { ...m.urls, download: canDownload ? m.urls.download : null } }} />;
+        if (m.kind === 'code' || m.is_text) return <CodeCard key={m.id} canRun={canRun} media={{ ...m, urls: { ...m.urls, download: canDownload ? m.urls.download : null } }} />;
         return <FileCard key={m.id} m={m} canDownload={canDownload} />;
       })}
       {lb != null && <Lightbox items={images} start={lb} onClose={() => setLb(null)} />}

@@ -128,7 +128,7 @@ function Quoted({ post, t, locale }) {
       </div>
       {post.title && <h4 className="pu-title pu-title--sm">{post.title}</h4>}
       {post.body && <p className="pu-body" dir="auto"><RichText text={post.body} /></p>}
-      <PostMedia media={post.media || []} canDownload={false} />
+      <PostMedia media={post.media || []} canDownload={false} canRun={false} />
     </div>
   );
 }
@@ -229,7 +229,7 @@ export default function PublicPost() {
 
               {hiddenMedia && post.media.length > 0 ? (
                 <button type="button" className="pp-sensitive" onClick={() => setSensitiveOk(true)}><Icon name="eye-off" size={22} /><strong>{t('Sensitive content', 'محتوى حساس')}</strong><span>{t('Tap to view', 'اضغط للعرض')}</span></button>
-              ) : <PostMedia media={post.media || []} canDownload={post.allow_download} />}
+              ) : <PostMedia media={post.media || []} canDownload={post.allow_download} canRun={post.allow_run !== false} />}
 
               {post.repost_of && <Quoted post={post.repost_of} t={t} locale={locale} />}
 

@@ -21,7 +21,7 @@ console.log=w;console.error=(...a)=>w('Error:',...a);window.onerror=(m)=>w('Erro
 </script><script>${text.replace(/<\/script/gi, '<\\/script')}</script>`;
 }
 
-export default function CodeCard({ media, onRunStart }) {
+export default function CodeCard({ media, onRunStart, canRun = true }) {
   const { locale } = useLanguage();
   const tt = (en, ar) => (locale === 'ar' ? ar : en);
   const [data, setData] = useState(null);
@@ -40,7 +40,10 @@ export default function CodeCard({ media, onRunStart }) {
   }, [media.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const lang = data?.language || media.extension || 'text';
-  const runner = data?.runner || media.meta?.runner || 'none';
+  const runner = canRun ? (data?.runner || media.meta?.runner || 'none') : 'none';
+  const output = (media.meta?.output?.text || '').trim();
+  const [outOpen, setOutOpen] = useState(false);
+  const outLines = output ? output.split('\n') : [];
   const lines = useMemo(() => (data?.text || '').split('\n'), [data]);
   const shown = open ? lines : lines.slice(0, MAX_LINES);
   const html = useMemo(() => highlight(shown.join('\n'), lang), [shown, lang]);
@@ -91,6 +94,14 @@ export default function CodeCard({ media, onRunStart }) {
           {open ? tt('Show less', 'عرض أقل') : tt(`Show all ${lines.length} lines`, `عرض كل ${lines.length} سطر`)}
         </button>
       )}
+      {output && (
+        <div className="pp-out">
+          <div className="pp-out__bar"><span><Icon name="terminal" size={12} /> {tt('Output', 'الناتج')} <em>{tt('· run by the author', '· شغّله الكاتب')}</em></span></div>
+          <pre className={`pp-out__pre${outOpen ? ' is-open' : ''}`} dir="ltr">{outOpen ? output : outLines.slice(0, 10).join('\n')}</pre>
+          {outLines.length > 10 && <button type="button" className="pp-code__more" onClick={() => setOutOpen((o) => !o)}><Icon name={outOpen ? 'chevron-up' : 'chevron-down'} size={14} />{outOpen ? tt('Show less', 'عرض أقل') : tt(`Show all ${outLines.length} lines`, `عرض كل ${outLines.length} سطر`)}</button>}
+        </div>
+      )}
+      {!canRun && !output && data && (data.runner !== 'none' || media.meta?.runner) && <p className="pp-code__note">{tt('The author turned off running for this code.', 'الكاتب قفل تشغيل الكود ده.')}</p>}
       {data?.truncated && open && <p className="pp-code__note">{tt('Large file — only the first part is shown. Download it to see everything.', 'ملف كبير — الجزء الأول بس معروض. نزّله عشان تشوفه كله.')}</p>}
 
       {mode === 'run' && runner === 'html' && (

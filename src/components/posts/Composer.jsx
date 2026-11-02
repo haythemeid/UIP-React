@@ -1,12 +1,68 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Icon from '../Icon';
 import { postsApi } from '../../api/postsApi';
 import { errorMessage } from '../../api/client';
 import { fmtBytes } from '../../lib/postMedia';
+import { zipSync } from 'fflate';
+import { useSandbox } from '../zipbench/runner/useSandbox';
 import { Alert, COMMENT_MODES, PAvatar, VIS, useTt } from './shared';
 
 const CODE_EXT = ['py', 'js', 'ts', 'html', 'css', 'php', 'java', 'c', 'cpp', 'cs', 'go', 'rb', 'sh', 'sql', 'json', 'yml', 'md'];
+const SandboxTerminal = lazy(() => import('./SandboxTerminal'));
 let seq = 0;
+
+/**
+ * Shown under an attached code file: (1) whether other people may run it, (2) the author's own run — "Run now" executes it once on the
+ * author's side and the printed output is published together with the code, so readers see the result without running anything.
+ */
+function CodeRunBox({ item, allowRun, onAllowRun, onOutput, tt }) {
+  const m = item.media;
+  const runner = m.meta?.runner || 'none';
+  const sandbox = useSandbox(`post-${m.id}`, `/api/v1/posts/media/${m.id}/run-token`);
+  const [err, setErr] = useState('');
+  const [fetching, setFetching] = useState(false);
+  const live = sandbox.phase === 'running' || sandbox.phase === 'exited';
+  const busy = fetching || (sandbox.busy && !live);
+
+  const runNow = async () => {
+    setErr(''); setFetching(true);
+    try {
+      const d = await postsApi.mediaText(m.id);
+      const name = m.original_name && /^[\w.\- ]+$/.test(m.original_name) ? m.original_name : `main.${m.extension || 'txt'}`;
+      sandbox.start({ kind: 'lang', entry: name, zip: zipSync({ [name]: new TextEncoder().encode(d.text) }, { level: 1 }), cols: 100, rows: 10 });
+    } catch (e) { setErr(errorMessage(e)); } finally { setFetching(false); }
+  };
+  const useOutput = () => { onOutput(sandbox.getOutput?.() || ''); sandbox.stop(); };
+
+  return (
+    <div className="pp-runbox">
+      <label className="pp-check"><input type="checkbox" checked={!!allowRun} onChange={(e) => onAllowRun(e.target.checked)} /> {tt('Let readers run this code', 'السماح للقرّاء بتشغيل الكود')}</label>
+      <small className="pp-muted">{allowRun
+        ? tt('Each run uses server resources. You can also publish the output below instead.', 'كل تشغيل بيستهلك موارد السيرفر. ممكن كمان تنشر الناتج هنا بدل ما كل واحد يشغّل.')
+        : tt('Readers will only see the code and the output you attach below.', 'القرّاء هيشوفوا الكود والناتج اللي ترفقه تحت بس.')}</small>
+      {runner === 'sandbox' && (
+        <>
+          <div className="pp-row">
+            {live
+              ? <button type="button" className="pp-btn is-primary" onClick={useOutput}>{tt('Use this output', 'استخدم الناتج ده')}</button>
+              : <button type="button" className="pp-btn" onClick={runNow} disabled={busy}><Icon name="play" size={13} /> {busy ? tt('Starting…', 'بيبدأ…') : tt('Run now & attach the output', 'شغّله دلوقتي وأرفق الناتج')}</button>}
+            {live && <button type="button" className="pp-btn" onClick={() => sandbox.stop()}>{tt('Stop', 'إيقاف')}</button>}
+          </div>
+          {(live || busy || sandbox.phase === 'error') && (
+            <div className="pp-runbox__term">
+              {sandbox.error && <p className="pp-code__err">{sandbox.error}</p>}
+              <Suspense fallback={<div className="pp-skel" style={{ height: 120 }} />}><SandboxTerminal sandbox={sandbox} /></Suspense>
+            </div>
+          )}
+        </>
+      )}
+      {err && <small className="pp-err">{err}</small>}
+      <label className="pp-runbox__lbl">{tt('Output shown under the code (optional)', 'الناتج اللي يظهر تحت الكود (اختياري)')}
+        <textarea className="pp-input pp-input--code" dir="ltr" rows={4} maxLength={8000} spellCheck={false} value={item.output ?? ''} onChange={(e) => onOutput(e.target.value)} placeholder="Hello, world!" />
+      </label>
+    </div>
+  );
+}
 
 /** Language picker: a styled listbox instead of the browser's native <select> popup (which ignores the app theme and shows an OS scrollbar). */
 function LangSelect({ value, options, onChange, label }) {
@@ -58,8 +114,8 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
   const [link, setLink] = useState(post?.link_url || '');
   const [vis, setVis] = useState(post?.visibility || (config?.visibilities?.includes('public') ? 'public' : 'followers'));
   const [mode, setMode] = useState(post?.comments_mode || 'everyone');
-  const [opts, setOpts] = useState({ allow_download: post?.allow_download ?? true, allow_repost: post?.allow_repost ?? true, hide_counts: post?.hide_counts ?? false, is_sensitive: post?.is_sensitive ?? false });
-  const [items, setItems] = useState(() => (post?.media || []).map((m) => ({ key: `m${m.id}`, status: 'done', media: m, name: m.original_name, size: m.size_bytes })));
+  const [opts, setOpts] = useState({ allow_download: post?.allow_download ?? true, allow_run: post?.allow_run ?? false, allow_repost: post?.allow_repost ?? true, hide_counts: post?.hide_counts ?? false, is_sensitive: post?.is_sensitive ?? false });
+  const [items, setItems] = useState(() => (post?.media || []).map((m) => ({ key: `m${m.id}`, status: 'done', media: m, name: m.original_name, size: m.size_bytes, output: m.meta?.output?.text || '', outputTouched: false })));
   const [open, setOpen] = useState(editing || false);
   const [more, setMore] = useState(false);
   const [showTitle, setShowTitle] = useState(!!post?.title);
@@ -129,6 +185,7 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
     const payload = {
       title, body, link_url: link, visibility: vis, comments_mode: mode, ...opts, tags,
       media_ids: items.filter((i) => i.status === 'done').map((i) => i.media.id),
+      media_details: Object.fromEntries(items.filter((i) => i.status === 'done' && i.media.kind === 'code' && i.outputTouched).map((i) => [i.media.id, { output: i.output || '' }])),
       ...(draft ? { draft: true } : {}), ...(when ? { scheduled_at: new Date(when).toISOString() } : {}),
     };
     try {
@@ -169,6 +226,10 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
                     {i.status === 'up' && <i className="pp-bar"><b style={{ width: `${i.progress}%` }} /></i>}</div>
                   {i.status === 'err' && i.file && <button type="button" className="pp-icon" onClick={() => retry(i)} aria-label="Retry"><Icon name="refresh" size={15} /></button>}
                   <button type="button" className="pp-icon" onClick={() => remove(i)} aria-label="Remove"><Icon name="x" size={15} /></button>
+                  {i.status === 'done' && i.media?.kind === 'code' && (
+                    <CodeRunBox item={i} tt={tt} allowRun={opts.allow_run} onAllowRun={(v) => setOpts((o) => ({ ...o, allow_run: v }))}
+                      onOutput={(text) => setItems((p) => p.map((x) => (x.key === i.key ? { ...x, output: text, outputTouched: true } : x)))} />
+                  )}
                 </li>
               ))}
             </ul>
