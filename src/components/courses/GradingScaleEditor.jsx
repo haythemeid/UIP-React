@@ -52,6 +52,20 @@ export default function GradingScaleEditor() {
 
   const target = facultyId ? 'faculty' : data?.level;
 
+  const mins = form ? form.bands.map((x) => (x.min_percent === '' || Number.isNaN(Number(x.min_percent)) ? null : Number(x.min_percent))) : [];
+  const rangeOf = (i) => {
+    const lo = mins[i];
+    if (lo == null) return '—';
+    const higher = mins.filter((m, j) => m != null && j !== i && m > lo);
+    const hi = higher.length ? Math.min(...higher) : null;
+    return hi == null ? `${lo} – 100` : `${lo} – ${Math.round((hi - 0.1) * 10) / 10}`;
+  };
+  const scale = form ? form.bands
+    .map((x, i) => ({ letter: x.letter, fail: !!x.is_fail, lo: mins[i] }))
+    .filter((x) => x.lo != null && x.letter)
+    .sort((x, y) => x.lo - y.lo)
+    .map((x, k, arr) => { const hi = k + 1 < arr.length ? arr[k + 1].lo : 100; return { ...x, hi, span: hi - x.lo }; }) : [];
+
   return (
     <div className="ex-page">
       <div>
@@ -62,46 +76,92 @@ export default function GradingScaleEditor() {
       {notice && <div className="st-alert"><Icon name="check-circle" size={16} /><span>{notice}</span></div>}
 
       {!data || !form ? <Skeleton h={120} count={3} /> : (
-        <div className="ex-card">
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
-            {data.faculties && (
-              <select className="ex-select" value={facultyId} onChange={(e) => setFacultyId(e.target.value)} aria-label={ar ? 'المستوى' : 'Level'}>
-                <option value="">{ar ? 'نظام الجامعة' : 'University scale'}</option>
-                {data.faculties.map((f) => <option key={f.id} value={f.id}>{ar ? (f.name_ar || f.name_en) : (f.name_en || f.name_ar)}{f.has_own ? ' ✓' : ''}</option>)}
-              </select>
-            )}
-            <b>{LEVEL[target]?.[ar ? 0 : 1]}</b>
-            <span className={`att-pill att-pill--${data.own ? 'present' : 'excused'}`}>{data.own ? (ar ? 'نظام خاص' : 'Custom') : (ar ? 'موروث / افتراضي' : 'Inherited / default')}</span>
-          </div>
+        <div className="gsc">
+          <section className="gsc-card">
+            <header className="gsc-head">
+              <div className="gsc-head__title">
+                <b>{LEVEL[target]?.[ar ? 0 : 1]}</b>
+                <span className={`att-pill att-pill--${data.own ? 'present' : 'excused'}`}>{data.own ? (ar ? 'نظام خاص' : 'Custom') : (ar ? 'موروث / افتراضي' : 'Inherited / default')}</span>
+              </div>
+              {data.faculties && (
+                <select className="ex-select gsc-level" value={facultyId} onChange={(e) => setFacultyId(e.target.value)} aria-label={ar ? 'المستوى' : 'Level'}>
+                  <option value="">{ar ? 'نظام الجامعة' : 'University scale'}</option>
+                  {data.faculties.map((f) => <option key={f.id} value={f.id}>{ar ? (f.name_ar || f.name_en) : (f.name_en || f.name_ar)}{f.has_own ? ' ✓' : ''}</option>)}
+                </select>
+              )}
+            </header>
 
-          <div className="ex-table-wrap">
-            <table className="ex-table">
-              <thead><tr><th>{ar ? 'التقدير' : 'Grade'}</th><th>{ar ? 'من نسبة (%)' : 'Min %'}</th><th>{ar ? 'نقاط GPA' : 'GPA points'}</th><th>{ar ? 'رسوب' : 'Fail'}</th><th /></tr></thead>
-              <tbody>
-                {form.bands.map((b, i) => (
-                  <tr key={i}>
-                    <td><input className="form-input" style={{ width: 80 }} maxLength={8} value={b.letter} onChange={(e) => setBand(i, 'letter', e.target.value)} /></td>
-                    <td><input className="form-input" style={{ width: 100 }} type="number" min="0" max="100" step="0.5" value={b.min_percent} onChange={(e) => setBand(i, 'min_percent', e.target.value)} /></td>
-                    <td><input className="form-input" style={{ width: 100 }} type="number" min="0" max="10" step="0.1" value={b.points} onChange={(e) => setBand(i, 'points', e.target.value)} /></td>
-                    <td><input type="checkbox" checked={!!b.is_fail} onChange={(e) => setBand(i, 'is_fail', e.target.checked)} /></td>
-                    <td><button type="button" className="btn btn-ghost btn-sm" onClick={() => delBand(i)}><Icon name="trash" size={13} /></button></td>
-                  </tr>
+            <div className="gsc-sec-title">
+              <h2>{ar ? 'التقديرات' : 'Grades'}</h2>
+              <span>{ar ? 'لازم يكون فيه تقدير يبدأ من 0%.' : 'One grade must start at 0%.'}</span>
+            </div>
+
+            {scale.length > 0 && (
+              <div className="gsc-strip" aria-hidden="true">
+                {scale.map((x, k) => (
+                  <div key={k} className={`gsc-strip__seg${x.fail ? ' is-fail' : ''}`} style={{ flexGrow: Math.min(Math.max(x.span, 4), 18) }} title={`${x.letter} · ${x.lo}–${x.hi}%`}>{x.letter}</div>
                 ))}
-              </tbody>
-            </table>
-          </div>
-          <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: 8 }} onClick={addBand}><Icon name="plus" size={13} /> {ar ? 'إضافة تقدير' : 'Add grade'}</button>
-          <small className="is-muted" style={{ display: 'block', marginTop: 6 }}>{ar ? 'لازم يكون فيه تقدير يبدأ من 0%.' : 'One grade must start at 0%.'}</small>
+              </div>
+            )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14, marginTop: 16 }}>
-            <label>{ar ? 'اسم النظام (اختياري)' : 'Scale name (optional)'}<input className="form-input" maxLength={120} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
-            <label>{ar ? 'خانات المعدل العشرية' : 'GPA decimals'}<input className="form-input" type="number" min="0" max="4" value={form.gpa_decimals} onChange={(e) => setForm({ ...form, gpa_decimals: e.target.value })} /></label>
-            <label>{ar ? 'تقدير الحرمان' : 'Deprivation grade'}<input className="form-input" maxLength={8} value={form.deprivation_letter} onChange={(e) => setForm({ ...form, deprivation_letter: e.target.value })} /></label>
-          </div>
-          <label className="cr-confirm" style={{ display: 'block', marginTop: 12 }}><input type="checkbox" checked={form.deprivation_fails} onChange={(e) => setForm({ ...form, deprivation_fails: e.target.checked })} /> {ar ? 'الطالب المحروم (حد الغياب) يرسب تلقائيًا في المادة' : 'Deprived students (absence limit) automatically fail the course'}</label>
-          <label className="cr-confirm" style={{ display: 'block', marginTop: 8 }}><input type="checkbox" checked={form.require_approval} onChange={(e) => setForm({ ...form, require_approval: e.target.checked })} /> {ar ? 'نتيجة المادة تحتاج اعتماد الكلية/الجامعة قبل النشر (الدكتور/المعيد يرفعها للاعتماد فقط)' : 'Course results need faculty/university approval before publishing (instructors can only submit)'}</label>
+            <div className="gsc-table" role="table">
+              <div className="gsc-row gsc-row--head" role="row">
+                <span>{ar ? 'التقدير' : 'Grade'}</span>
+                <span>{ar ? 'من نسبة' : 'From %'}</span>
+                <span>{ar ? 'المدى' : 'Range'}</span>
+                <span>GPA</span>
+                <span>{ar ? 'رسوب' : 'Fail'}</span>
+                <span />
+              </div>
+              {form.bands.map((b, i) => {
+                const r = rangeOf(i);
+                return (
+                  <div key={i} className={`gsc-row${b.is_fail ? ' is-fail' : ''}`} role="row">
+                    <input className="gsc-cell gsc-cell--letter" maxLength={8} value={b.letter} placeholder="A" aria-label={ar ? 'التقدير' : 'Grade'} onChange={(e) => setBand(i, 'letter', e.target.value)} />
+                    <input className="gsc-cell" type="number" min="0" max="100" step="0.5" value={b.min_percent} aria-label={ar ? 'من نسبة' : 'Min %'} onChange={(e) => setBand(i, 'min_percent', e.target.value)} />
+                    <span className="gsc-range">{r}</span>
+                    <input className="gsc-cell" type="number" min="0" max="10" step="0.1" value={b.points} aria-label="GPA" onChange={(e) => setBand(i, 'points', e.target.value)} />
+                    <label className="gsc-failbox" title={ar ? 'تقدير رسوب' : 'Failing grade'}>
+                      <input type="checkbox" checked={!!b.is_fail} onChange={(e) => setBand(i, 'is_fail', e.target.checked)} />
+                      <span />
+                    </label>
+                    <button type="button" className="gsc-del" onClick={() => delBand(i)} aria-label={ar ? 'حذف' : 'Delete'} title={ar ? 'حذف' : 'Delete'}><Icon name="trash" size={14} /></button>
+                  </div>
+                );
+              })}
+              <button type="button" className="gsc-add" onClick={addBand}><Icon name="plus" size={14} /><span>{ar ? 'إضافة تقدير' : 'Add grade'}</span></button>
+            </div>
+          </section>
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+          <section className="gsc-card">
+            <div className="gsc-sec-title"><h2>{ar ? 'السياسة' : 'Policy'}</h2></div>
+            <div className="gsc-fields">
+              <label className="gsc-field gsc-field--wide">
+                <span>{ar ? 'اسم النظام (اختياري)' : 'Scale name (optional)'}</span>
+                <div className="gsc-input"><input maxLength={120} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+              </label>
+              <label className="gsc-field">
+                <span>{ar ? 'خانات المعدل العشرية' : 'GPA decimals'}</span>
+                <div className="gsc-input"><input type="number" min="0" max="4" value={form.gpa_decimals} onChange={(e) => setForm({ ...form, gpa_decimals: e.target.value })} /></div>
+              </label>
+              <label className="gsc-field">
+                <span>{ar ? 'تقدير الحرمان' : 'Deprivation grade'}</span>
+                <div className="gsc-input"><input maxLength={8} value={form.deprivation_letter} onChange={(e) => setForm({ ...form, deprivation_letter: e.target.value })} /></div>
+              </label>
+            </div>
+            <label className="gsc-switch">
+              <input type="checkbox" checked={form.deprivation_fails} onChange={(e) => setForm({ ...form, deprivation_fails: e.target.checked })} />
+              <span className="gsc-switch__track" aria-hidden="true" />
+              <span className="gsc-switch__text">{ar ? 'الطالب المحروم (حد الغياب) يرسب تلقائيًا في المادة' : 'Deprived students (absence limit) automatically fail the course'}</span>
+            </label>
+            <label className="gsc-switch">
+              <input type="checkbox" checked={form.require_approval} onChange={(e) => setForm({ ...form, require_approval: e.target.checked })} />
+              <span className="gsc-switch__track" aria-hidden="true" />
+              <span className="gsc-switch__text">{ar ? 'نتيجة المادة تحتاج اعتماد الكلية/الجامعة قبل النشر (الدكتور/المعيد يرفعها للاعتماد فقط)' : 'Course results need faculty/university approval before publishing (instructors can only submit)'}</span>
+            </label>
+          </section>
+
+          <div className="gsc-actions">
             <button type="button" className="btn btn-primary" disabled={saving} onClick={save}><Icon name="check" size={14} /> {ar ? 'حفظ' : 'Save'}</button>
             <button type="button" className="btn btn-outline" disabled={saving} onClick={useDefaults}>{ar ? 'تحميل القيم الافتراضية' : 'Load defaults'}</button>
             {data.own && <button type="button" className="btn btn-ghost" disabled={saving} onClick={reset}><Icon name="trash" size={14} /> {ar ? 'مسح والرجوع للموروث' : 'Remove & inherit'}</button>}
