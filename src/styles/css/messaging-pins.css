@@ -39,6 +39,7 @@
 
 /* ---------- bar ---------- */
 .pinbar {
+  flex: none; /* never squeezed by the message list below */
   flex-shrink: 0; display: flex; align-items: stretch; gap: 10px; padding: 7px 10px 7px 12px; min-height: 54px;
   background: color-mix(in srgb, var(--bg-surface) 92%, #f5a524 8%); border-bottom: 1px solid var(--border-subtle);
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);

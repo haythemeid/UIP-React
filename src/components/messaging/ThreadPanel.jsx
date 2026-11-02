@@ -1196,9 +1196,13 @@ export default function ThreadPanel({
   const shownMessages = isSavedChat && savedFilter !== 'all' && SAVED_TESTS[savedFilter] ? messages.filter((m) => !m.is_deleted && SAVED_TESTS[savedFilter](m)) : messages;
   // Direct chat where one side blocked the other: 'blocked_by_me' (can unblock here) / 'blocked_by_peer' (generic notice).
   const dmBlock = conversation && !conversation.is_group && (conversation.send_block === 'blocked_by_me' || conversation.send_block === 'blocked_by_peer') ? conversation.send_block : null;
-  const canSend = peerDeleted || dmBlock ? false : (!grp || grp.can_send !== false);
+  // the other person's privacy settings ("who can message / call me"): the composer is locked and the call buttons are switched off
+  const isDirect = !!conversation && !conversation.is_group && !conversation.is_saved && !peerDeleted && !dmBlock;
+  const msgClosed = isDirect && (conversation.send_block === 'peer_no_messages' || conversation.peer_accepts_messages === false);
+  const callsClosed = isDirect && conversation.peer_accepts_calls === false;
+  const canSend = peerDeleted || dmBlock || msgClosed ? false : (!grp || grp.can_send !== false);
   // Voice calls: direct chats only, and not with a deleted account or when either side blocked the other.
-  const canCall = !!conversation && !conversation.is_group && !conversation.is_saved && !peerDeleted && !dmBlock && call.available;
+  const canCall = !!conversation && !conversation.is_group && !conversation.is_saved && !peerDeleted && !dmBlock && !callsClosed && call.available;
   const callBusy = call.phase !== 'idle';
   const startCall = (video) => {
     if (!canCall || callBusy) return;
@@ -1499,6 +1503,13 @@ export default function ThreadPanel({
             {!phone && onToggleFull && <button type="button" className="msg-icon-btn msg-full-btn" title={fullView ? t('Exit full screen', 'الخروج من ملء الشاشة') : t('Full screen', 'ملء الشاشة')} aria-label={fullView ? t('Exit full screen', 'الخروج من ملء الشاشة') : t('Full screen', 'ملء الشاشة')} aria-pressed={!!fullView} onClick={onToggleFull}>
               <Icon name={fullView ? 'collapse' : 'maximize'} size={18} />
             </button>}
+            {callsClosed && call.available && (
+              <button type="button" className="msg-icon-btn msg-call-btn msg-call-btn--off" disabled aria-disabled="true"
+                title={t('This person is not accepting calls', 'هذا الشخص لا يستقبل مكالمات')} aria-label={t('Calls are turned off by this person', 'المكالمات مغلقة من هذا الشخص')}>
+                <Icon name="phone" size={18} />
+                <span className="msg-call-btn__slash" aria-hidden="true" />
+              </button>
+            )}
             {canCall && (
               <button type="button" className="msg-icon-btn msg-call-btn" onClick={() => startCall(false)} disabled={callBusy}
                 title={callBusy ? t('You are already in a call', 'أنت في مكالمة بالفعل') : t('Voice call', 'مكالمة صوتية')}
@@ -1588,6 +1599,13 @@ export default function ThreadPanel({
 
         {pinnedMessages.length > 0 && (
           <PinnedBar pinned={pinnedMessages} onGo={(id) => onGoToMessage?.(id)} onOpenList={onShowPinned} onUnpin={(m) => onUnpin?.(m)} />
+        )}
+
+        {callsClosed && !msgClosed && call.available && (
+          <div className="msg-calls-off" role="status">
+            <Icon name="phone" size={14} />
+            <span>{t('This person turned calls off — you can only message them.', 'هذا الشخص أغلق المكالمات — تقدر تراسله فقط.')}</span>
+          </div>
         )}
 
         {isSavedChat && messages.length > 0 && (
@@ -1799,6 +1817,16 @@ export default function ThreadPanel({
                 {t('Unblock', 'إلغاء الحظر')}
               </button>
             )}
+          </div>
+        ) : msgClosed ? (
+          <div className="grp-locked grp-locked--privacy" role="status">
+            <Icon name="lock" size={16} />
+            <span>
+              <strong>{t('This person is not accepting messages from you.', 'هذا الشخص لا يستقبل رسائل منك.')}</strong>{' '}
+              {callsClosed
+                ? t('Calls are turned off too. You can still read the conversation.', 'والمكالمات مغلقة كمان. تقدر تقرأ المحادثة فقط.')
+                : t('You can still read the conversation.', 'تقدر تقرأ المحادثة فقط.')}
+            </span>
           </div>
         ) : !canSend ? (
           <div className="grp-locked" role="status">

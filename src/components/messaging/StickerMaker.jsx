@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { autoCutout, tapCutout, paintMask, applyMask } from '../../lib/stickerCutout';
 
 /**
  * "New sticker": turn any photo or short video into a sticker.
@@ -7,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
  * Everything runs in the browser; the result is handed to onSave(file) / onSend(file).
  */
 const SIZE = 512;
+const WORK_MAX = 800; // longest side of the working copy used for background removal
 const MAX_VIDEO_SEC = 6;
 const QUICK_EMOJI = ['😂', '😍', '🔥', '👍', '❤️', '😭', '🎉', '😎', '🥺', '🙏', '💯', '🤝'];
 const COLORS = ['#ffffff', '#111111', '#ffd400', '#ff3b6b', '#19c37d', '#3b82f6'];
@@ -66,6 +68,12 @@ export default function StickerMaker({ ar, initialFile = null, onClose, onSave, 
   const [busy, setBusy] = useState(null); // 'save' | 'send'
   const [progress, setProgress] = useState(0);
   const [err, setErr] = useState('');
+  const [fit, setFit] = useState('fill'); // 'fill' (crop to the square) | 'whole' (the whole picture, transparent margins)
+  const [tool, setTool] = useState('move'); // 'move' | 'tap' | 'erase' | 'restore'
+  const [tol, setTol] = useState(45);
+  const [brush, setBrush] = useState(26);
+  const [hasCut, setHasCut] = useState(false);
+  const [cutBusy, setCutBusy] = useState(false);
 
   const canvasRef = useRef(null);
   const mediaRef = useRef(null);
@@ -73,6 +81,8 @@ export default function StickerMaker({ ar, initialFile = null, onClose, onSave, 
   const drag = useRef(null);
   const live = useRef({});
   const exporting = useRef(false);
+  // background removal: working copy of the picture + mask (255 keep / 0 removed) + the composed cut-out and its white silhouette
+  const cut = useRef({ w: 0, h: 0, pix: null, mask: null, canvas: null, sil: null, dirty: false, history: [] });
 
   // classify the chosen file and create the object URL
   useEffect(() => {
@@ -85,6 +95,8 @@ export default function StickerMaker({ ar, initialFile = null, onClose, onSave, 
     setErr('');
     pan.current = { x: 0, y: 0 };
     setZoom(1); setOverlays([]); setSel(null); setStart(0);
+    setFit('fill'); setTool('move'); setHasCut(false);
+    cut.current = { w: 0, h: 0, pix: null, mask: null, canvas: null, sil: null, dirty: false, history: [] };
     if (isVideo) { setShape('square'); setOutline(false); } else { setShape('rounded'); setOutline(true); }
     return () => URL.revokeObjectURL(u);
   }, [file]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -96,30 +108,99 @@ export default function StickerMaker({ ar, initialFile = null, onClose, onSave, 
   }, [busy, onClose]);
 
   // the latest drawing state, readable from the rAF loop without restarting it
-  live.current = { kind, shape, outline, zoom, overlays, sel };
+  live.current = { ...live.current, kind, shape, outline, zoom, overlays, sel, fit, hasCut };
+
+  /* ---------------------------------------------------- background removal */
+  const rebuildCut = () => {
+    const c = cut.current;
+    if (!c.pix) return;
+    c.dirty = false;
+    const id = new ImageData(c.w, c.h);
+    applyMask(c.pix, c.mask, c.w, c.h, id.data);
+    const cx = c.canvas.getContext('2d');
+    cx.putImageData(id, 0, 0);
+    const sx = c.sil.getContext('2d');
+    sx.globalCompositeOperation = 'source-over'; sx.clearRect(0, 0, c.w, c.h);
+    sx.drawImage(c.canvas, 0, 0);
+    sx.globalCompositeOperation = 'source-in'; sx.fillStyle = '#fff'; sx.fillRect(0, 0, c.w, c.h);
+    sx.globalCompositeOperation = 'source-over';
+  };
+  // working copy of the picture (downscaled) — made the first time a removal tool is used
+  const ensureCut = () => {
+    const c = cut.current;
+    if (c.pix) return true;
+    const im = mediaRef.current;
+    if (!im || !im.naturalWidth) return false;
+    const k = Math.min(1, WORK_MAX / Math.max(im.naturalWidth, im.naturalHeight));
+    c.w = Math.max(1, Math.round(im.naturalWidth * k)); c.h = Math.max(1, Math.round(im.naturalHeight * k));
+    const cv = document.createElement('canvas'); cv.width = c.w; cv.height = c.h;
+    const cx = cv.getContext('2d', { willReadFrequently: true });
+    cx.drawImage(im, 0, 0, c.w, c.h);
+    c.pix = cx.getImageData(0, 0, c.w, c.h).data;
+    c.mask = new Uint8Array(c.w * c.h).fill(255);
+    c.canvas = document.createElement('canvas'); c.canvas.width = c.w; c.canvas.height = c.h;
+    c.sil = document.createElement('canvas'); c.sil.width = c.w; c.sil.height = c.h;
+    c.dirty = true;
+    return true;
+  };
+  const snapshot = () => { const c = cut.current; c.history.push(c.mask.slice()); if (c.history.length > 12) c.history.shift(); };
+  const markCut = () => { cut.current.dirty = true; setHasCut(true); };
+  const doAuto = () => {
+    if (!ensureCut()) return;
+    setCutBusy(true); setErr('');
+    setTimeout(() => { // let the spinner paint first
+      const c = cut.current; snapshot();
+      const n = autoCutout(c.pix, c.w, c.h, c.mask, tol);
+      if (!n) { c.history.pop(); setErr(t('Could not find a plain background to remove. Try "Tap to remove" or the eraser.', 'مقدرتش ألاقي خلفية واضحة أشيلها. جرّب "اضغط للإزالة" أو الممحاة.')); } else { markCut(); setFit('whole'); }
+      setCutBusy(false);
+    }, 30);
+  };
+  const undoCut = () => {
+    const c = cut.current; const prev = c.history.pop();
+    if (!prev) return;
+    c.mask = prev; c.dirty = true;
+    setHasCut(c.mask.some((v) => v === 0));
+  };
+  const resetCut = () => { const c = cut.current; if (!c.mask) return; snapshot(); c.mask.fill(255); c.dirty = true; setHasCut(false); };
+  // canvas point -> pixel of the working copy
+  const toWork = (p) => {
+    const c = cut.current; const xf = live.current.xf;
+    if (!xf || !c.pix) return null;
+    return { x: ((p.x - xf.ox) / xf.dw) * c.w, y: ((p.y - xf.oy) / xf.dh) * c.h, k: c.w / xf.dw };
+  };
 
   const render = useCallback(() => {
     const cv = canvasRef.current; const m = mediaRef.current;
     if (!cv) return;
     const ctx = cv.getContext('2d');
-    const { kind: k, shape: sh, outline: ol, zoom: z, overlays: ovs, sel: s } = live.current;
+    const { kind: k, shape: sh, outline: ol, zoom: z, overlays: ovs, sel: s, fit: ft, hasCut: hc } = live.current;
+    const c = cut.current;
+    if (c.dirty) rebuildCut();
+    const cutOn = k === 'image' && hc && c.canvas;
     ctx.clearRect(0, 0, SIZE, SIZE);
-    const ready = m && (k === 'video' ? m.readyState >= 2 : m.complete && m.naturalWidth);
-    const inset = ol && k === 'image' ? 14 : 0;
+    const src = cutOn ? c.canvas : m;
+    const ready = src && (cutOn ? true : k === 'video' ? m.readyState >= 2 : m.complete && m.naturalWidth);
+    const inset = ol && k === 'image' && !cutOn ? 14 : 0;
     ctx.save();
-    if (ol && k === 'image') { pathFor(ctx, sh, 0); ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(0,0,0,.28)'; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0; }
-    pathFor(ctx, sh, inset);
-    ctx.clip();
+    if (ol && k === 'image' && !cutOn) { pathFor(ctx, sh, 0); ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(0,0,0,.28)'; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0; }
+    if (!cutOn) { pathFor(ctx, sh, inset); ctx.clip(); }
     if (ready) {
-      const w = k === 'video' ? m.videoWidth : m.naturalWidth; const h = k === 'video' ? m.videoHeight : m.naturalHeight;
-      const base = Math.max(SIZE / w, SIZE / h);
+      const w = cutOn ? c.w : k === 'video' ? m.videoWidth : m.naturalWidth; const h = cutOn ? c.h : k === 'video' ? m.videoHeight : m.naturalHeight;
+      const base = ft === 'whole' ? Math.min(SIZE / w, SIZE / h) : Math.max(SIZE / w, SIZE / h);
       const sc = base * z;
       const dw = w * sc; const dh = h * sc;
       const maxX = Math.max(0, (dw - SIZE) / 2); const maxY = Math.max(0, (dh - SIZE) / 2);
       pan.current.x = Math.max(-maxX, Math.min(maxX, pan.current.x));
       pan.current.y = Math.max(-maxY, Math.min(maxY, pan.current.y));
       if (k === 'video') { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, SIZE, SIZE); }
-      ctx.drawImage(m, (SIZE - dw) / 2 + pan.current.x, (SIZE - dh) / 2 + pan.current.y, dw, dh);
+      const ox = (SIZE - dw) / 2 + pan.current.x; const oy = (SIZE - dh) / 2 + pan.current.y;
+      live.current.xf = { ox, oy, dw, dh };
+      if (cutOn && ol && c.sil) { // white sticker border that follows the shape of what is left
+        const r = 9; ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.3)'; ctx.shadowBlur = 8;
+        for (let a = 0; a < 16; a += 1) ctx.drawImage(c.sil, ox + Math.cos((a / 16) * Math.PI * 2) * r, oy + Math.sin((a / 16) * Math.PI * 2) * r, dw, dh);
+        ctx.restore();
+      }
+      ctx.drawImage(src, ox, oy, dw, dh);
     }
     ctx.restore();
     ovs.forEach((o) => drawOverlay(ctx, o));
@@ -161,6 +242,18 @@ export default function StickerMaker({ ar, initialFile = null, onClose, onSave, 
   };
   const onDown = (e) => {
     const p = toCanvas(e);
+    if (kind === 'image' && (tool === 'tap' || tool === 'erase' || tool === 'restore')) {
+      if (!ensureCut()) return;
+      const q = toWork(p);
+      if (!q) return;
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+      const c = cut.current;
+      snapshot();
+      if (tool === 'tap') { if (tapCutout(c.pix, c.w, c.h, c.mask, q.x, q.y, tol)) markCut(); else c.history.pop(); return; }
+      drag.current = { type: 'brush', value: tool === 'erase' ? 0 : 255 };
+      paintMask(c.mask, c.w, c.h, q.x, q.y, brush * q.k, drag.current.value); markCut();
+      return;
+    }
     const ctx = canvasRef.current.getContext('2d');
     const hit = [...overlays].reverse().find((o) => { const b = overlayBox(ctx, o); return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h; });
     e.currentTarget.setPointerCapture?.(e.pointerId);
@@ -169,11 +262,16 @@ export default function StickerMaker({ ar, initialFile = null, onClose, onSave, 
   const onMove = (e) => {
     const d = drag.current; if (!d) return;
     const p = toCanvas(e);
+    if (d.type === 'brush') {
+      const q = toWork(p); const c = cut.current;
+      if (q) { paintMask(c.mask, c.w, c.h, q.x, q.y, brush * q.k, d.value); c.dirty = true; if (d.value === 255) setHasCut(c.mask.some((v) => v === 0)); }
+      return;
+    }
     if (d.type === 'pan') pan.current = { x: d.ox + (p.x - d.sx), y: d.oy + (p.y - d.sy) };
     else setOverlays((list) => list.map((o) => (o.id === d.id ? { ...o, x: Math.max(0, Math.min(SIZE, p.x + d.dx)), y: Math.max(0, Math.min(SIZE, p.y + d.dy)) } : o)));
   };
-  const onUp = () => { drag.current = null; };
-  const onWheel = (e) => { setZoom((z) => Math.max(1, Math.min(4, +(z - e.deltaY * 0.0015).toFixed(3)))); };
+  const onUp = () => { const d = drag.current; drag.current = null; if (d?.type === 'brush') setHasCut(cut.current.mask.some((v) => v === 0)); };
+  const onWheel = (e) => { setZoom((z) => Math.max(0.5, Math.min(4, +(z - e.deltaY * 0.0015).toFixed(3)))); };
 
   /* ---------------------------------------------------- overlays */
   const addOverlay = (o) => { const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`; setOverlays((l) => [...l, { id, x: SIZE / 2, y: SIZE / 2, ...o }]); setSel(id); };
@@ -281,24 +379,59 @@ export default function StickerMaker({ ar, initialFile = null, onClose, onSave, 
                 <canvas ref={canvasRef} width={SIZE} height={SIZE} className="smk-canvas" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel} />
                 {busy && kind === 'video' && <div className="smk-rec"><span className="smk-rec__dot" />{t('Recording', 'جارٍ التسجيل')} {progress}%</div>}
               </div>
-              <p className="smk-hint">{t('Drag to move · scroll or slider to zoom', 'اسحب لتحريك الصورة · اللف أو السلايدر للتكبير')}</p>
+              <p className="smk-hint">{tool === 'move' || kind !== 'image' ? t('Drag to move · scroll or slider to zoom', 'اسحب لتحريك الصورة · اللف أو السلايدر للتكبير') : tool === 'tap' ? t('Tap the part you want to remove', 'اضغط على الجزء اللي عايز تشيله') : t('Paint over the picture', 'ارسم على الصورة')}</p>
               {kind === 'video' ? <video ref={mediaRef} src={url} className="smk-src" muted playsInline loop onLoadedMetadata={onMeta} /> : <img ref={mediaRef} src={url} alt="" className="smk-src" />}
             </div>
 
             <div className="smk-tools">
               <label className="smk-row">
                 <span>{t('Zoom', 'تكبير')}</span>
-                <input type="range" min="1" max="4" step="0.01" value={zoom} onChange={(e) => setZoom(+e.target.value)} />
+                <input type="range" min="0.5" max="4" step="0.01" value={zoom} onChange={(e) => setZoom(+e.target.value)} />
               </label>
+
+              <div className="smk-row smk-row--wrap">
+                <span>{t('Fit', 'العرض')}</span>
+                <div className="smk-seg">
+                  <button type="button" className={fit === 'fill' ? 'is-on' : ''} onClick={() => { setFit('fill'); pan.current = { x: 0, y: 0 }; }}>{t('Fill', 'تغطية')}</button>
+                  <button type="button" className={fit === 'whole' ? 'is-on' : ''} onClick={() => { setFit('whole'); pan.current = { x: 0, y: 0 }; }}>{t('Whole picture', 'الصورة كاملة')}</button>
+                </div>
+              </div>
+
+              {kind === 'image' && (
+                <div className="smk-sec">
+                  <span className="smk-sec__title">{t('Remove background', 'عزل الخلفية')}</span>
+                  <div className="smk-textrow">
+                    <button type="button" className="smk-btn smk-btn--primary" onClick={doAuto} disabled={cutBusy || !!busy}>{cutBusy ? t('Working…', 'جارٍ العمل…') : t('Remove automatically', 'عزل تلقائي')}</button>
+                    <button type="button" className="smk-btn" onClick={undoCut} disabled={!cut.current.history.length}>{t('Undo', 'تراجع')}</button>
+                    <button type="button" className="smk-btn" onClick={resetCut} disabled={!hasCut}>{t('Reset', 'إعادة')}</button>
+                  </div>
+                  <label className="smk-row">
+                    <span>{t('Sensitivity', 'الحساسية')}</span>
+                    <input type="range" min="10" max="140" value={tol} onChange={(e) => setTol(+e.target.value)} />
+                  </label>
+                  <div className="smk-seg">
+                    {[['move', t('Move', 'تحريك')], ['tap', t('Tap to remove', 'اضغط للإزالة')], ['erase', t('Eraser', 'ممحاة')], ['restore', t('Restore', 'استرجاع')]].map(([id, label]) => (
+                      <button key={id} type="button" className={tool === id ? 'is-on' : ''} onClick={() => setTool(id)}>{label}</button>
+                    ))}
+                  </div>
+                  {(tool === 'erase' || tool === 'restore') && (
+                    <label className="smk-row">
+                      <span>{t('Brush size', 'حجم الفرشاة')}</span>
+                      <input type="range" min="6" max="90" value={brush} onChange={(e) => setBrush(+e.target.value)} />
+                    </label>
+                  )}
+                  <p className="smk-note">{t('Automatic removal works best on a plain background; fix the rest with the eraser.', 'العزل التلقائي بيشتغل أحسن مع خلفية سادة؛ وكمّل الباقي بالممحاة.')}</p>
+                </div>
+              )}
 
               {kind === 'image' ? (
                 <>
-                  <div className="smk-row smk-row--wrap">
+                  {!hasCut && <div className="smk-row smk-row--wrap">
                     <span>{t('Shape', 'الشكل')}</span>
                     <div className="smk-seg">
                       {shapes.map((s) => <button key={s.id} type="button" className={shape === s.id ? 'is-on' : ''} onClick={() => setShape(s.id)}>{s.label}</button>)}
                     </div>
-                  </div>
+                  </div>}
                   <label className="smk-check"><input type="checkbox" checked={outline} onChange={(e) => setOutline(e.target.checked)} /> {t('White outline', 'إطار أبيض')}</label>
                 </>
               ) : (

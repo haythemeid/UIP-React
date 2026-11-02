@@ -99,7 +99,7 @@ html body .savp .savp-select:focus { outline: 0; border-color: var(--color-prima
 @container savp (min-width: 420px) { html body .savp .savp-select { width: 168px; } }
 
 /* filter chips above the saved list */
-.savp-filters { display: flex; gap: 6px; padding: 8px 12px; overflow-x: auto; scrollbar-width: none; background: color-mix(in srgb, var(--bg-surface) 82%, transparent); border-bottom: 1px solid var(--border-subtle); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.savp-filters { flex: none; flex-shrink: 0; min-height: max-content; display: flex; gap: 6px; padding: 8px 12px; overflow-x: auto; scrollbar-width: none; background: color-mix(in srgb, var(--bg-surface) 82%, transparent); border-bottom: 1px solid var(--border-subtle); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 .savp-filters::-webkit-scrollbar { display: none; }
 .savp-filter { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-secondary); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; transition: all .15s; }
 .savp-filter b { min-width: 18px; padding: 0 5px; border-radius: 999px; font-size: 11px; line-height: 18px; text-align: center; color: var(--color-primary); background: rgba(var(--color-primary-rgb), .12); }
@@ -116,3 +116,10 @@ html body .savp .savp-select:focus { outline: 0; border-color: var(--color-prima
 .savp-empty ul { list-style: none; margin: 4px 0 0; padding: 0; width: 100%; display: grid; gap: 6px; }
 .savp-empty li { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; font-size: 12.5px; font-weight: 600; text-align: start; background: var(--bg-canvas); border: 1px solid var(--border-subtle); }
 .savp-empty li svg { color: var(--color-primary); flex: none; }
+
+/* the other person turned calls off: greyed, struck-through call buttons + a slim notice */
+.msg-call-btn--off { position: relative; opacity: .5; cursor: not-allowed; }
+.msg-call-btn__slash { position: absolute; top: 50%; inset-inline: 22% ; height: 2px; border-radius: 2px; background: #e5484d; transform: rotate(-45deg); pointer-events: none; }
+.msg-calls-off { flex: none; display: flex; align-items: center; gap: 8px; padding: 6px 14px; font-size: 12.5px; color: var(--text-secondary, #64748b); background: color-mix(in srgb, #e5484d 8%, var(--bg-surface, #fff)); border-bottom: 1px solid var(--border-subtle, rgba(127, 127, 150, .25)); }
+.msg-calls-off svg { color: #e5484d; flex: none; }
+.grp-locked--privacy strong { font-weight: 700; }
