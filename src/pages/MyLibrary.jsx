@@ -22,6 +22,14 @@ import '../styles/css/my-library.css';
  * under "My Library/<type>", so they show up in My PC too and every sharing option works on them.
  */
 const LIB_ROOT = 'My Library';
+/** The element that actually scrolls the page (the app shell scrolls inside a container, not the window). */
+const scrollParent = (el) => {
+  for (let p = el?.parentElement; p; p = p.parentElement) {
+    const o = getComputedStyle(p).overflowY;
+    if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight) return p;
+  }
+  return document.scrollingElement || document.documentElement;
+};
 const PREVIEW_TEXT_MAX = 200000;
 const THUMB_MAX_BYTES = 4 * 1024 * 1024;
 const NO_THUMB = new Set(['heic', 'heif', 'tif', 'tiff', 'ico']);
@@ -161,6 +169,93 @@ export default function MyLibrary() {
   const selected = useMemo(() => list.filter((n) => sel.has(n.id)), [list, sel]);
   const toggle = (id) => setSel((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
+  // ---- selection: click / Shift+click ranges / drag across cards / long-press on touch / Ctrl+A / Esc ----
+  const [pick, setPick] = useState(false); // "Select" mode: tapping a card selects it instead of opening it
+  const selMode = pick || sel.size > 0;
+  const listRef = useRef(list);
+  const selModeRef = useRef(selMode);
+  listRef.current = list;
+  selModeRef.current = selMode;
+  const anchorRef = useRef(null); // last item selected, start of a Shift+click range
+  const swallowClick = useRef(false); // the click that ends a drag / long-press must not toggle a second time
+  const pressT = useRef(0);
+  useEffect(() => () => clearTimeout(pressT.current), []);
+
+  const clearSel = useCallback(() => { setSel(new Set()); setPick(false); anchorRef.current = null; }, []);
+  const applyIds = (ids, on) => setSel((p) => { const n = new Set(p); ids.forEach((x) => (on ? n.add(x) : n.delete(x))); return n; });
+  const rangeIds = (a, b) => {
+    const L = listRef.current;
+    const i = L.findIndex((n) => n.id === a);
+    const j = L.findIndex((n) => n.id === b);
+    if (i < 0 || j < 0) return [b];
+    return L.slice(Math.min(i, j), Math.max(i, j) + 1).map((n) => n.id);
+  };
+  const pickItem = (id, e) => {
+    if (e?.shiftKey && anchorRef.current && anchorRef.current !== id) applyIds(rangeIds(anchorRef.current, id), true);
+    else toggle(id);
+    anchorRef.current = id;
+  };
+  const onCardClick = (n, e) => {
+    if (swallowClick.current) { swallowClick.current = false; e.preventDefault(); return; }
+    if (e.shiftKey || e.ctrlKey || e.metaKey || selMode) { e.preventDefault(); pickItem(n.id, e); return; }
+    setPreview(n);
+  };
+  const onCheckClick = (n, e) => {
+    if (swallowClick.current) { swallowClick.current = false; e.preventDefault(); return; }
+    pickItem(n.id, e);
+  };
+  const startPress = (n, e) => {
+    swallowClick.current = false;
+    if (e.target.closest?.('.lib-card__act')) return;
+    clearTimeout(pressT.current);
+    if (e.pointerType === 'touch') {
+      // long-press a card to start selecting
+      const x0 = e.clientX; const y0 = e.clientY;
+      const off = () => { window.removeEventListener('pointermove', cancel); window.removeEventListener('pointerup', cancel); window.removeEventListener('pointercancel', cancel); }; // eslint-disable-line no-use-before-define
+      function cancel(ev) { if (ev.type === 'pointermove' && Math.hypot(ev.clientX - x0, ev.clientY - y0) < 8) return; clearTimeout(pressT.current); off(); }
+      window.addEventListener('pointermove', cancel); window.addEventListener('pointerup', cancel); window.addEventListener('pointercancel', cancel);
+      pressT.current = setTimeout(() => { off(); swallowClick.current = true; setPick(true); pickItem(n.id); navigator.vibrate?.(12); }, 450);
+      return;
+    }
+    if (e.button !== 0) return;
+    const onCheck = !!e.target.closest?.('.lib-check');
+    if (!onCheck && !selMode) return; // a plain click on a card still just opens it
+    // mouse / pen: press and drag across cards to select (or un-select) a whole run
+    const startId = n.id;
+    const to = !sel.has(startId);
+    const sp = scrollParent(e.currentTarget);
+    let lastId = startId; let moved = false;
+    const end = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end); }; // eslint-disable-line no-use-before-define
+    function move(ev) {
+      if (!(ev.buttons & 1)) { end(); return; }
+      const top = sp === document.scrollingElement || sp === document.documentElement ? 0 : sp.getBoundingClientRect().top;
+      const bottom = sp === document.scrollingElement || sp === document.documentElement ? window.innerHeight : sp.getBoundingClientRect().bottom;
+      if (ev.clientY < top + 70) sp.scrollTop -= 18; else if (ev.clientY > bottom - 70) sp.scrollTop += 18;
+      const id = document.elementFromPoint(ev.clientX, ev.clientY)?.closest?.('[data-lib-id]')?.getAttribute('data-lib-id');
+      if (!id || id === lastId) return;
+      if (!moved) { moved = true; swallowClick.current = true; applyIds([startId], to); }
+      applyIds(rangeIds(lastId, id), to);
+      lastId = id; anchorRef.current = id;
+    }
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end);
+  };
+
+  const modalOpen = !!(shareNodes || preview || adding || moving || smartEdit);
+  useEffect(() => {
+    const onKey = (e) => {
+      if (modalOpen) return;
+      const t = e.target; const tag = t?.tagName;
+      if ((tag === 'INPUT' && t.type !== 'checkbox') || tag === 'TEXTAREA' || tag === 'SELECT' || t?.isContentEditable) return;
+      if ((e.ctrlKey || e.metaKey) && e.code === 'KeyA') {
+        if (!listRef.current.length) return;
+        e.preventDefault();
+        setSel(new Set(listRef.current.map((n) => n.id)));
+      } else if (e.key === 'Escape' && selModeRef.current) clearSel();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [modalOpen, clearSel]);
+
   // ---- actions ----
   const ensureFolder = useCallback(async (kindKey) => idOf(await drive.ensurePath(null, `${LIB_ROOT}/${KIND_BY_KEY[kindKey].folder}`)), []);
 
@@ -249,6 +344,7 @@ export default function MyLibrary() {
           <button type="button" className={view === 'grid' ? 'is-on' : ''} onClick={() => setView('grid')} aria-label={tt('Grid', 'شبكة')}><Icon name="grid" size={15} /></button>
           <button type="button" className={view === 'list' ? 'is-on' : ''} onClick={() => setView('list')} aria-label={tt('List', 'قائمة')}><Icon name="ed-list" size={15} /></button>
         </div>
+        <button type="button" className={`lib-btn${selMode ? ' is-on' : ''}`} onClick={() => (selMode ? clearSel() : setPick(true))} aria-pressed={selMode} title={tt('Select items (or press and drag across them)', 'تحديد عناصر (أو اضغط واسحب عليها)')}><Icon name="check-circle" size={15} /><span>{selMode ? tt('Done', 'تم') : tt('Select', 'تحديد')}</span></button>
         <button type="button" className="lib-btn" onClick={load} title={tt('Refresh', 'تحديث')} aria-label={tt('Refresh', 'تحديث')}><Icon name="refresh" size={15} /></button>
       </div>
 
@@ -286,8 +382,8 @@ export default function MyLibrary() {
             const url = linkUrls[n.id];
             const tags = marks.tagsOf(n.id);
             return (
-              <article key={n.id} role="listitem" className={`lib-card${on ? ' is-sel' : ''}`} style={{ '--k': k.color }}>
-                <button type="button" className="lib-card__open" onClick={() => setPreview(n)} aria-label={`${tt('Open', 'فتح')} ${n.name}`}>
+              <article key={n.id} role="listitem" data-lib-id={n.id} className={`lib-card${on ? ' is-sel' : ''}`} style={{ '--k': k.color }} onPointerDown={(e) => startPress(n, e)} onDragStart={(e) => e.preventDefault()}>
+                <button type="button" className="lib-card__open" onClick={(e) => onCardClick(n, e)} aria-pressed={selMode ? on : undefined} aria-label={`${selMode ? tt('Select', 'تحديد') : tt('Open', 'فتح')} ${n.name}`}>
                   {view === 'grid' && (n.kind === 'link' ? <div className="lib-thumb" style={{ '--k': k.color }}><Icon name="link" size={30} /><small dir="ltr">{url ? hostOf(url) : ''}</small></div> : <Thumb node={n} kind={n.kind} />)}
                   {view === 'list' && <span className="lib-ico"><Icon name={k.icon} size={18} /></span>}
                   <span className="lib-card__txt">
@@ -297,7 +393,7 @@ export default function MyLibrary() {
                     {tags.length > 0 && <span className="lib-tags">{tags.slice(0, 3).map((t) => <i key={t} style={{ '--t': tagColor(t) }}>{t}</i>)}</span>}
                   </span>
                 </button>
-                <label className="lib-check" title={tt('Select', 'تحديد')}><input type="checkbox" checked={on} onChange={() => toggle(n.id)} aria-label={`${tt('Select', 'تحديد')} ${n.name}`} /></label>
+                <label className="lib-check" title={tt('Select', 'تحديد')}><input type="checkbox" checked={on} onChange={() => {}} onClick={(e) => onCheckClick(n, e)} aria-label={`${tt('Select', 'تحديد')} ${n.name}`} /></label>
                 <div className="lib-card__act">
                   <button type="button" className={marks.isFav(n.id) ? 'is-on' : ''} onClick={() => marks.setFav([n.id], !marks.isFav(n.id))} aria-label={tt('Favorite', 'مفضلة')} aria-pressed={marks.isFav(n.id)}><Icon name="star" size={14} /></button>
                   <button type="button" onClick={() => setShareNodes([n])} aria-label={tt('Share', 'مشاركة')}><Icon name="share" size={14} /></button>
@@ -308,12 +404,12 @@ export default function MyLibrary() {
         </div>
       )}
 
-      {selected.length > 0 && (
+      {selMode && (
         <div className="lib-sel-bar" role="toolbar" aria-label={tt('Selected items', 'العناصر المحددة')}>
-          <b>{selected.length} {tt('selected', 'محدد')}</b>
-          <button type="button" onClick={() => setSel(new Set(list.map((n) => n.id)))}>{tt('Select all', 'تحديد الكل')}</button>
+          {selected.length > 0 ? <b>{selected.length} {tt('selected', 'محدد')}</b> : <b className="lib-sel-hint">{tt('Tap items to select · press and drag to select many', 'اضغط على العناصر لتحديدها · اضغط واسحب لتحديد أكتر من عنصر')}</b>}
+          <button type="button" onClick={() => setSel(selected.length === list.length ? new Set() : new Set(list.map((n) => n.id)))}>{selected.length === list.length && list.length > 0 ? tt('Deselect all', 'إلغاء تحديد الكل') : tt('Select all', 'تحديد الكل')}</button>
           <span className="lib-spacer" />
-          {cat === 'hidden'
+          {selected.length > 0 && (cat === 'hidden'
             ? <button type="button" onClick={() => unhide(selected.map((n) => n.id))}><Icon name="eye" size={15} /><span>{tt('Show again', 'إظهار')}</span></button>
             : (
               <>
@@ -322,8 +418,8 @@ export default function MyLibrary() {
                 <button type="button" onClick={() => { const on = !selected.every((n) => marks.isFav(n.id)); marks.setFav(selected.map((n) => n.id), on); }}><Icon name="star" size={15} /><span>{tt('Favorite', 'مفضلة')}</span></button>
                 <button type="button" onClick={() => hide(selected.map((n) => n.id))}><Icon name="eye-off" size={15} /><span>{tt('Hide', 'إخفاء')}</span></button>
               </>
-            )}
-          <button type="button" onClick={() => setSel(new Set())} aria-label={tt('Clear selection', 'إلغاء التحديد')}><Icon name="x" size={15} /></button>
+            ))}
+          <button type="button" onClick={clearSel} aria-label={tt('Clear selection', 'إلغاء التحديد')}><Icon name="x" size={15} /></button>
         </div>
       )}
 

@@ -144,3 +144,15 @@
 .lib-form input[aria-invalid="true"] { border-color: var(--color-danger, #d33); }
 .lib-form__count { font-weight: 600; }
 .lib-danger { color: var(--color-danger, #d33) !important; margin-inline-end: auto; }
+
+/* ---- easier multi-select ---- */
+.lib-card { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.lib-check { width: 30px; height: 30px; border-radius: 10px; touch-action: manipulation; }
+.lib-check input { width: 18px; height: 18px; }
+.lib-card.is-sel .lib-check { background: var(--lib-pri); }
+.lib-card.is-sel .lib-check input { accent-color: #fff; }
+.lib-grid .lib-card.is-sel { transform: scale(.975); }
+.lib:has(.lib-sel-bar) .lib-card:hover { transform: none; }
+.lib:has(.lib-sel-bar) .lib-grid .lib-card.is-sel { transform: scale(.975); }
+.lib-btn.is-on { border-color: var(--lib-pri); background: color-mix(in srgb, var(--lib-pri) 16%, transparent); }
+.lib-sel-hint { font-weight: 600; opacity: .85; }
