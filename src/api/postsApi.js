@@ -43,6 +43,8 @@ export const postsApi = {
   editComment: (cid, body) => api.patch(`${P}/comments/${cid}`, { body }).then(d),
   deleteComment: (cid) => api.del(`${P}/comments/${cid}`),
   likeComment: (cid) => api.post(`${P}/comments/${cid}/like`).then(d),
+  /** type: like | love | insightful | celebrate | support | funny — null removes my reaction. */
+  reactComment: (cid, type) => api.post(`${P}/comments/${cid}/react`, { type: type || null }).then(d),
 
   trendingTags: (limit = 12) => api.get(`${P}/tags/trending`, { limit }).then(d),
   suggestTags: (q) => api.get(`${P}/tags/suggest`, { q }).then(d),

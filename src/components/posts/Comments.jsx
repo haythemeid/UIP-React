@@ -4,10 +4,12 @@ import { postsApi } from '../../api/postsApi';
 import { errorMessage } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { ago } from '../feed/feedUi';
-import { Alert, Empty, PAvatar, REPORT_REASONS, RichText, useTt } from './shared';
+import { Alert, Empty, PAvatar, REACTIONS, REPORT_REASONS, RichText, useTt } from './shared';
+import usePostsRealtime, { isOwnEcho, markLocalWrite } from '../../lib/usePostsRealtime';
 import { Dialog, useDialogs } from './Dialogs';
 
 const MAX = 2000;
+const RCOLOR = { like: '#3b5bdb', love: '#e11d48', insightful: '#d97706', celebrate: '#16a34a', support: '#0891b2', funny: '#ca8a04' };
 
 /** Auto-growing textarea: Enter sends, Shift+Enter adds a line, Esc cancels. */
 function Field({ value, onChange, onSubmit, onCancel, placeholder, autoFocus, busy, label, sendLabel, compact }) {
@@ -68,7 +70,12 @@ function Comment({ c, postId, canComment, onChange, onDeleted, onReply, depth = 
   const [report, setReport] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [long, setLong] = useState(false);
+  const [pick, setPick] = useState(false);
   const box = useRef(null);
+  const pickRef = useRef(null);
+  const pressT = useRef(0);
+  const pressed = useRef(false);
+  const hoverT = useRef(0);
   const sendLabel = { send: tt('Send', 'إرسال'), cancel: tt('Cancel', 'إلغاء') };
 
   useEffect(() => {
@@ -87,19 +94,55 @@ function Comment({ c, postId, canComment, onChange, onDeleted, onReply, depth = 
       setMore(!!r.meta.has_more);
     } catch (e) { setErr(errorMessage(e)); } finally { setLoadingReplies(false); }
   };
-  const like = async () => {
-    const was = !!c.liked_by_me;
-    onChange({ ...c, liked_by_me: !was, likes_count: Math.max(0, (c.likes_count || 0) + (was ? -1 : 1)) }); // optimistic
-    try { const r = await postsApi.likeComment(c.id); onChange({ ...c, liked_by_me: r.liked ?? !was, likes_count: r.likes_count ?? Math.max(0, (c.likes_count || 0) + (was ? -1 : 1)) }); }
-    catch (e) { onChange(c); setErr(errorMessage(e)); }
+  // Reactions on comments: same six as the post. Click = like / remove, hover (or long-press on touch) = pick another one.
+  const react = async (type) => {
+    markLocalWrite();
+    const prev = c;
+    const was = c.my_reaction || (c.liked_by_me ? 'like' : null);
+    const bd = { ...(c.reactions || {}) };
+    if (was) { bd[was] = Math.max(0, (bd[was] || 1) - 1); if (!bd[was]) delete bd[was]; }
+    if (type) bd[type] = (bd[type] || 0) + 1;
+    onChange({ ...c, my_reaction: type, liked_by_me: !!type, likes_count: Object.values(bd).reduce((a, b) => a + b, 0), reactions: bd }); // optimistic
+    try {
+      const r = await postsApi.reactComment(c.id, type);
+      onChange({ ...c, my_reaction: r.my_reaction ?? null, liked_by_me: !!r.my_reaction, likes_count: r.likes_count ?? 0, reactions: r.reactions || {} });
+    } catch (e) { onChange(prev); setErr(errorMessage(e)); }
   };
+  const openPick = () => { clearTimeout(hoverT.current); hoverT.current = setTimeout(() => setPick(true), 250); };
+  const closePick = () => { clearTimeout(hoverT.current); hoverT.current = setTimeout(() => setPick(false), 200); };
+  const pressStart = (e) => { if (e.pointerType !== 'touch') return; pressed.current = false; clearTimeout(pressT.current); pressT.current = setTimeout(() => { pressed.current = true; setPick(true); }, 420); };
+  const pressEnd = () => clearTimeout(pressT.current);
+  useEffect(() => () => { clearTimeout(pressT.current); clearTimeout(hoverT.current); }, []);
+  useEffect(() => {
+    if (!pick) return undefined;
+    const h = (e) => { if (pickRef.current && !pickRef.current.contains(e.target)) setPick(false); };
+    document.addEventListener('pointerdown', h);
+    return () => document.removeEventListener('pointerdown', h);
+  }, [pick]);
+  const refreshReplies = async () => {
+    try {
+      const r = await postsApi.replies(c.id, 1);
+      setReplies((p) => { const ids = new Set(r.items.map((x) => x.id)); return [...r.items, ...(p || []).filter((x) => !ids.has(x.id))]; });
+    } catch { /* the next event / reconnect fixes it */ }
+  };
+  // Realtime inside an opened thread: new / edited / reacted replies appear without reloading
+  const rt = useRef(0);
+  usePostsRealtime(postId, (d) => {
+    if (isOwnEcho(d, me?.id)) return;
+    if (d.kind === 'comment_delete' && d.comment_id) { setReplies((p) => (p ? p.filter((x) => x.id !== d.comment_id) : p)); return; }
+    if (d.kind === 'resync' || (d.parent_id === c.id && ['comment', 'comment_react', 'comment_edit'].includes(d.kind))) {
+      clearTimeout(rt.current);
+      rt.current = setTimeout(refreshReplies, 250 + Math.random() * 500);
+    }
+  }, depth === 0 && replies !== null);
+  useEffect(() => () => clearTimeout(rt.current), []);
   const startReply = () => {
     setOpen(true);
     setText(depth > 0 || (c.author && !c.author.is_me) ? `@${c.author.full_name} ` : '');
   };
   const reply = async () => {
     if (!text.trim() || busy) return;
-    setBusy(true); setErr('');
+    setBusy(true); setErr(''); markLocalWrite();
     try {
       const n = await postsApi.addComment(postId, text.trim(), c.parent_id || c.id);
       setText(''); setOpen(false);
@@ -111,6 +154,7 @@ function Comment({ c, postId, canComment, onChange, onDeleted, onReply, depth = 
   const save = async () => {
     if (!edit.trim() || busy) return;
     setBusy(true); setErr('');
+    markLocalWrite();
     try { const n = await postsApi.editComment(c.id, edit.trim()); onChange({ ...c, ...n }); setEditing(false); } catch (e) { setErr(errorMessage(e)); } finally { setBusy(false); }
   };
   const del = async () => {
@@ -123,11 +167,12 @@ function Comment({ c, postId, canComment, onChange, onDeleted, onReply, depth = 
       confirmLabel: tt('Delete', 'حذف'),
       run: () => postsApi.deleteComment(c.id),
     });
-    if (ok) { setLeaving(true); setTimeout(() => onDeleted(c), 180); }
+    if (ok) { markLocalWrite(); setLeaving(true); setTimeout(() => onDeleted(c), 180); }
   };
 
   const body = c.body || '';
   const clamp = body.length > 420 && !long;
+  const myR = c.my_reaction ? REACTIONS[c.my_reaction] : c.liked_by_me ? REACTIONS.like : null;
   const hasMenu = c.can.edit || c.can.delete || !c.author.is_me;
 
   return (
@@ -141,13 +186,21 @@ function Comment({ c, postId, canComment, onChange, onDeleted, onReply, depth = 
           </div>
         ) : (
           <div className="pp-cm__row">
-            <div className="pp-cm__bubble">
+            <div className={`pp-cm__bubble${c.likes_count > 0 ? ' has-likes' : ''}`}>
               <div className="pp-cm__who">
                 <strong>{c.author.full_name}</strong>
                 {c.author.is_author && <em className="pp-chip is-brand">{tt('Author', 'الكاتب')}</em>}
               </div>
               <p dir="auto"><RichText text={clamp ? `${body.slice(0, 420)}…` : body} />{clamp && <button type="button" className="pp-link" onClick={() => setLong(true)}> {tt('See more', 'عرض المزيد')}</button>}</p>
-              {c.likes_count > 0 && <span className="pp-cm__likes" aria-label={tt(`${c.likes_count} likes`, `${c.likes_count} إعجاب`)}><Icon name="heart" size={11} />{c.likes_count}</span>}
+              {c.likes_count > 0 && (() => {
+                const top = Object.entries(c.reactions || {}).sort((a, b) => b[1] - a[1]).slice(0, 3);
+                return (
+                  <span className="pp-cm__likes" title={top.map(([k, n]) => `${tt(REACTIONS[k]?.en, REACTIONS[k]?.ar)} ${n}`).join(' · ')}>
+                    <span className="pp-cm__emo">{(top.length ? top : [['like', 1]]).map(([k]) => <i key={k}>{REACTIONS[k]?.e}</i>)}</span>
+                    {c.likes_count > 1 && <b>{c.likes_count}</b>}
+                  </span>
+                );
+              })()}
             </div>
             {hasMenu && (
               <div className="pp-cm__menu" ref={box}>
@@ -165,7 +218,21 @@ function Comment({ c, postId, canComment, onChange, onDeleted, onReply, depth = 
         )}
         {!editing && (
           <div className="pp-cm__acts">
-            <button type="button" className={c.liked_by_me ? 'is-on' : ''} onClick={like} aria-pressed={!!c.liked_by_me}>{c.liked_by_me ? tt('Liked', 'أعجبني') : tt('Like', 'إعجاب')}</button>
+            <span className="pp-cm__react" ref={pickRef} onMouseEnter={openPick} onMouseLeave={closePick}>
+              {pick && (
+                <span className="pp-react__pick pp-cm__pick" role="menu">
+                  {Object.entries(REACTIONS).map(([k, r]) => (
+                    <button key={k} type="button" role="menuitem" title={tt(r.en, r.ar)} className={c.my_reaction === k ? 'is-on' : ''}
+                      onClick={() => { setPick(false); react(c.my_reaction === k ? null : k); }}>{r.e}</button>
+                  ))}
+                </span>
+              )}
+              <button type="button" className={`pp-cm__rbtn${myR ? ' is-on' : ''}`} style={myR ? { '--rc': RCOLOR[c.my_reaction || 'like'] } : undefined} aria-pressed={!!myR}
+                onPointerDown={pressStart} onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd} onContextMenu={(e) => e.preventDefault()}
+                onClick={() => { if (pressed.current) { pressed.current = false; return; } react(myR ? null : 'like'); }}>
+                {myR ? <><span aria-hidden="true">{myR.e}</span> {tt(myR.en, myR.ar)}</> : tt('Like', 'إعجاب')}
+              </button>
+            </span>
             {canComment && <button type="button" onClick={() => (open ? setOpen(false) : startReply())}>{tt('Reply', 'رد')}</button>}
             <span className="pp-cm__time" title={c.created_at}>{ago(c.created_at, locale)}{c.edited_at ? ` · ${tt('Edited', 'معدّل')}` : ''}</span>
           </div>
@@ -225,9 +292,25 @@ export default function Comments({ post, onCount }) {
   useEffect(() => { setItems(null); load(1); }, [load]);
   useEffect(() => { if (!toast) return undefined; const t = setTimeout(() => setToast(''), 2600); return () => clearTimeout(t); }, [toast]);
 
+  // Realtime: new / edited / deleted / reacted comments from other people show up by themselves
+  const refreshT = useRef(0);
+  usePostsRealtime(post.id, (d) => {
+    if (isOwnEcho(d, user?.id)) return;
+    if (d.kind === 'comment_delete' && d.comment_id) setItems((p) => (p ? p.filter((x) => x.id !== d.comment_id) : p));
+    if (!['comment', 'comment_react', 'comment_edit', 'comment_delete', 'resync'].includes(d.kind)) return;
+    clearTimeout(refreshT.current);
+    refreshT.current = setTimeout(async () => {
+      try {
+        const r = await postsApi.comments(post.id, sort, 1);
+        setItems((p) => { if (!p) return r.items; const ids = new Set(r.items.map((x) => x.id)); return [...r.items, ...p.filter((x) => !ids.has(x.id))]; });
+      } catch { /* the next event / reconnect fixes it */ }
+    }, 250 + Math.random() * 500);
+  });
+  useEffect(() => () => clearTimeout(refreshT.current), []);
+
   const add = async () => {
     if (!text.trim() || busy) return;
-    setBusy(true); setErr('');
+    setBusy(true); setErr(''); markLocalWrite();
     try { const n = await postsApi.addComment(post.id, text.trim()); setText(''); setItems((p) => [n, ...(p || [])]); onCount?.(1); }
     catch (er) { setErr(errorMessage(er)); } finally { setBusy(false); }
   };

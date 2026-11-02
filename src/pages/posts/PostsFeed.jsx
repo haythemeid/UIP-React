@@ -13,6 +13,7 @@ import '../../styles/css/posts.css';
 import '../../styles/css/posts-pro.css';
 import '../../styles/css/posts-engage.css';
 import { useDialogs } from '../../components/posts/Dialogs';
+import { onRealtime } from '../../lib/realtime';
 
 const TABS = [
   ['for_you', 'For you', 'لك', 'ai-spark'], ['following', 'Following', 'المتابَعون', 'users'], ['latest', 'Latest', 'الأحدث', 'clock'],
@@ -79,6 +80,16 @@ export default function PostsFeed() {
     } catch (e) { setErr(errorMessage(e)); } finally { setLoading(false); }
   }, [effMode, tag, q, status, single, col]);
   useEffect(() => { load(1); }, [load]);
+
+  // Realtime: other people's new posts → a "N new posts" pill (no jumping feed); reconnect → quiet reload of page 1
+  const [fresh, setFresh] = useState(0);
+  const liveMode = !single && !tag && !q && (mode === 'for_you' || mode === 'latest');
+  useEffect(() => setFresh(0), [mode, tag, q, single]);
+  useEffect(() => onRealtime('posts', (d, topic) => {
+    if (!liveMode) return;
+    if (topic === 'resync') return;
+    if (d.kind === 'new' && Number(d.actor) !== Number(user?.id)) setFresh((n) => n + 1);
+  }), [liveMode, user?.id]);
 
   useEffect(() => {
     if (!sentinel.current || !more || loading) return undefined;
@@ -169,6 +180,11 @@ export default function PostsFeed() {
           )}
 
           {err && <Alert tt={tt} onRetry={() => load(1)}>{err}</Alert>}
+          {fresh > 0 && (
+            <button type="button" className="pp-newpill" onClick={() => { setFresh(0); window.scrollTo?.({ top: 0, behavior: 'smooth' }); load(1, true); }}>
+              <Icon name="refresh" size={14} /> {tt(`${fresh} new post${fresh > 1 ? 's' : ''}`, `${fresh} ${fresh > 2 && fresh < 11 ? 'منشورات جديدة' : 'منشور جديد'}`)}
+            </button>
+          )}
           <div className="pp-stack">
             {items.map((p) => <PostCard key={p.id} post={p} onChange={replace} onRemoved={drop} onTag={pickTag} onEdit={setEditing} onSavedRemoved={unsavedHere} />)}
           </div>

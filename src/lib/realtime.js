@@ -11,6 +11,7 @@ import { getReverbConfig } from './reverbConfig';
  *
  *   topic 'messaging'    {conversation_id, kind: message|reaction|read|typing|change|inbox}
  *   topic 'notification' {id?, title?, body?, ...}   (a new one, or "re-sync" after a read on another device)
+ *   topic 'posts'        {post_id, kind: react|comment|comment_react|comment_edit|comment_delete|save|edit|new|removed, actor, comment_id?, parent_id?}
  *   topic 'drive'        {node_id?, kind: tree|content}   (My PC changed on this or another device)
  *   topic 'resync'       socket (re)connected → refresh everything once (covers any missed ping)
  *
@@ -86,6 +87,8 @@ export async function startRealtime(userId) {
   });
 
   echo.private(`App.Models.User.${userId}`).listen('.rt', handlePing);
+  // public posts: one shared channel (ids + kind only; the screens re-fetch the real data through the permission-checked API)
+  try { echo.private('posts.feed').listen('.posts', (p) => emit('posts', p || {})); } catch { /* optional: polling / resync still cover it */ }
 
   const conn = echo.connector?.pusher?.connection;
   if (conn) {
@@ -117,6 +120,7 @@ export function stopRealtime() {
     document.removeEventListener('visibilitychange', echo.__wake);
     window.removeEventListener('online', echo.__wake);
     echo.leave(`App.Models.User.${currentUid}`);
+    echo.leave('posts.feed');
     echo.disconnect();
   } catch { /* ignore */ }
   echo = null; currentUid = null; connected = false;

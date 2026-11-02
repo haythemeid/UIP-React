@@ -12,6 +12,8 @@ import ShareDialog from './ShareDialog';
 import InsightsDialog from './InsightsDialog';
 import RepostDialog from './RepostDialog';
 import { useDialogs } from './Dialogs';
+import { useAuth } from '../../context/AuthContext';
+import usePostsRealtime, { isOwnEcho, markLocalWrite } from '../../lib/usePostsRealtime';
 
 const Comments = lazy(() => import('./Comments'));
 const BODY_CLAMP = 420;
@@ -53,7 +55,21 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
 
   const patch = (p) => setPost((cur) => { const n = { ...cur, ...p }; onChange?.(n); return n; });
   const bumpCount = (k, d) => patch({ counts: post.counts ? { ...post.counts, [k]: Math.max(0, (post.counts[k] || 0) + d) } : post.counts });
-  const run = async (fn) => { setErr(''); setNote(''); try { await fn(); } catch (e) { setErr(errorMessage(e)); } };
+  const run = async (fn) => { setErr(''); setNote(''); markLocalWrite(); try { await fn(); } catch (e) { setErr(errorMessage(e)); } };
+
+  // Realtime: someone reacted / commented / saved / edited this post → re-fetch it (counts, my state, text) a moment later
+  const { user: me } = useAuth();
+  const rtTimer = useRef(0);
+  usePostsRealtime(post.id, (d) => {
+    if (d.kind === 'removed') { onRemoved?.(post); return; }
+    if (isOwnEcho(d, me?.id)) return;
+    if (d.kind === 'resync') { const r = ref.current?.getBoundingClientRect(); if (!r || r.bottom < -300 || r.top > window.innerHeight + 300) return; }
+    clearTimeout(rtTimer.current);
+    rtTimer.current = setTimeout(async () => {
+      try { const n = await postsApi.one(post.id); if (n) patch(n); } catch (e) { if (e?.status === 404) onRemoved?.(post); }
+    }, 200 + Math.random() * 600);
+  }, !compactView);
+  useEffect(() => () => clearTimeout(rtTimer.current), []);
 
   // dwell tracking: report a view once the card has been mostly visible for 2s (feeds the ranking), and again on leave with the real dwell
   useEffect(() => {

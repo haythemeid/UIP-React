@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from '../Icon';
 import { postsApi } from '../../api/postsApi';
 import { errorMessage } from '../../api/client';
 import { useTt } from './shared';
 
+let sheetSeq = 0; // only one save sheet can be open: a newer one closes any older one
 const LAST_KEY = 'uip_posts_last_collection';
 const readLast = () => { try { const v = localStorage.getItem(LAST_KEY); return v ? Number(v) : null; } catch { return null; } };
 
@@ -25,6 +27,13 @@ export default function SaveDialog({ post, onClose, onDone }) {
   useEffect(() => {
     postsApi.collections().then((r) => { setCols(r.items || []); if (!already && readLast() && !(r.items || []).some((c) => c.id === readLast())) setSel(null); }).catch((e) => { setCols([]); setErr(errorMessage(e)); });
   }, [already]);
+  useEffect(() => {
+    const me = ++sheetSeq;
+    const h = (e) => { if (e.detail !== me) onClose(); };
+    window.addEventListener('pp-save-sheet', h);
+    window.dispatchEvent(new CustomEvent('pp-save-sheet', { detail: me }));
+    return () => window.removeEventListener('pp-save-sheet', h);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const k = (e) => { if (e.key === 'Escape' && !busy) onClose(); };
     window.addEventListener('keydown', k);
@@ -53,7 +62,7 @@ export default function SaveDialog({ post, onClose, onDone }) {
     </button>
   );
 
-  return (
+  return createPortal(
     <div className="sv-scrim" onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onClose(); }}>
       <div className="sv-sheet" role="dialog" aria-modal="true" aria-label={tt('Save post', 'حفظ المنشور')}>
         {confirm ? (
@@ -96,6 +105,5 @@ export default function SaveDialog({ post, onClose, onDone }) {
           </>
         )}
       </div>
-    </div>
-  );
+    </div>, document.body);
 }
