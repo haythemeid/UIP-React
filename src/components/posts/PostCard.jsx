@@ -148,7 +148,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
 
       {hiddenMedia && post.media.length > 0 ? (
         <button type="button" className="pp-sensitive" onClick={() => setSensitiveOk(true)}><Icon name="eye-off" size={22} /><strong>{tt('Sensitive content', 'محتوى حساس')}</strong><span>{tt('Tap to view', 'اضغط للعرض')}</span></button>
-      ) : <PostMedia media={post.media} canDownload={post.can.download} canRun={post.can.run !== false} />}
+      ) : <PostMedia media={post.media} canDownload={post.can.download} canRun={post.can.run !== false} post={post} onPostChange={(n) => { if (n) patch(n); }} />}
 
       {post.repost_of && (
         <div className="pp-quote">

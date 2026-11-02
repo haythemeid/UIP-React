@@ -12,6 +12,7 @@ import { describe, extOf, cellStr, MAX_ROWS, PdfCanvasViewer } from './FilePrevi
 import { agoText, discardDraft, getDraft } from '../lib/draftStore';
 import useDraftScope from '../lib/useDraftScope';
 import { afterGuard } from '../lib/saveCenter';
+import { generateAutoSubtitles, AutoSubError, MAX_VIDEO_BYTES } from '../lib/autoSubtitles';
 import { JSON_EXT } from '../lib/driveFileKinds';
 import '../styles/css/drafts.css';
 import '../styles/css/file-viewer.css';
@@ -280,7 +281,72 @@ function ImageStage({ url, alt, tt, apiRef, onSwipe, rtl }) {
   );
 }
 
-export default function FileViewer({ files, startIndex = 0, onClose: onCloseProp, locale = 'en', onSaveZip, onSaveFile, onEditText, projectId, loadBlob, sandboxTokenPathOf, embedded = false, registerGuard }) {
+
+/** Voice note / audio file: extract the text (Whisper) or translate it, right inside the viewer. */
+const SUB_ERR = {
+  unavailable: ['Transcription is not available right now.', 'استخراج النص غير متاح حاليًا.'],
+  unsupported: ['This browser cannot decode this audio.', 'المتصفح مش قادر يفك تشفير الصوت ده.'],
+  fetch_failed: ['Could not read the audio.', 'تعذّرت قراءة الصوت.'],
+  too_large: ['The file is too large to transcribe.', 'الملف كبير أوي لاستخراج النص.'],
+  decode_failed: ['Could not decode the audio.', 'تعذّر فك تشفير الصوت.'],
+  no_audio: ['There is no audio in this file.', 'مفيش صوت في الملف ده.'],
+  no_speech: ['No speech was detected.', 'ماتسمعش كلام في التسجيل.'],
+  rate_limited: ['Too many requests — try again in a minute.', 'طلبات كتير — جرّب بعد دقيقة.'],
+  cancelled: ['Cancelled.', 'اتلغى.'],
+};
+function AudioTranscript({ blob, url, name, tt }) {
+  const [st, setSt] = useState({ phase: 'idle' }); // idle | busy | done | error
+  const ctl = useRef(null);
+  useEffect(() => () => ctl.current?.abort(), []);
+  useEffect(() => { ctl.current?.abort(); setSt({ phase: 'idle' }); }, [blob, url]);
+  const run = async (target) => {
+    ctl.current?.abort();
+    const ac = new AbortController(); ctl.current = ac;
+    setSt({ phase: 'busy', target, pct: 0 });
+    try {
+      const out = await generateAutoSubtitles({
+        src: url, file: blob || null, target, signal: ac.signal,
+        onProgress: (p) => { if (!ac.signal.aborted) setSt((c) => (c.phase === 'busy' ? { ...c, pct: Math.round(p?.percent ?? p?.pct ?? c.pct ?? 0), stage: p?.stage } : c)); },
+        onCues: (cues) => { if (!ac.signal.aborted) setSt((c) => (c.phase === 'busy' ? { ...c, cues } : c)); },
+      });
+      if (!ac.signal.aborted) setSt({ phase: 'done', target, cues: out.cues || [], partial: !!out.partial });
+    } catch (e) {
+      if (ac.signal.aborted) return;
+      const m = e instanceof AutoSubError ? SUB_ERR[e.code] : null;
+      setSt({ phase: 'error', msg: m ? tt(m[0], m[1]) : tt('Could not process this audio.', 'تعذّرت معالجة الصوت.') });
+    }
+  };
+  const text = (st.cues || []).map((c) => c.text).filter(Boolean).join('\n');
+  const copy = async () => { try { await navigator.clipboard.writeText(text); } catch { /* blocked */ } };
+  const save = () => saveBlob(new Blob([`\ufeff${text}`], { type: 'text/plain;charset=utf-8' }), `${String(name || 'audio').replace(/\.[^.]+$/, '')}-${st.target || 'text'}.txt`);
+  const busy = st.phase === 'busy';
+  return (
+    <div className="st-fv__row" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(520px, 88vw)', gap: 10 }}>
+      <div className="st-fv__row" style={{ flexWrap: 'wrap', justifyContent: 'center' }}>
+        <button type="button" className="st-fv__btn st-fv__btn--primary" disabled={busy} onClick={() => run('orig')}><Icon name="file" size={16} /> {tt('Extract text', 'استخراج النص')}</button>
+        <button type="button" className="st-fv__btn" disabled={busy} onClick={() => run('ar')}>{tt('Translate → Arabic', 'ترجمة للعربي')}</button>
+        <button type="button" className="st-fv__btn" disabled={busy} onClick={() => run('en')}>{tt('Translate → English', 'ترجمة للإنجليزي')}</button>
+        {busy && <button type="button" className="st-fv__btn" onClick={() => ctl.current?.abort()}>{tt('Cancel', 'إلغاء')}</button>}
+      </div>
+      {busy && <p style={{ margin: 0, textAlign: 'center', opacity: 0.8 }}>{tt('Working on it…', 'جاري المعالجة…')}{st.pct ? ` ${st.pct}%` : ''}</p>}
+      {st.phase === 'error' && <p style={{ margin: 0, textAlign: 'center', color: '#e5484d' }}>{st.msg}</p>}
+      {text && (
+        <>
+          <div dir="auto" style={{ maxHeight: 220, overflow: 'auto', textAlign: 'start', whiteSpace: 'pre-wrap', lineHeight: 1.7, padding: 12, borderRadius: 10, border: '1px solid rgba(128,128,128,.3)', userSelect: 'text' }}>{text}</div>
+          {!busy && (
+            <div className="st-fv__row" style={{ justifyContent: 'center' }}>
+              <button type="button" className="st-fv__btn" onClick={copy}><Icon name="copy" size={16} /> {tt('Copy', 'نسخ')}</button>
+              <button type="button" className="st-fv__btn" onClick={save}><Icon name="download" size={16} /> {tt('Save as .txt', 'حفظ كـ txt')}</button>
+            </div>
+          )}
+          {st.partial && !busy && <p style={{ margin: 0, textAlign: 'center', opacity: 0.7 }}>{tt('Part of the audio could not be processed.', 'جزء من الصوت ماتعالجش.')}</p>}
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function FileViewer({ files, startIndex = 0, onClose: onCloseProp, locale = 'en', onSaveZip, onSaveFile, onEditText, projectId, loadBlob, sandboxTokenPathOf, embedded = false, registerGuard, canDownload = true }) {
   const rtl = locale === 'ar';
   const tt = useCallback((en, ar) => (locale === 'ar' ? ar : en), [locale]);
   const list = useMemo(() => files.filter((f) => f && f.url), [files]);
@@ -574,10 +640,12 @@ export default function FileViewer({ files, startIndex = 0, onClose: onCloseProp
               <Icon name="edit" size={17} /><span>{tt('Edit', 'تعديل')}</span>
             </button>
           )}
-          <a className="st-fv__btn" href={file.url} download={downloadName} title={tt('Download', 'تنزيل')} onClick={onDownloadClick}>
-            <Icon name="download" size={17} /><span>{tt('Download', 'تنزيل')}</span>
-          </a>
-          {ext !== 'pdf' && !loadBlob && (
+          {canDownload && (
+            <a className="st-fv__btn" href={file.url} download={downloadName} title={tt('Download', 'تنزيل')} onClick={onDownloadClick}>
+              <Icon name="download" size={17} /><span>{tt('Download', 'تنزيل')}</span>
+            </a>
+          )}
+          {canDownload && ext !== 'pdf' && !loadBlob && (
             <a className="st-fv__btn" href={file.url} target="_blank" rel="noopener noreferrer" title={tt('Open in a new tab', 'فتح في تبويب جديد')}>
               <Icon name="expand" size={17} /><span>{tt('New tab', 'تبويب جديد')}</span>
             </a>
@@ -620,7 +688,7 @@ export default function FileViewer({ files, startIndex = 0, onClose: onCloseProp
             <strong>{tt('No in-page preview for this file type', 'لا توجد معاينة داخل الصفحة لهذا النوع من الملفات')}</strong>
             <p>{tt('Download it, or open it in a new tab.', 'نزّله أو افتحه في تبويب جديد.')}</p>
             <div className="st-fv__row">
-              <a className="st-fv__btn st-fv__btn--primary" href={file.url} download={downloadName} onClick={onDownloadClick}><Icon name="download" size={16} /> {tt('Download', 'تنزيل')}</a>
+              {canDownload && <a className="st-fv__btn st-fv__btn--primary" href={file.url} download={downloadName} onClick={onDownloadClick}><Icon name="download" size={16} /> {tt('Download', 'تنزيل')}</a>}
               {ext !== 'pdf' && !loadBlob && <a className="st-fv__btn" href={file.url} target="_blank" rel="noopener noreferrer"><Icon name="expand" size={16} /> {tt('New tab', 'تبويب جديد')}</a>}
             </div>
           </div>
@@ -655,7 +723,7 @@ export default function FileViewer({ files, startIndex = 0, onClose: onCloseProp
               'فيه سكربتات أو محتوى نشط ممكن يضر جهازك أو حسابك، فاتمنع فتحه هنا.'
             )}</p>
             <div className="st-fv__row">
-              <button type="button" className="st-fv__btn" onClick={() => { if (confirmRiskyDownload(tt, downloadName)) saveBlob(data.blob, downloadName); }}>
+              <button type="button" className="st-fv__btn" hidden={!canDownload} onClick={() => { if (confirmRiskyDownload(tt, downloadName)) saveBlob(data.blob, downloadName); }}>
                 <Icon name="download" size={16} /> {tt('Download anyway…', 'نزّله رغم كده…')}
               </button>
             </div>
@@ -683,6 +751,7 @@ export default function FileViewer({ files, startIndex = 0, onClose: onCloseProp
             ) : (
               <BoostedAudio src={data.url} autoPlay style={{ width: 'min(420px, 80vw)' }} />
             )}
+            <AudioTranscript blob={data.blob && data.blob.size <= MAX_VIDEO_BYTES ? data.blob : null} url={data.url} name={downloadName} tt={tt} />
           </div>
         )}
         {stage === 'zip' && (

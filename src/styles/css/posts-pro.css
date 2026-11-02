@@ -418,3 +418,8 @@ select.pp-input:hover{background-color:var(--pp-soft)}
 .pi-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:48px 16px;color:var(--pp-mut);text-align:center;font-size:14px}
 .pi-empty svg{padding:14px;box-sizing:content-box;border-radius:50%;background:var(--pp-soft);color:var(--pp-pri)}
 @media(max-width:560px){.pi-sheet{height:min(88dvh,calc(100dvh - 24px))}}
+
+/* open-in-viewer button on video / audio attachments */
+.pp-open{position:absolute;inset-block-start:8px;inset-inline-end:8px;z-index:3;width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:8px;background:rgba(15,23,42,.62);color:#fff;cursor:pointer;backdrop-filter:blur(4px)}
+.pp-open:hover{background:rgba(15,23,42,.85)}
+.pp-audio{position:relative}
