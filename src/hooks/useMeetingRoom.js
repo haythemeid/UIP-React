@@ -1062,6 +1062,12 @@ export function useMeetingRoom({
         })
         .listenForWhisper('signal', handleSignal)
         .listenForWhisper('sfu', (m) => transportMgrRef.current?.handleAnnounce(m))
+        // Fallback for "end for everyone": the server's status broadcast can fail to reach the socket (e.g. API still on BROADCAST_CONNECTION=log).
+        // Only a host / co-host that we know from the roster is trusted.
+        .listenForWhisper('meeting-ended', (m) => {
+          const role = participantsRef.current?.[m?.key]?.role;
+          if (role === 'host' || role === 'co_host') setMeetingStatus('ended');
+        })
         .listenForWhisper('wb', (e) => { wbHandlersRef.current.forEach((fn) => { try { fn(e); } catch { /* a bad whiteboard message must never break the call */ } }); })
         .listenForWhisper('capture', (e) => {
           // someone else's screenshot / recording warning (client event: it never goes through Laravel)
@@ -1624,10 +1630,12 @@ export function useMeetingRoom({
 
   /** Host / co-host: close the meeting for everybody (they all get the "meeting ended" screen), then leave it ourselves. */
   const endMeetingForAll = useCallback(async () => {
+    try { channelRef.current?.whisper('meeting-ended', { key: myKey }); } catch { /* the server broadcast is the primary path */ }
     await meetingLifecycleApi.end(meetingUuid);
+    try { channelRef.current?.whisper('meeting-ended', { key: myKey }); } catch { /* ignore */ }
     leftRef.current = true;
     signalingApi.leave(meetingUuid, guestToken).catch(() => {});
-  }, [meetingUuid, guestToken]);
+  }, [meetingUuid, guestToken, myKey]);
 
   const clearNotice = useCallback(() => setNotice(null), []);
 
