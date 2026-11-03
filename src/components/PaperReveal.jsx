@@ -14,6 +14,8 @@ import { paperPending, subscribePaper } from '../lib/paperGate';
  */
 const PUBLIC = /^\/($|(projects|p|u|universities|post|s|join|verify-certificate|privacy-policy|403|500|auth)(\/|$))/;
 const isPublic = (path) => PUBLIC.test(path) || (STAFF_LOGIN_PATH && path.startsWith(STAFF_LOGIN_PATH));
+// The very first screen of a tab (also the signed-in app) is covered by the paper and unfolds once; later in-app navigation stays instant.
+let appOpened = false;
 const enabled = () => {
   if (isNative || typeof document === 'undefined') return false;
   if (document.documentElement.dataset.motion === 'off') return false;
@@ -24,11 +26,11 @@ export default function PaperReveal() {
   const { pathname } = useLocation();
   const prev = useRef(pathname);
   const startedAt = useRef(performance.now());
-  const [phase, setPhase] = useState(() => (enabled() && isPublic(pathname) ? 'cover' : 'idle'));
+  const [phase, setPhase] = useState(() => (enabled() && (isPublic(pathname) || !appOpened) ? 'cover' : 'idle'));
   const [soft, setSoft] = useState(false);
 
   // React now owns the paper: drop the static boot sheet from index.html (identical look, so no flicker).
-  useLayoutEffect(() => { document.getElementById('uip-boot')?.remove(); }, []);
+  useLayoutEffect(() => { document.getElementById('uip-boot')?.remove(); appOpened = true; }, []);
 
   useLayoutEffect(() => {
     if (prev.current === pathname) return;

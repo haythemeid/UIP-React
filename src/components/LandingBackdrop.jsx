@@ -12,7 +12,7 @@ const SHAPES = [
 function isLowEnd() {
   try {
     const n = typeof navigator !== 'undefined' ? navigator : {};
-    return !!(n.connection?.saveData || (n.deviceMemory && n.deviceMemory <= 4) || (n.hardwareConcurrency && n.hardwareConcurrency <= 4));
+    return !!(n.connection?.saveData || (n.deviceMemory && n.deviceMemory <= 2) || (n.hardwareConcurrency && n.hardwareConcurrency <= 2));
   } catch { return false; }
 }
 
