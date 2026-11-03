@@ -20,7 +20,9 @@ const clearMark = (id) => { try { localStorage.removeItem(markKey(id)); } catch 
  *
  * phase: idle | connecting | starting | running | exited | error | closed | disconnected
  */
-export function useSandbox(projectId, tokenPath) {
+export function useSandbox(projectId, tokenPath, opts = {}) {
+  const keepAliveRef = useRef(!!opts.keepAlive); // the cloud browser: closing the window only detaches, the gateway keeps the session so it can be re-attached
+  keepAliveRef.current = !!opts.keepAlive;
   const wsRef = useRef(null);
   const sinkRef = useRef(null);      // terminal writer, set by <SandboxPanel>
   const outRef = useRef('');         // output so far, replayed when the terminal (re)mounts
@@ -193,7 +195,7 @@ export function useSandbox(projectId, tokenPath) {
   }, [phase, connect]);
 
   // leaving the page ends the sandbox (it would only sit there until the idle timeout otherwise)
-  useEffect(() => () => { runRef.current += 1; try { wsRef.current?.send(JSON.stringify({ t: 'stop' })); } catch { /* ignore */ } closeSocket(); }, [closeSocket]);
+  useEffect(() => () => { runRef.current += 1; if (!keepAliveRef.current) { try { wsRef.current?.send(JSON.stringify({ t: 'stop' })); } catch { /* ignore */ } } closeSocket(); }, [closeSocket]);
 
   const busy = phase === 'connecting' || phase === 'starting';
   /** everything printed in the terminal so far (last 200 KB) — read by the "explain this error" button */
