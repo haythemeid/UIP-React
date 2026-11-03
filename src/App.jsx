@@ -4,6 +4,7 @@ import PageLoading from './components/PageLoading';
 import PaperReveal from './components/PaperReveal';
 import { VirtualModeProvider } from './virtual/virtualMode';
 import MyPcAccessGate from './components/MyPcAccessGate';
+import { roleHome } from './config/roleHome';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import RealtimeBridge from './components/RealtimeBridge';
 import ActivityTracker from './components/ActivityTracker';
@@ -208,6 +209,11 @@ function MyPcRedirect() {
   const { user } = useAuth();
   return <Navigate to={myPcPath(user?.role)} replace />;
 }
+/** `/student`, `/student/`, `/admin/` … (a portal root with no page after it) → this account's portal home instead of a 404. */
+function PortalRootRedirect() {
+  const { user } = useAuth();
+  return <Navigate to={roleHome(user?.role)} replace />;
+}
 const StudentGraduation = lazy(() => import('./pages/student/StudentGraduation'));
 const StudentGraduationTranscript = lazy(() => import('./pages/student/StudentGraduationTranscript'));
 const StudentGraduationCertificate = lazy(() => import('./pages/student/StudentGraduationCertificate'));
@@ -381,6 +387,9 @@ export default function App() {
               <Route path="/student/graduation/certificate" element={<StudentGraduationCertificate />} />
               {/* Group invite link: /join/group/:token (messaging). Guests sign in first, then come back here. */}
               <Route path="/join/group/:token" element={<JoinGroup />} />
+
+              {/* A bare portal root (/student/, /faculty/ …) is not a page: send it to that account's home. */}
+              {MY_PC_PREFIXES.map((px) => <Route key={`${px}-root`} path={`/${px}`} element={<PortalRootRedirect />} />)}
 
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />

@@ -99,6 +99,7 @@ const PRINT_PAGE = /^\/student\/graduation\/(transcript|certificate)\/?$/;
 export function resolveTarget(path) {
   const p = String(path || '').split(/[?#]/)[0];
   if (MY_PC.test(p)) return { kind: 'explorer' };
+  if (/^\/student\/?$/.test(p) && VM_BY_KEY.dashboard) return { kind: 'app', app: VM_BY_KEY.dashboard }; // the bare portal root is the dashboard, never a real page
   if (EXAM_ATTEMPT.test(p) || MEETING_ROOM.test(p)) return { kind: 'page' };
   if (PRINT_PAGE.test(p)) return { kind: 'tab' };
   const app = appForPath(p);
