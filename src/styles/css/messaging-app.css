@@ -1,7 +1,7 @@
 /* ==========================================================================
-   UIP Enterprise Messaging Ã¢â‚¬â€ Phase 30 (Global Upgrade)
+   UIPE Enterprise Messaging Ã¢â‚¬â€ Phase 30 (Global Upgrade)
    Teams / Slack / Discord / LinkedIn-Messaging inspired chat shell.
-   Built entirely on the existing UIP design tokens (variables.css) so it
+   Built entirely on the existing UIPE design tokens (variables.css) so it
    inherits light/dark themes and glassmorphism automatically Ã¢â‚¬â€ no new
    color system introduced. RTL handled via [dir="rtl"] overrides.
    ========================================================================== */
@@ -892,7 +892,7 @@ html body .msg-app .msg-thread__header { height: auto !important; min-height: va
 /* ==========================================================================
    Unified header (2026-10-08): every portal uses the Student design — the
    "Messages" title + subtitle live in the topbar, so the in-page header,
-   the "UIP / MESSAGES" eyebrow and the breadcrumb are hidden everywhere
+   the "UIPE / MESSAGES" eyebrow and the breadcrumb are hidden everywhere
    (the admin shell forces .page-header visible with !important, and the
    security shell re-shows the eyebrow, hence the !important + specificity).
    ========================================================================== */

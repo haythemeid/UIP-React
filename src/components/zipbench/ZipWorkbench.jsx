@@ -1065,7 +1065,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
       const targets = CONVERT_TARGETS.filter((l) => l !== cur && !(cur === 'React JSX' && l === 'JavaScript')).slice(0, 4);
       items.push(
         { sep: true },
-        { label: tt('Ask UIP AI…', 'اسأل UIP AI…'), icon: 'chat', onClick: () => openChat({ selection: true }) },
+        { label: tt('Ask UIPE AI…', 'اسأل UIPE AI…'), icon: 'chat', onClick: () => openChat({ selection: true }) },
         { label: tt('Explain this code', 'اشرح الكود'), icon: 'sparkles', onClick: () => go('explain') },
         { label: tt('Fix bugs', 'صلّح الأخطاء'), icon: 'wrench', onClick: () => go('fix') },
         { label: tt('Improve', 'حسّن الكود'), icon: 'edit', onClick: () => go('improve') },

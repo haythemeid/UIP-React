@@ -7,7 +7,7 @@ import { useIsMobileOS } from '../desktop/useIsMobileOS';
 import { belongsInDesktop } from './catalog';
 
 /**
- * Virtual mode ("UIP OS"): the student chooses to work on the WHOLE platform from inside the My PC desktop — every portal page
+ * Virtual mode ("UIPE OS"): the student chooses to work on the WHOLE platform from inside the My PC desktop — every portal page
  * (courses, exams, grades, messages…) opens as a window of that desktop.
  *
  * The choice lives on the server (GET/PUT /api/v1/desktop/virtual-mode → desktop_settings.virtual_mode) so it follows the student

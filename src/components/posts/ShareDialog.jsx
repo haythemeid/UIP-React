@@ -30,7 +30,7 @@ export default function ShareDialog({ post, onClose, onShared }) {
   const { user } = useAuth();
   // Public posts get the open page (/post/:id) so anyone with the link can read it; limited-audience posts keep the in-app link.
   const url = post.visibility === 'public' ? `${window.location.origin}/post/${post.id}` : `${window.location.origin}${window.location.pathname}?post=${post.id}`;
-  const title = post.title || (post.body || '').slice(0, 90) || tt('A post on UIP', 'منشور على UIP');
+  const title = post.title || (post.body || '').slice(0, 90) || tt('A post on UIPE', 'منشور على UIPE');
   const canRepost = post.can?.repost;
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);

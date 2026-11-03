@@ -22,7 +22,7 @@ import './mobile.css';
 export { useIsMobileOS } from './useIsMobileOS';
 
 /* ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   UIP Mobile — a purpose-built phone interface for My PC (not a squeezed desktop):
+   UIPE Mobile — a purpose-built phone interface for My PC (not a squeezed desktop):
    status bar · home screen (widget, search, app + file grid) · dock · full-screen apps with their own app bar ·
    gesture bar (tap / swipe up = home, long swipe = app switcher) · bottom sheets (new, item actions, move, control centre, search) ·
    long-press + multi-select instead of right-click / drag. All data / actions come from <DesktopOS> (same drive API, same windows).
@@ -144,7 +144,7 @@ export default function MobileShell(p) {
     vmApps = [], // virtual mode: the platform's pages ([{ id, en, ar, group }]) — they are apps of this phone too
   } = p;
 
-  const vm = useVirtualMode(); // UIP OS: the whole platform as apps of this phone
+  const vm = useVirtualMode(); // UIPE OS: the whole platform as apps of this phone
   const pv = (k) => (prefs && prefs[k] !== undefined ? prefs[k] : MOBILE_DEFAULTS[k]);
   const pages = pv('mHome') === 'pages';
   const gs = GLYPH_SIZES[pv('mIcon')] || 56;
@@ -177,7 +177,7 @@ export default function MobileShell(p) {
 
   // ---- home content ---------------------------------------------------------------------------------------
   const sysApps = useMemo(() => [
-    ...(aiEnabled ? [{ key: 'ai', app: 'ai', label: tt('UIP AI Assistant', 'مساعد UIP الذكي'), run: () => runCommand('ai') }] : []),
+    ...(aiEnabled ? [{ key: 'ai', app: 'ai', label: tt('UIPE AI Assistant', 'مساعد UIPE الذكي'), run: () => runCommand('ai') }] : []),
     { key: 'explorer', app: 'explorer', label: tt('This PC', 'جهازي'), run: () => openExplorer({}) },
     { key: 'bin', app: 'bin', label: tt('Recycle Bin', 'سلة المحذوفات'), run: () => openExplorer({ view: 'trash' }) },
     { key: 'settings', app: 'settings', label: tt('Settings', 'الإعدادات'), run: () => runCommand('settings') },
@@ -185,9 +185,9 @@ export default function MobileShell(p) {
     { key: 'notes', app: 'notes', label: tt('Notes', 'الملاحظات'), run: () => runCommand('notes') },
     { key: 'calendar', app: 'calendar', label: tt('Calendar', 'التقويم'), run: () => runCommand('calendar') },
     { key: 'calculator', app: 'calculator', label: tt('Calculator', 'الآلة الحاسبة'), run: () => runCommand('calculator') },
-    { key: 'terminal', app: 'terminal', label: tt('UIP Terminal', 'ترمينال UIP'), run: () => runCommand('terminal') },
+    { key: 'terminal', app: 'terminal', label: tt('UIPE Terminal', 'ترمينال UIPE'), run: () => runCommand('terminal') },
     { key: 'taskmgr', app: 'taskmgr', label: tt('Task Manager', 'مدير المهام'), run: () => runCommand('taskmgr') },
-    { key: 'portal', app: 'portal', label: tt('UIP Portal', 'بوابة UIP'), run: () => runCommand('portal') },
+    { key: 'portal', app: 'portal', label: tt('UIPE Portal', 'بوابة UIPE'), run: () => runCommand('portal') },
   ], [tt, openExplorer, runCommand, aiEnabled]);
   // platform pages as phone apps, grouped like the portal's sidebar; the Dock keeps the four you reach for most
   const vmItems = useMemo(() => vmApps.map((a) => ({ key: a.id, app: a.id, label: ar ? a.ar : a.en, group: a.group, run: () => runCommand(a.id) })), [vmApps, ar, runCommand]);
@@ -291,7 +291,7 @@ export default function MobileShell(p) {
         <Icon name="search" size={18} /><span>{tt('Search apps and files', 'ابحث في التطبيقات والملفات')}</span>
       </button>
       {showPlatform && (
-        <button type="button" className={`mos-platbtn${vm.enabled ? ' is-on' : ''}`} onClick={openPlatform} aria-label={vm.enabled ? tt('Platform pages', 'صفحات المنصة') : tt('Enter UIP OS', 'الدخول إلى UIP OS')}>
+        <button type="button" className={`mos-platbtn${vm.enabled ? ' is-on' : ''}`} onClick={openPlatform} aria-label={vm.enabled ? tt('Platform pages', 'صفحات المنصة') : tt('Enter UIPE OS', 'الدخول إلى UIPE OS')}>
           <Icon name="grid" size={20} />
         </button>
       )}
@@ -300,7 +300,7 @@ export default function MobileShell(p) {
   const uiposCard = showPlatform && !vm.enabled && (
     <button type="button" className="mos-uipos" onClick={openPlatform}>
       <span className="mos-uipos__ic"><Icon name="grid" size={22} /></span>
-      <span className="mos-uipos__tx"><b>{tt('Enter UIP OS', 'ادخل UIP OS')}</b><small>{tt('Courses, exams, grades and messages as apps on this phone', 'المواد والامتحانات والدرجات والرسائل كتطبيقات جوه الموبايل')}</small></span>
+      <span className="mos-uipos__tx"><b>{tt('Enter UIPE OS', 'ادخل UIPE OS')}</b><small>{tt('Courses, exams, grades and messages as apps on this phone', 'المواد والامتحانات والدرجات والرسائل كتطبيقات جوه الموبايل')}</small></span>
       <Icon name={ar ? 'chevron-left' : 'chevron-right'} size={18} />
     </button>
   );
@@ -635,9 +635,9 @@ export default function MobileShell(p) {
             <input type="range" min="40" max="100" value={brightness} onChange={(e) => setBrightness(Number(e.target.value))} aria-label={tt('Brightness', 'السطوع')} />
           </label>
           <Row icon="palette" label={tt('Phone look', 'مظهر الهاتف')} sub={tt('Layout, clock, icons, Dynamic Island', 'الشكل، الساعة، الأيقونات، الجزيرة')} onClick={() => setSheet({ type: 'phoneset' })} />
-          {showPlatform && <Row icon="grid" label={vm.enabled ? tt('Platform pages', 'صفحات المنصة') : tt('Enter UIP OS', 'ادخل UIP OS')} sub={vm.enabled ? undefined : tt('The whole platform inside My PC', 'المنصة كلها جوه جهازي')} onClick={() => setSheet({ type: vm.enabled ? 'nav' : 'uipos' })} />}
+          {showPlatform && <Row icon="grid" label={vm.enabled ? tt('Platform pages', 'صفحات المنصة') : tt('Enter UIPE OS', 'ادخل UIPE OS')} sub={vm.enabled ? undefined : tt('The whole platform inside My PC', 'المنصة كلها جوه جهازي')} onClick={() => setSheet({ type: vm.enabled ? 'nav' : 'uipos' })} />}
           <Row icon="settings" label={tt('Settings', 'الإعدادات')} onClick={after(() => runCommand('settings'))} />
-          {vm.enabled && <Row icon="logout" label={tt('Leave UIP OS', 'الخروج من UIP OS')} sub={tt('Back to the normal portal', 'الرجوع للمنصة العادية')} onClick={() => switchPlatform(false)} />}
+          {vm.enabled && <Row icon="logout" label={tt('Leave UIPE OS', 'الخروج من UIPE OS')} sub={tt('Back to the normal portal', 'الرجوع للمنصة العادية')} onClick={() => switchPlatform(false)} />}
           <Row icon="home" label={tt('Back to the portal', 'الرجوع للبوابة')} onClick={after(() => runCommand('portal'))} />
           <Row icon="logout" label={tt('Sign out', 'تسجيل الخروج')} onClick={after(() => runCommand('logout'))} />
         </Sheet>
@@ -671,7 +671,7 @@ export default function MobileShell(p) {
         <Sheet onClose={closeSheet}>
           <div className="mos-uiposhero">
             <span className="mos-uiposhero__ic"><Icon name="grid" size={30} /></span>
-            <h3 dir="auto">{tt('UIP OS — the platform inside My PC', 'UIP OS — المنصة جوه جهازي')}</h3>
+            <h3 dir="auto">{tt('UIPE OS — the platform inside My PC', 'UIPE OS — المنصة جوه جهازي')}</h3>
             <p dir="auto">{tt('Every page of the platform becomes an app on this phone, next to your files: courses, exams, grades, messages and projects.', 'كل صفحات المنصة بتبقى تطبيقات على الموبايل جنب ملفاتك: المواد والامتحانات والدرجات والرسائل والمشاريع.')}</p>
             <ul>
               <li><Icon name="check-circle" size={15} />{tt('One list to reach any page', 'قائمة واحدة توصّلك لأي صفحة')}</li>
@@ -680,7 +680,7 @@ export default function MobileShell(p) {
             </ul>
             {vmErr && <p className="mos-uiposhero__err" role="alert">{vmErr}</p>}
             <button type="button" className="mos-uiposhero__go" disabled={vm.busy || !vm.available} onClick={() => switchPlatform(true)}>
-              {vm.busy ? tt('Please wait…', 'ثانية واحدة…') : tt('Enter UIP OS', 'ادخل UIP OS')}
+              {vm.busy ? tt('Please wait…', 'ثانية واحدة…') : tt('Enter UIPE OS', 'ادخل UIPE OS')}
             </button>
           </div>
         </Sheet>

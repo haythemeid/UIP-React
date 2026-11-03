@@ -61,9 +61,9 @@ async function buildPoster({ qrPng, name, url, ar }) {
   ctx.fillStyle = grad; ctx.fillRect(0, 0, PW, 190);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.direction = 'ltr';
   ctx.fillStyle = '#ffffff'; ctx.font = `800 78px ${family}`;
-  ctx.fillText('UIP', PW / 2, 84);
+  ctx.fillText('UIPE', PW / 2, 84);
   ctx.globalAlpha = 0.85; ctx.font = `500 26px ${family}`;
-  ctx.fillText('Ultimate Intelligent Platform', PW / 2, 142);
+  ctx.fillText('Unified Integrated Platform Ecosystem', PW / 2, 142);
   ctx.globalAlpha = 1;
 
   // title

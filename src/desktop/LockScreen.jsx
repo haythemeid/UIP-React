@@ -101,8 +101,8 @@ export function LockScreen({ ar, tt, user, lockEnabled, onUnlock: onUnlockRaw, o
       <div className="lk-scroll">
         <header className="lk-top">
           <div className="lk-brand">
-            <img className="lk-brand__mark" src="/images/logo/uip-mark.png" srcSet="/images/logo/uip-mark.png 1x, /images/logo/uip-mark@2x.png 2x" alt="" width="52" height="52" decoding="async" />
-            <span className="lk-brand__txt"><b>UIP</b><small>Ultimate Intelligent Platform</small></span>
+            <img className="lk-brand__mark" src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark.png 1x, /images/logo/uipe-mark@2x.png 2x" alt="" width="52" height="52" decoding="async" />
+            <span className="lk-brand__txt"><b>UIPE</b><small>Unified Integrated Platform Ecosystem</small></span>
           </div>
           <div className="lk-clock" dir={dir}><Clock ar={ar} big /></div>
           <div className="lk-tools" dir="ltr">
@@ -131,10 +131,10 @@ export function LockScreen({ ar, tt, user, lockEnabled, onUnlock: onUnlockRaw, o
       </div>
       {leaving && (
         <div className="os-scrim os-scrim--top" style={{ inset: 0 }} onPointerDown={() => setLeaving(false)}>
-          <div className="os-dlg os-dlg--confirm" role="alertdialog" aria-modal="true" aria-label={tt('Exit to the UIP portal?', 'الخروج إلى بوابة UIP؟')} dir={dir}
+          <div className="os-dlg os-dlg--confirm" role="alertdialog" aria-modal="true" aria-label={tt('Exit to the UIPE portal?', 'الخروج إلى بوابة UIPE؟')} dir={dir}
             onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Escape') setLeaving(false); }}>
             <span className="os-dlg__ico" aria-hidden="true"><Icon name="logout" size={26} /></span>
-            <h3>{tt('Exit to the UIP portal?', 'الخروج إلى بوابة UIP؟')}</h3>
+            <h3>{tt('Exit to the UIPE portal?', 'الخروج إلى بوابة UIPE؟')}</h3>
             <p>{tt('You will leave the desktop and go back to the portal. Your files stay saved.', 'هتخرج من سطح المكتب وترجع للبوابة. ملفاتك فاضلة محفوظة.')}</p>
             <footer>
               <button type="button" className="os-btn" onClick={() => setLeaving(false)}>{tt('Cancel', 'إلغاء')}<kbd>Esc</kbd></button>

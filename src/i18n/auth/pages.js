@@ -31,7 +31,7 @@ export default {
   'Sign in': 'تسجيل الدخول',
   // register
   'Create your account': 'أنشئ حسابك',
-  'Join the Ultimate Intelligent Platform': 'انضم إلى منصة Ultimate Intelligent Platform',
+  'Join the Unified Integrated Platform Ecosystem': 'انضم إلى منصة Unified Integrated Platform Ecosystem',
   'Full name': 'الاسم بالكامل',
   'Jane Doe': 'الاسم الثلاثي',
   'Account type': 'نوع الحساب',

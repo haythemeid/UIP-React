@@ -18,6 +18,7 @@ import { Dialog } from '../../components/posts/Dialogs';
 import UserAvatar from '../../components/posts/UserAvatar';
 import { StoryHubProvider, useStoryHub } from '../../components/posts/StoryHub';
 import { usePhotoFlow } from '../../components/posts/ProfilePhotoFlow';
+import { BioBubble, BioEditor, bioStyleId } from '../../components/messaging/BioNote';
 import PersonActions from '../../components/network/PersonActions';
 import { roleText } from '../../components/network/PersonCard';
 import '../../styles/css/posts.css';
@@ -29,22 +30,15 @@ import '../../styles/css/posts-profile.css';
 const TABS = [['posts', 'Posts', 'المنشورات', 'note'], ['about', 'About', 'نبذة', 'info'], ['friends', 'Friends', 'الأصدقاء', 'users'], ['photos', 'Photos', 'الصور', 'image']];
 const coverUrl = (p) => (p ? `/${String(p).replace(/^\//, '')}` : null);
 
-function BioDialog({ initial, max, onClose, onSaved }) {
+function BioDialog({ onClose, onSaved }) {
   const { tt } = useTt();
-  const [text, setText] = useState(initial || '');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-  const { patch } = useChatSettings();
-  const save = async () => {
-    setBusy(true); setErr('');
-    try { await patch({ bio: text.trim() }); onSaved(text.trim()); } catch (e) { setErr(errorMessage(e)); setBusy(false); }
-  };
+  const { settings, patch } = useChatSettings();
+  // BioEditor = the same editor as in chat: emoji picker, quick statuses, 8 bubble designs, live preview.
+  const save = async (v) => { await patch(v); onSaved(v.bio, v.bio_style); };
   return (
-    <Dialog title={tt('Edit bio', 'تعديل البايو')} icon="edit" busy={busy} onClose={onClose}
-      footer={<><button type="button" className="pp-btn" disabled={busy} onClick={onClose}>{tt('Cancel', 'إلغاء')}</button><button type="button" className="pp-btn is-primary" disabled={busy} onClick={save}>{tt('Save', 'حفظ')}</button></>}>
-      <textarea className="pp-input" rows={4} maxLength={max} value={text} autoFocus onChange={(e) => setText(e.target.value)} placeholder={tt('Describe yourself in a few words…', 'عرّف بنفسك في كلمتين…')} />
-      <small className="pp-muted">{text.length}/{max}</small>
-      {err && <p className="pp-err" role="alert">{err}</p>}
+    <Dialog title={tt('Edit bio', 'تعديل البايو')} icon="edit" wide onClose={onClose}
+      footer={<button type="button" className="pp-btn" onClick={onClose}>{tt('Cancel', 'إلغاء')}</button>}>
+      <div className="pfx-bioed"><BioEditor settings={settings} save={save} /></div>
     </Dialog>
   );
 }
@@ -182,7 +176,7 @@ function About({ data, tt, locale, onEditBio }) {
   return (
     <section className="pfx-card">
       <header className="pfx-card__head"><h2>{tt('About', 'نبذة')}</h2>{data.is_me && <button type="button" className="pp-btn" onClick={onEditBio}><Icon name="edit" size={14} /> {tt('Edit bio', 'تعديل البايو')}</button>}</header>
-      {data.bio ? <p className="pfx-bio" dir="auto">{data.bio}</p> : <p className="pp-muted">{data.is_me ? tt('Add a short bio so people know who you are.', 'أضف بايو قصير ليعرفك الناس.') : tt('No bio to show.', 'لا يوجد بايو لعرضه.')}</p>}
+      {data.bio ? <BioBubble text={data.bio} styleId={data.bio_style} className="pfx-biob" tail={false} /> : <p className="pp-muted">{data.is_me ? tt('Add a short bio so people know who you are.', 'أضف بايو قصير ليعرفك الناس.') : tt('No bio to show.', 'لا يوجد بايو لعرضه.')}</p>}
       <ul className="pfx-about">
         {row('briefcase', tt('Role', 'الدور'), roleText(data.role, tt))}
         {row('building', tt('University', 'الجامعة'), org)}
@@ -331,7 +325,7 @@ function ProfileInner({ userId }) {
               {data.follows_me && <span className="pp-chip">{tt('Follows you', 'يتابعك')}</span>}
               {data.mutual_connections > 0 && <span className="pp-chip"><Icon name="users" size={12} /> {tt(`${data.mutual_connections} mutual`, `${data.mutual_connections} مشترك`)}</span>}
             </div>
-            {data.bio && <p className="pfx-bio" dir="auto"><RichText text={data.bio} /></p>}
+            {data.bio && <BioBubble text={data.bio} styleId={data.bio_style} className="pfx-biob" />}
           </div>
           <div className="pfx-id__actions">
             {isMe ? (
@@ -387,7 +381,7 @@ function ProfileInner({ userId }) {
 
       {lb != null && <Lightbox items={photos.map((x) => x.m)} start={lb} onClose={() => setLb(null)} />}
       {privOpen && <PrivacyDialog onClose={() => setPrivOpen(false)} onSaved={(r) => { setPrivOpen(false); setData((d) => d && { ...d, locked: !!r.profile_locked, photo_can_download: true }); setNotice(tt('Privacy settings saved.', 'تم حفظ إعدادات الخصوصية.')); }} />}
-      {bioOpen && <BioDialog initial={data.bio || ''} max={settings?.bio_max || 190} onClose={() => setBioOpen(false)} onSaved={(b) => { setBioOpen(false); setData((d) => ({ ...d, bio: b || null })); }} />}
+      {bioOpen && <BioDialog onClose={() => setBioOpen(false)} onSaved={(b, st) => { setBioOpen(false); setData((d) => ({ ...d, bio: b || null, bio_style: b ? bioStyleId(st) : null })); }} />}
       {flow.node}
     </div>
   );

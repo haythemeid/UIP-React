@@ -1,4 +1,4 @@
-/* UIP Desktop — macOS look. Loaded after desktop.css: design tokens, menu bar, Dock, traffic-light windows, Launchpad,
+/* UIPE Desktop — macOS look. Loaded after desktop.css: design tokens, menu bar, Dock, traffic-light windows, Launchpad,
    Spotlight, lock screen and the Finder-style "This PC" window. Everything is scoped to .os. */
 
 /* ── tokens ─────────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -265,7 +265,7 @@ body.os-active { overflow: hidden; background: #000; }
 body.os-active #root { display: none; }
 @supports (height: 100dvh) { .os { height: 100dvh; bottom: auto; } }
 
-/* Start-up screen: UIP NUB (light: pure CSS, transform / opacity only) */
+/* Start-up screen: UIPE NUB (light: pure CSS, transform / opacity only) */
 .os-boot { background: radial-gradient(ellipse 60% 50% at 50% 42%, #162447 0%, #0a1024 55%, #050816 100%); gap: 0; color: #fff; }
 .os-boot__logo { display: grid; place-items: center; width: 104px; height: 104px; border-radius: 30px; color: #fff; background: linear-gradient(145deg, var(--os-accent, #3b82f6), #6d5ef0); box-shadow: 0 0 0 1px rgba(255, 255, 255, .18) inset, 0 18px 50px color-mix(in srgb, var(--os-accent, #3b82f6) 55%, transparent); animation: os-boot-in .7s cubic-bezier(.2, .8, .2, 1) both, os-boot-float 3.2s ease-in-out .7s infinite; }
 .os-boot__name { margin-top: 26px; display: flex; gap: 10px; align-items: baseline; font: 800 30px/1 system-ui, -apple-system, 'Segoe UI', sans-serif; letter-spacing: .28em; padding-inline-start: .28em; animation: os-boot-in .7s cubic-bezier(.2, .8, .2, 1) .12s both; direction: ltr; }

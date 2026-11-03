@@ -2,7 +2,7 @@
    every wired dashboard page (student/university/
    admin). Sits on top of variables.css + component css files.
    Status: Active - Phase 3/4 (UI Wiring)
-   @package UIP */
+   @package UIPE */
 
 /* ---- App shell (sidebar + topbar + content) --------------------------- */
 .app-shell { display: flex; min-height: 100vh; }

@@ -78,7 +78,7 @@ export default function VerifyCertificate() {
               type="text"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder={t('e.g. UIP-3-2026-0001', 'مثال: UIP-3-2026-0001')}
+              placeholder={t('e.g. UIPE-3-2026-0001', 'مثال: UIPE-3-2026-0001')}
               aria-label={t('Certificate number', 'رقم الشهادة')}
               dir="ltr"
               autoComplete="off"
@@ -133,7 +133,7 @@ export default function VerifyCertificate() {
         <section className="lp5-vc-info" aria-label={t('How verification works', 'إزاي بيتم التحقق')}>
           <h2>{t('How verification works', 'إزاي بيتم التحقق')}</h2>
           <ol>
-            <li><span>1</span><div><strong>{t('Find the number', 'اعرف الرقم')}</strong><p>{t('Every UIP graduation certificate carries a unique certificate number.', 'كل شهادة تخرج من UIP عليها رقم شهادة فريد.')}</p></div></li>
+            <li><span>1</span><div><strong>{t('Find the number', 'اعرف الرقم')}</strong><p>{t('Every UIPE graduation certificate carries a unique certificate number.', 'كل شهادة تخرج من UIPE عليها رقم شهادة فريد.')}</p></div></li>
             <li><span>2</span><div><strong>{t('Enter it above', 'اكتبه فوق')}</strong><p>{t('Type it exactly as printed. No sign-in is needed.', 'اكتبه زي ما هو مطبوع بالظبط. مش محتاج تسجيل دخول.')}</p></div></li>
             <li><span>3</span><div><strong>{t('Read the result', 'اقرأ النتيجة')}</strong><p>{t('You see whether it is valid or revoked, with the details the university recorded.', 'هتعرف هل هي صحيحة أو ملغاة، مع البيانات اللي سجلتها الجامعة.')}</p></div></li>
           </ol>

@@ -7,7 +7,7 @@ import { portalPrefix } from '../config/navConfig';
 import './miniApps.css';
 
 /* ------------------------------------------------------------------------------------------------------------------
- * Small built-in apps of the UIP desktop: Notes, Calendar (the calculator lives in SciCalc.jsx).
+ * Small built-in apps of the UIPE desktop: Notes, Calendar (the calculator lives in SciCalc.jsx).
  * Notes and the calendar's personal tasks live in this browser, per account (localStorage). The calendar also shows the
  * student's real exams (/exam-system/my-exams) and scheduled meetings / lectures (/meetings/calendar).
  * ---------------------------------------------------------------------------------------------------------------- */

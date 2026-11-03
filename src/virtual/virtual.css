@@ -1,4 +1,4 @@
-/* Virtual mode (UIP OS): the platform's pages as windows of the My PC desktop. */
+/* Virtual mode (UIPE OS): the platform's pages as windows of the My PC desktop. */
 
 /* ---- a platform page inside a window ------------------------------------------------------------------ */
 .vm-shell.app-shell { position: relative; display: block; min-height: 0; height: 100%; overflow: auto; background: var(--bg-canvas); color: var(--text-primary); overscroll-behavior: contain; }
@@ -46,7 +46,7 @@
 .vm-modal__box .vm-card { border: 0; }
 .vm-modal__x { position: absolute; top: 12px; inset-inline-end: 12px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: var(--bg-canvas); color: var(--text-secondary); display: grid; place-items: center; cursor: pointer; z-index: 1; }
 
-/* Settings ▸ UIP OS tab inside the desktop */
+/* Settings ▸ UIPE OS tab inside the desktop */
 .vm-set { display: grid; gap: 14px; }
 .vm-set .vm-card { background: transparent; padding: 0; border: 0; }
 

@@ -120,7 +120,7 @@ export default function AdminAnalyticsDashboard() {
         </div>
       </div>
 
-      <h2 className="ap-section-title">{t('UIP Project Ecosystem')}</h2>
+      <h2 className="ap-section-title">{t('UIPE Project Ecosystem')}</h2>
       <KpiGrid>
         <Kpi title={t('Total projects')} value={n(eco.total_projects)} icon="folder" />
         <Kpi title={t('Published')} value={n(eco.published_projects)} icon="check-circle" />

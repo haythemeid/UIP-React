@@ -1,4 +1,4 @@
-/* UIP Scientific Calculator - modern dark body, independent of the OS theme. */
+/* UIPE Scientific Calculator - modern dark body, independent of the OS theme. */
 .ucalc { --bg1: #12141b; --bg2: #0c0e13; --edge: rgba(255,255,255,.07); --key: #1e222d; --key-hi: #292e3c; --fg: #eef0f7;
   --fn: #181b24; --num: #2a2f3f; --num-hi: #353b4f; --op: #3a3566; --op-hi: #4a437f;
   --acc: #6d5efc; --acc2: #4f8bff; --amber: #f5b83d; --pink: #ff6f8e; --lcd: #0a0c11; --lcd-fg: #f4f6fb; --lcd-dim: rgba(244,246,251,.26);

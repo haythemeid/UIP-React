@@ -56,8 +56,8 @@ export default function AppDownloadLink({ app, className = '', iconSize = 16, wi
     e.preventDefault();
     const res = await shareAppLink(
       app.url,
-      'UIP',
-      t('Join me on UIP — get the Android app:', 'انضم لي على UIP — حمّل تطبيق الأندرويد:'),
+      'UIPE',
+      t('Join me on UIPE — get the Android app:', 'انضم لي على UIPE — حمّل تطبيق الأندرويد:'),
     );
     if (res === 'copied') setNote(t('Link copied ✓', 'تم نسخ الرابط ✓'));
     else if (res === 'failed') window.prompt(t('Copy the app link:', 'انسخ رابط التطبيق:'), app.url);
@@ -70,7 +70,7 @@ export default function AppDownloadLink({ app, className = '', iconSize = 16, wi
       {...(app.native ? { role: 'button' } : { target: '_blank', rel: 'noopener noreferrer' })}>
       {logo && (
         <span className="app-dl__logo" aria-hidden="true">
-          <img src="/images/logo/uip-mark.png" srcSet="/images/logo/uip-mark@2x.png 2x" alt="" width={iconSize + 10} height={iconSize + 10} />
+          <img src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark@2x.png 2x" alt="" width={iconSize + 10} height={iconSize + 10} />
         </span>
       )}
       {withIcon && !logo && <Icon name={app.native ? 'share' : 'smartphone'} size={iconSize} />} {note || (app.native ? L.share : L.download)}

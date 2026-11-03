@@ -6,7 +6,7 @@
  * things that differ per portal live here, so a portal is customised by
  * editing one entry instead of forking components:
  *
- *   sub        brand subtitle under "UIP" in the sidebar
+ *   sub        brand subtitle under "UIPE" in the sidebar
  *   promo      the tinted card at the bottom of the sidebar
  *              ({ text, cta, to } — `to: null` hides the link, `promo: null`
  *              hides the whole card)
@@ -25,7 +25,7 @@ const BRAND = {
   student: {
     sub: t('Student Portal', 'بوابة الطالب'),
     // The Student design puts the user card under the brand and a theme
-    // switch + "UIP AI Assistant" button at the bottom instead of a promo.
+    // switch + "UIPE AI Assistant" button at the bottom instead of a promo.
     shell: 'student',
     roleLabel: t('Student', 'طالب'),
     promo: null,
@@ -49,7 +49,7 @@ const BRAND = {
   faculty: {
     sub: t('Faculty Portal', 'بوابة الكلية'),
     // New Faculty design: same chrome as the Student shell (theme switch +
-    // "UIP AI Assistant" at the bottom, page title in the topbar), no promo.
+    // "UIPE AI Assistant" at the bottom, page title in the topbar), no promo.
     shell: 'faculty',
     roleLabel: t('Faculty', 'الكلية'),
     promo: null,
@@ -58,14 +58,14 @@ const BRAND = {
     messages: t('Talk with students, staff and the university in one place.', 'تواصل مع الطلاب والهيئة التدريسية والجامعة في مكان واحد.'),
     notifications: t('Approvals, graduation and faculty updates.', 'الاعتمادات والتخرج وتحديثات الكلية.'),
   },
-  // Academic Staff design: "U" tile + "Academic Staff Portal / UIP", user card at
+  // Academic Staff design: "U" tile + "Academic Staff Portal / UIPE", user card at
   // the bottom, no promo. Both roles that make up the academic-staff side of
   // the platform share it (supervisor = students/projects, academic_staff =
   // exams); each keeps its own pages, nav and API.
   supervisor: {
     shell: 'staff',
     title: t('Academic Staff Portal', 'بوابة الهيئة التدريسية'),
-    sub: t('UIP', 'UIP'),
+    sub: t('UIPE', 'UIPE'),
     roleLabel: t('Supervisor', 'مشرف'),
     promo: null,
     search: { placeholder: t('Search exams, questions, students…', 'ابحث عن امتحانات، أسئلة، طلاب…'), route: '/academic-staff/search' },
@@ -76,7 +76,7 @@ const BRAND = {
   academic_staff: {
     shell: 'staff',
     title: t('Academic Staff Portal', 'بوابة الهيئة التدريسية'),
-    sub: t('UIP', 'UIP'),
+    sub: t('UIPE', 'UIPE'),
     roleLabel: t('Academic Staff', 'هيئة تدريس'),
     promo: null,
     search: { placeholder: t('Search exams, questions, students…', 'ابحث عن امتحانات، أسئلة، طلاب…'), route: '/academic-staff/search' },
@@ -97,7 +97,7 @@ const BRAND = {
     notifications: t('Platform alerts, approvals and system events.', 'تنبيهات المنصة والاعتمادات وأحداث النظام.'),
   },
   security_admin: {
-    name: { strong: 'UIP', light: 'Security' },
+    name: { strong: 'UIPE', light: 'Security' },
     sub: t('Control Center', 'مركز التحكم'),
     roleLabel: t('Security Admin', 'مسؤول الأمان'),
     userCard: true,
@@ -111,7 +111,7 @@ const BRAND = {
     sub: t('Insight Platform', 'منصة الرؤى'),
     promo: {
       text: t('Turn your data into your next decision.', 'حوّل بياناتك إلى قرارك القادم.'),
-      cta: t('Ask UIP AI', 'اسأل UIP AI'),
+      cta: t('Ask UIPE AI', 'اسأل UIPE AI'),
       to: '/data-analysis/ai-insights',
     },
     search: { placeholder: t('Search exams, students, doctors, projects…', 'ابحث في الامتحانات والطلاب والدكاترة والمشاريع…'), route: '/data-analysis/search' },

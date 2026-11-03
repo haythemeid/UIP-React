@@ -41,7 +41,7 @@ function Gate({ reason, onClose, t, isAr }) {
         <button type="button" className="pu-gate__x" onClick={onClose} aria-label={t('Close', 'إغلاق')}><Icon name="x" size={18} /></button>
         <span className="pu-gate__ico"><Icon name="sparkles" size={26} /></span>
         <h3>{reason || t('Join the conversation', 'انضم للنقاش')}</h3>
-        <p>{t('Create a free UIP account or sign in to react, comment, follow authors and share your own work.', 'أنشئ حسابًا مجانيًا على UIP أو سجّل الدخول عشان تتفاعل وتعلّق وتتابع الكتّاب وتشارك أعمالك.')}</p>
+        <p>{t('Create a free UIPE account or sign in to react, comment, follow authors and share your own work.', 'أنشئ حسابًا مجانيًا على UIPE أو سجّل الدخول عشان تتفاعل وتعلّق وتتابع الكتّاب وتشارك أعمالك.')}</p>
         <Link to="/auth/register" className="btn btn-primary pu-gate__btn">{t('Create an account', 'إنشاء حساب')}</Link>
         <Link to="/auth/login" className="btn pu-gate__btn pu-gate__btn--ghost">{t('Log in', 'تسجيل الدخول')}</Link>
       </div>
@@ -67,7 +67,7 @@ function Unavailable({ t }) {
       <h2>{t('This post isn’t available', 'المنشور ده مش متاح')}</h2>
       <p>{t('It may have been deleted, or its author shared it with a limited audience only. Public posts can be opened by anyone with the link.', 'ممكن يكون اتحذف، أو صاحبه شاركه لجمهور محدد بس. المنشورات العامة بس هي اللي بتفتح لأي حد معاه الرابط.')}</p>
       <div className="pu-empty__row">
-        <Link to="/" className="btn btn-primary">{t('Go to UIP', 'الصفحة الرئيسية')}</Link>
+        <Link to="/" className="btn btn-primary">{t('Go to UIPE', 'الصفحة الرئيسية')}</Link>
         <Link to="/auth/login" className="btn pu-gate__btn--ghost">{t('Log in', 'تسجيل الدخول')}</Link>
       </div>
     </div>
@@ -162,7 +162,7 @@ export default function PublicPost() {
   useEffect(() => {
     if (state !== 'ok' || !post) return undefined;
     const text = (post.title || post.body || '').replace(/\s+/g, ' ').trim().slice(0, 140);
-    const title = `${post.author.full_name}${text ? ` — ${text}` : ''} | UIP`;
+    const title = `${post.author.full_name}${text ? ` — ${text}` : ''} | UIPE`;
     const prevTitle = document.title;
     document.title = title;
     const undo = [setMeta('property', 'og:title', title), setMeta('property', 'og:type', 'article'), setMeta('name', 'description', text || title)];
@@ -257,8 +257,8 @@ export default function PublicPost() {
             {!authed ? (
               <aside className="pu-join">
                 <div>
-                  <h2>{t('See more from UIP', 'اكتشف المزيد على UIP')}</h2>
-                  <p>{t('Join the Universities Innovation Platform — share projects, follow researchers and join the conversation.', 'انضم لمنصة UIP — شارك مشاريعك، تابع الباحثين، وشارك في النقاش.')}</p>
+                  <h2>{t('See more from UIPE', 'اكتشف المزيد على UIPE')}</h2>
+                  <p>{t('Join the Universities Innovation Platform — share projects, follow researchers and join the conversation.', 'انضم لمنصة UIPE — شارك مشاريعك، تابع الباحثين، وشارك في النقاش.')}</p>
                 </div>
                 <div className="pu-join__btns">
                   <Link to="/auth/register" className="btn btn-primary">{t('Create an account', 'إنشاء حساب')}</Link>
@@ -267,8 +267,8 @@ export default function PublicPost() {
               </aside>
             ) : feedLink && (
               <aside className="pu-join">
-                <div><h2>{t('You’re signed in', 'انت مسجّل دخول')}</h2><p>{t('Open this post inside UIP to react, comment and save it.', 'افتح المنشور جوه UIP عشان تتفاعل وتعلّق وتحفظه.')}</p></div>
-                <div className="pu-join__btns"><Link to={feedLink} className="btn btn-primary">{t('Open in UIP', 'افتح داخل UIP')}</Link></div>
+                <div><h2>{t('You’re signed in', 'انت مسجّل دخول')}</h2><p>{t('Open this post inside UIPE to react, comment and save it.', 'افتح المنشور جوه UIPE عشان تتفاعل وتعلّق وتحفظه.')}</p></div>
+                <div className="pu-join__btns"><Link to={feedLink} className="btn btn-primary">{t('Open in UIPE', 'افتح داخل UIPE')}</Link></div>
               </aside>
             )}
           </>

@@ -91,7 +91,7 @@ export default {
   'Model': 'النموذج',
   '6-digit code': 'رمز مكون من 6 أرقام',
   'Confirm action': 'تأكيد الإجراء',
-  'Ultimate Intelligent Platform': 'Ultimate Intelligent Platform',
+  'Unified Integrated Platform Ecosystem': 'Unified Integrated Platform Ecosystem',
   'Profile photo': 'الصورة الشخصية',
   // Admin strings wrapped in t() (second pass)
   'Sending…': 'جارٍ الإرسال…',

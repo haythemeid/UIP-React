@@ -72,9 +72,11 @@ function ShareDialog({ kind, file, onClose, onDone }) {
             placeholder={tt('Say something about it… (optional)', 'اكتب حاجة عنها… (اختياري)')} />
           <label className="pfx-share__aud">
             <span>{tt('Who can see it', 'مين يشوفها')}</span>
-            <select className="pp-input" value={vis} onChange={(e) => setVis(e.target.value)} disabled={busy}>
-              {options.map((v) => <option key={v} value={v}>{tt((VIS[v] || {}).en || v, (VIS[v] || {}).ar || v)}</option>)}
-            </select>
+            {options.length > 1 ? (
+              <select className="pp-input" value={vis} onChange={(e) => setVis(e.target.value)} disabled={busy}>
+                {options.map((v) => <option key={v} value={v}>{tt((VIS[v] || {}).en || v, (VIS[v] || {}).ar || v)}</option>)}
+              </select>
+            ) : <strong className="pp-chip">{tt((VIS[options[0] || 'public'] || {}).en || 'Everyone', (VIS[options[0] || 'public'] || {}).ar || 'الجميع')}</strong>}
           </label>
         </>
       )}

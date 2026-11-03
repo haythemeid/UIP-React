@@ -127,7 +127,7 @@ export default function Register() {
   return (
     <AuthLayout
       title={t('Create your account')}
-      subtitle={step === 1 ? L('Join UIP as a student', 'انضم لـ UIP كطالب') : L('Almost done — tell us where you study (optional)', 'خلاص تقريباً — قولنا بتدرس فين (اختياري)')}
+      subtitle={step === 1 ? L('Join UIPE as a student', 'انضم لـ UIPE كطالب') : L('Almost done — tell us where you study (optional)', 'خلاص تقريباً — قولنا بتدرس فين (اختياري)')}
       error={error}
       wide
     >

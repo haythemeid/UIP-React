@@ -56,21 +56,22 @@ export default function SiteFooter() {
         <div className="uip-footer__grid">
           <div className="uip-footer__brand">
             <Link to="/" className="uip-footer__logo">
-              <span className="uip-footer__mark"><img src="/images/logo/uip-mark.png" srcSet="/images/logo/uip-mark@2x.png 2x" alt="" /></span>
-              <span>UIP</span>
+              <span className="uip-footer__mark"><img src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark@2x.png 2x" alt="" /></span>
+              <span>UIPE</span>
             </Link>
             <p className="uip-footer__tagline">
+              <strong style={{ display: 'block', marginBottom: 6 }}>One Platform. Endless Connections.</strong>
               {t(
-                'UIP is one campus platform for students, instructors and universities: chat and video meetings, courses and exams, your files and code, a social community, and projects to publish, with an AI tutor beside you.',
-                'UIP منصة جامعية واحدة للطلاب والدكاترة والجامعات: شات واجتماعات فيديو، ومواد وامتحانات، وملفاتك وأكوادك، ومجتمع اجتماعي، ومشاريع تنشرها، ومعاك معلم ذكي جنبك.'
+                'UIPE is one campus platform for students, instructors and universities: chat and video meetings, courses and exams, your files and code, a social community, and projects to publish, with an AI tutor beside you.',
+                'UIPE منصة جامعية واحدة للطلاب والدكاترة والجامعات: شات واجتماعات فيديو، ومواد وامتحانات، وملفاتك وأكوادك، ومجتمع اجتماعي، ومشاريع تنشرها، ومعاك معلم ذكي جنبك.'
               )}
             </p>
-            <ul className="uip-footer__ecosystem" aria-label={t('What UIP offers', 'ماذا تقدم UIP')}>
+            <ul className="uip-footer__ecosystem" aria-label={t('What UIPE offers', 'ماذا تقدم UIPE')}>
               {ecosystem.map((tag) => <li key={tag}>{tag}</li>)}
             </ul>
 
             {Object.keys(socialLinks).length > 0 && (
-              <div className="uip-footer__social" aria-label={t('UIP on social media', 'UIP على مواقع التواصل')}>
+              <div className="uip-footer__social" aria-label={t('UIPE on social media', 'UIPE على مواقع التواصل')}>
                 {Object.entries(socialLinks).map(([platform, href]) => (
                   SOCIAL_INITIALS[platform] ? (
                     <a key={platform} href={href} target="_blank" rel="noopener noreferrer" aria-label={platform.charAt(0).toUpperCase() + platform.slice(1)}>
@@ -112,7 +113,7 @@ export default function SiteFooter() {
         <VisitorCounter />
 
         <div className="uip-footer__bottom">
-          <span>&copy; {new Date().getFullYear()} {t('Ultimate Intelligent Platform (UIP). All rights reserved.', 'Ultimate Intelligent Platform (UIP). جميع الحقوق محفوظة.')}</span>
+          <span>&copy; {new Date().getFullYear()} {t('Unified Integrated Platform Ecosystem (UIPE). All rights reserved.', 'Unified Integrated Platform Ecosystem (UIPE). جميع الحقوق محفوظة.')}</span>
           <div className="uip-footer__bottom-links">
             <Link to="/privacy-policy">{t('Privacy Policy', 'سياسة الخصوصية')}</Link>
           </div>

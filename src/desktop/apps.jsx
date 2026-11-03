@@ -27,7 +27,7 @@ export const APPS = {
   shortcuts: { en: 'Keyboard shortcuts', ar: 'اختصارات الكيبورد', size: { w: 760, h: 600 }, singleton: true, pin: true },
   notes: { en: 'Notes', ar: 'الملاحظات', size: { w: 820, h: 560 }, singleton: true, pin: true },
   calendar: { en: 'Calendar', ar: 'التقويم', size: { w: 920, h: 600 }, singleton: true, pin: true },
-  terminal: { en: 'UIP Terminal', ar: 'ترمينال UIP', size: { w: 860, h: 540 }, singleton: true, pin: true },
+  terminal: { en: 'UIPE Terminal', ar: 'ترمينال UIPE', size: { w: 860, h: 540 }, singleton: true, pin: true },
   calculator: { en: 'Calculator', ar: 'الآلة الحاسبة', size: { w: 430, h: 800 }, singleton: true, pin: true },
   // one window per file (title = the file name): images / PDFs / media / ZIPs, and the code editor
   viewer: { en: 'Viewer', ar: 'العارض', size: { w: 1000, h: 660 }, singleton: false, pin: false },
@@ -82,7 +82,7 @@ export const leftText = (secs, tt) => {
  *  - files go to the Recycle Bin and are deleted for good after 24 h (Undo until then); settings / widgets / lock password are reset
  *  - blocked while an exam is in progress; asks for the account password + typing the PC name; offers a ZIP backup first
  */
-const PC_NAME = 'UIP-PC';
+const PC_NAME = 'UIPE-PC';
 function ResetPc({ tt }) {
   const [st, setSt] = useState(null); // { pending, seconds_left, exam_active }
   const [open, setOpen] = useState(false);
@@ -95,7 +95,7 @@ function ResetPc({ tt }) {
   const close = () => { setOpen(false); setPw(''); setWord(''); setErr(''); setBk(''); };
   const backup = async () => {
     setBk('busy');
-    try { const blob = await fetchBackupAll(); saveBlob(blob, 'UIP-PC-backup.zip'); setBk('done'); } catch (x) { setBk(lockError(x) || tt('Could not create the backup.', 'معرفتش أعمل النسخة الاحتياطية.')); }
+    try { const blob = await fetchBackupAll(); saveBlob(blob, 'UIPE-PC-backup.zip'); setBk('done'); } catch (x) { setBk(lockError(x) || tt('Could not create the backup.', 'معرفتش أعمل النسخة الاحتياطية.')); }
   };
   const run = async (e) => {
     e.preventDefault();
@@ -260,7 +260,7 @@ export function SettingsApp({ tab: tabProp, prefs, setPrefs, ar, tt, theme, togg
     ['links', 'link', tt('Shared links', 'الروابط المشاركة')],
     ['security', 'shield', tt('Security & devices', 'الأمان والأجهزة')],
     ['lock', 'lock', tt('Lock password', 'باسورد القفل')],
-    ...(showVm ? [['vm', 'grid', tt('UIP OS (virtual mode)', 'UIP OS (الوضع الافتراضي)')]] : []),
+    ...(showVm ? [['vm', 'grid', tt('UIPE OS (virtual mode)', 'UIPE OS (الوضع الافتراضي)')]] : []),
     ['system', 'monitor', tt('System', 'النظام')],
     ['about', 'info', tt('About', 'حول')],
   ];
@@ -272,7 +272,7 @@ export function SettingsApp({ tab: tabProp, prefs, setPrefs, ar, tt, theme, togg
         ))}
       </nav>
       <div className="os-set__main">
-        {tab === 'vm' && showVm && <Section title={tt('UIP OS — Virtual mode', 'UIP OS — الوضع الافتراضي')}><div className="vm-set"><ModeCard inDesktop /></div></Section>}
+        {tab === 'vm' && showVm && <Section title={tt('UIPE OS — Virtual mode', 'UIPE OS — الوضع الافتراضي')}><div className="vm-set"><ModeCard inDesktop /></div></Section>}
         {tab === 'personalize' && (
           <>
             <Section title={tt('Desktop background', 'خلفية سطح المكتب')}>
@@ -370,12 +370,12 @@ export function SettingsApp({ tab: tabProp, prefs, setPrefs, ar, tt, theme, togg
           </>
         )}
         {tab === 'about' && (
-          <Section title="UIP Desktop">
+          <Section title="UIPE Desktop">
             <dl className="os-about">
               <dt>{tt('Signed in as', 'المستخدم')}</dt><dd dir="auto">{user?.full_name || user?.email || '—'}</dd>
-              <dt>{tt('Device name', 'اسم الجهاز')}</dt><dd>UIP-PC</dd>
-              <dt>{tt('Edition', 'الإصدار')}</dt><dd>UIP Desktop 1.0 (web)</dd>
-              <dt>{tt('Storage backend', 'مكان التخزين')}</dt><dd>{tt('Private drive on the UIP server', 'مساحتك الخاصة على سيرفر UIP')}</dd>
+              <dt>{tt('Device name', 'اسم الجهاز')}</dt><dd>UIPE-PC</dd>
+              <dt>{tt('Edition', 'الإصدار')}</dt><dd>UIPE Desktop 1.0 (web)</dd>
+              <dt>{tt('Storage backend', 'مكان التخزين')}</dt><dd>{tt('Private drive on the UIPE server', 'مساحتك الخاصة على سيرفر UIPE')}</dd>
             </dl>
           </Section>
         )}

@@ -8,6 +8,7 @@ import { zipSync } from 'fflate';
 import { useSandbox } from '../zipbench/runner/useSandbox';
 import { Alert, COMMENT_MODES, PAvatar, VIS, useTt } from './shared';
 import LinkCard, { parseLink } from './LinkCard';
+import EmojiButton, { insertAtCaret } from './EmojiButton';
 
 const CODE_EXT = ['py', 'js', 'ts', 'html', 'css', 'php', 'java', 'c', 'cpp', 'cs', 'go', 'rb', 'sh', 'sql', 'json', 'yml', 'md'];
 const SandboxTerminal = lazy(() => import('./SandboxTerminal'));
@@ -327,6 +328,8 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
   const lim = config?.limits || {};
   const [title, setTitle] = useState(post?.title || '');
   const [body, setBody] = useState(post?.body || '');
+  const bodyRef = useRef(null);
+  const addEmoji = (e) => { const v = insertAtCaret(bodyRef.current, body, e, lim.max_body || 6000); if (v != null) setBody(v); };
   const [link, setLink] = useState(post?.link_url || '');
   const [vis, setVis] = useState(post?.visibility || (config?.visibilities?.includes('public') ? 'public' : 'followers'));
   const [mode, setMode] = useState(post?.comments_mode || 'everyone');
@@ -409,7 +412,7 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
           : (
             <div className="pp-composer__fields">
               {showTitle && <input className="pp-input pp-input--title" maxLength={lim.max_title || 180} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={tt('Title', 'العنوان')} />}
-              <textarea className="pp-input" dir="auto" rows={4} autoFocus maxLength={lim.max_body || 6000} value={body} onChange={(e) => setBody(e.target.value)} onPaste={onPaste}
+              <textarea ref={bodyRef} className="pp-input" dir="auto" rows={4} autoFocus maxLength={lim.max_body || 6000} value={body} onChange={(e) => setBody(e.target.value)} onPaste={onPaste}
                 placeholder={tt('What do you want to talk about? Use #tags', 'عن ماذا تريد أن تتحدث؟ استخدم #وسوم')} />
               {showLink && (
                 <div className="pp-linkfield">
@@ -449,6 +452,7 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
               <input ref={fileRef} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
               <button type="button" className="pp-icon" title={tt('Photos, videos, PDF, slides, files', 'صور، فيديو، PDF، عروض، ملفات')} aria-label={tt('Attach files', 'إرفاق ملفات')} onClick={() => fileRef.current?.click()}><Icon name="paperclip" size={18} /></button>
               <button type="button" className={`pp-icon${code ? ' is-on' : ''}`} title={tt('Code snippet', 'مقتطف كود')} aria-label={tt('Code snippet', 'مقتطف كود')} onClick={() => setCode(code ? null : { ext: 'py', text: '', touched: false })}><Icon name="terminal" size={18} /></button>
+              <EmojiButton onPick={addEmoji} up />
               <button type="button" className="pp-icon" title={tt('Voice note', 'تسجيل صوتي')} aria-label={tt('Voice note', 'تسجيل صوتي')} onClick={() => { setErr(''); setRecOn(true); setOpen(true); }}><Icon name="mic" size={18} /></button>
               {!showTitle && <button type="button" className="pp-icon" title={tt('Add title', 'عنوان')} aria-label={tt('Add title', 'عنوان')} onClick={() => setShowTitle(true)}><Icon name="ed-type" size={18} /></button>}
               {!showLink && <button type="button" className="pp-icon" title={tt('Add link', 'رابط')} aria-label={tt('Add link', 'رابط')} onClick={() => setShowLink(true)}><Icon name="link" size={18} /></button>}

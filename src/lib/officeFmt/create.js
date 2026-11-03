@@ -175,7 +175,7 @@ function makePptx(template, title, locale) {
 async function makePdf(template) {
   const { PDFDocument, rgb } = await import('pdf-lib');
   const doc = await PDFDocument.create();
-  doc.setCreator('UIP'); doc.setProducer('UIP');
+  doc.setCreator('UIPE'); doc.setProducer('UIPE');
   const [w, h] = template === 'landscape' ? [841.89, 595.28] : [595.28, 841.89];
   const page = doc.addPage([w, h]);
   if (template === 'lined') for (let y = h - 90; y > 50; y -= 26) page.drawLine({ start: { x: 50, y }, end: { x: w - 50, y }, thickness: 0.6, color: rgb(0.72, 0.76, 0.85) });
@@ -205,7 +205,7 @@ async function makeScratch(template) {
   const blocks = template === 'hello'
     ? {
         a: { opcode: 'event_whenflagclicked', next: 'b', parent: null, inputs: {}, fields: {}, shadow: false, topLevel: true, x: 48, y: 48 },
-        b: { opcode: 'looks_say', next: null, parent: 'a', inputs: { MESSAGE: [1, [10, 'Welcome In UIP NUB']] }, fields: {}, shadow: false, topLevel: false },
+        b: { opcode: 'looks_say', next: null, parent: 'a', inputs: { MESSAGE: [1, [10, 'Welcome In UIPE NUB']] }, fields: {}, shadow: false, topLevel: false },
       }
     : {};
   const common = { variables: {}, lists: {}, broadcasts: {}, comments: {}, sounds: [], volume: 100 };
@@ -216,7 +216,7 @@ async function makeScratch(template) {
       { ...common, isStage: false, name: 'Sprite1', blocks, currentCostume: 0, layerOrder: 1, visible: true, x: 0, y: 0, size: 100, direction: 90, draggable: false, rotationStyle: 'all around',
         costumes: [{ assetId: '44d981f19616cce1b5dce34be7d95ac2', name: 'costume1', md5ext: '44d981f19616cce1b5dce34be7d95ac2.svg', dataFormat: 'svg', rotationCenterX: 50, rotationCenterY: 50 }] },
     ],
-    monitors: [], extensions: [], meta: { semver: '3.0.0', vm: '0.2.0', agent: 'UIP' },
+    monitors: [], extensions: [], meta: { semver: '3.0.0', vm: '0.2.0', agent: 'UIPE' },
   };
   const zip = zipSync({ 'project.json': strToU8(JSON.stringify(project)), 'fcb8546c50e11d422b78fd55e34d7e7e.svg': strToU8(SVG0), '44d981f19616cce1b5dce34be7d95ac2.svg': strToU8(SVG1) }, { level: 6 });
   return new Blob([zip], { type: MIME.sb3 });
@@ -233,55 +233,55 @@ function makeText(type, template, title) {
 }
 
 const HELLO = {
-  js: "console.log(\"Welcome In UIP NUB\");\n",
-  py: "print(\"Welcome In UIP NUB\")\n",
-  c: "#include <stdio.h>\n\nint main(void) {\n    printf(\"Welcome In UIP NUB\\n\");\n    return 0;\n}\n",
-  cpp: "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n\n    cout << \"Welcome In UIP NUB\" << endl;\n\n    return 0;\n}\n",
-  java: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Welcome In UIP NUB\");\n    }\n}\n",
-  cs: "using System;\n\nclass Program {\n    static void Main() {\n        Console.WriteLine(\"Welcome In UIP NUB\");\n    }\n}\n",
-  go: "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"Welcome In UIP NUB\")\n}\n",
-  rs: "fn main() {\n    println!(\"Welcome In UIP NUB\");\n}\n",
-  php: "<?php\necho \"Welcome In UIP NUB\\n\";\n",
-  rb: "puts \"Welcome In UIP NUB\"\n",
-  ts: "const message: string = \"Welcome In UIP NUB\";\nconsole.log(message);\n",
-  kt: "fun main() {\n    println(\"Welcome In UIP NUB\")\n}\n",
-  dart: "void main() {\n  print('Welcome In UIP NUB');\n}\n",
-  lua: "print(\"Welcome In UIP NUB\")\n",
-  pl: "use strict;\nuse warnings;\n\nprint \"Welcome In UIP NUB\\n\";\n",
-  r: "cat(\"Welcome In UIP NUB\\n\")\n",
-  jl: "println(\"Welcome In UIP NUB\")\n",
-  sh: "#!/bin/bash\necho \"Welcome In UIP NUB\"\n",
+  js: "console.log(\"Welcome In UIPE NUB\");\n",
+  py: "print(\"Welcome In UIPE NUB\")\n",
+  c: "#include <stdio.h>\n\nint main(void) {\n    printf(\"Welcome In UIPE NUB\\n\");\n    return 0;\n}\n",
+  cpp: "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n\n    cout << \"Welcome In UIPE NUB\" << endl;\n\n    return 0;\n}\n",
+  java: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Welcome In UIPE NUB\");\n    }\n}\n",
+  cs: "using System;\n\nclass Program {\n    static void Main() {\n        Console.WriteLine(\"Welcome In UIPE NUB\");\n    }\n}\n",
+  go: "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"Welcome In UIPE NUB\")\n}\n",
+  rs: "fn main() {\n    println!(\"Welcome In UIPE NUB\");\n}\n",
+  php: "<?php\necho \"Welcome In UIPE NUB\\n\";\n",
+  rb: "puts \"Welcome In UIPE NUB\"\n",
+  ts: "const message: string = \"Welcome In UIPE NUB\";\nconsole.log(message);\n",
+  kt: "fun main() {\n    println(\"Welcome In UIPE NUB\")\n}\n",
+  dart: "void main() {\n  print('Welcome In UIPE NUB');\n}\n",
+  lua: "print(\"Welcome In UIPE NUB\")\n",
+  pl: "use strict;\nuse warnings;\n\nprint \"Welcome In UIPE NUB\\n\";\n",
+  r: "cat(\"Welcome In UIPE NUB\\n\")\n",
+  jl: "println(\"Welcome In UIPE NUB\")\n",
+  sh: "#!/bin/bash\necho \"Welcome In UIPE NUB\"\n",
   sql: "-- SQLite\nCREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT);\nINSERT INTO students (name) VALUES ('Sara'), ('Omar');\nSELECT * FROM students;\n",
-  hs: "main :: IO ()\nmain = putStrLn \"Welcome In UIP NUB\"\n",
-  f90: "program hello\n  print *, \"Welcome In UIP NUB\"\nend program hello\n",
-  pas: "program Hello;\nbegin\n  writeln('Welcome In UIP NUB');\nend.\n",
-  swift: "print(\"Welcome In UIP NUB\")\n",
-  matlab: "disp('Welcome In UIP NUB')\n",
-  vb: "Module Program\n    Sub Main()\n        Console.WriteLine(\"Welcome In UIP NUB\")\n    End Sub\nEnd Module\n",
-  objc: "#import <Foundation/Foundation.h>\n\nint main(void) {\n    @autoreleasepool {\n        NSLog(@\"Welcome In UIP NUB\");\n    }\n    return 0;\n}\n",
-  scala: "object Main {\n  def main(args: Array[String]): Unit = {\n    println(\"Welcome In UIP NUB\")\n  }\n}\n",
-  ex: "IO.puts(\"Welcome In UIP NUB\")\n",
-  erl: "#!/usr/bin/env escript\n\nmain(_) ->\n    io:format(\"Welcome In UIP NUB~n\").\n",
-  fs: "printfn \"Welcome In UIP NUB\"\n",
-  ml: "let () = print_endline \"Welcome In UIP NUB\"\n",
-  clj: "(println \"Welcome In UIP NUB\")\n",
-  lisp: "(format t \"Welcome In UIP NUB~%\")\n",
-  cob: "IDENTIFICATION DIVISION.\nPROGRAM-ID. HELLO.\nPROCEDURE DIVISION.\n    DISPLAY \"Welcome In UIP NUB\".\n    STOP RUN.\n",
-  asm: "; NASM, x86-64 Linux\nsection .data\n    msg db \"Welcome In UIP NUB\", 10\n    len equ $ - msg\n\nsection .text\n    global _start\n\n_start:\n    mov rax, 1\n    mov rdi, 1\n    mov rsi, msg\n    mov rdx, len\n    syscall\n\n    mov rax, 60\n    xor rdi, rdi\n    syscall\n",
-  dpr: "program Hello;\n\n{$APPTYPE CONSOLE}\n\nbegin\n  Writeln('Welcome In UIP NUB');\nend.\n",
-  bas: "Attribute VB_Name = \"Module1\"\nOption Explicit\n\nSub Main()\n    MsgBox \"Welcome In UIP NUB\"\nEnd Sub\n",
-  ps1: "Write-Host \"Welcome In UIP NUB\"\n",
-  sol: "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\ncontract Hello {\n    string public message = \"Welcome In UIP NUB\";\n\n    function greet() public view returns (string memory) {\n        return message;\n    }\n}\n",
-  cls: "public class Hello {\n    public static void run() {\n        System.debug('Welcome In UIP NUB');\n    }\n}\n",
-  abap: "REPORT zhello.\n\nWRITE / 'Welcome In UIP NUB'.\n",
-  sas: "data _null_;\n    put \"Welcome In UIP NUB\";\nrun;\n",
-  plsql: "SET SERVEROUTPUT ON;\n\nBEGIN\n    DBMS_OUTPUT.PUT_LINE('Welcome In UIP NUB');\nEND;\n/\n",
-  tsql: "-- SQL Server (T-SQL)\nPRINT 'Welcome In UIP NUB';\n",
-  pro: ":- initialization(main).\n\nmain :-\n    write('Welcome In UIP NUB'), nl,\n    halt.\n",
-  adb: "with Ada.Text_IO;\n\nprocedure Main is\nbegin\n    Ada.Text_IO.Put_Line (\"Welcome In UIP NUB\");\nend Main;\n",
-  v: "fn main() {\n\tprintln('Welcome In UIP NUB')\n}\n",
-  zig: "const std = @import(\"std\");\n\npub fn main() void {\n    std.debug.print(\"Welcome In UIP NUB\\n\", .{});\n}\n",
-  groovy: "println \"Welcome In UIP NUB\"\n",
+  hs: "main :: IO ()\nmain = putStrLn \"Welcome In UIPE NUB\"\n",
+  f90: "program hello\n  print *, \"Welcome In UIPE NUB\"\nend program hello\n",
+  pas: "program Hello;\nbegin\n  writeln('Welcome In UIPE NUB');\nend.\n",
+  swift: "print(\"Welcome In UIPE NUB\")\n",
+  matlab: "disp('Welcome In UIPE NUB')\n",
+  vb: "Module Program\n    Sub Main()\n        Console.WriteLine(\"Welcome In UIPE NUB\")\n    End Sub\nEnd Module\n",
+  objc: "#import <Foundation/Foundation.h>\n\nint main(void) {\n    @autoreleasepool {\n        NSLog(@\"Welcome In UIPE NUB\");\n    }\n    return 0;\n}\n",
+  scala: "object Main {\n  def main(args: Array[String]): Unit = {\n    println(\"Welcome In UIPE NUB\")\n  }\n}\n",
+  ex: "IO.puts(\"Welcome In UIPE NUB\")\n",
+  erl: "#!/usr/bin/env escript\n\nmain(_) ->\n    io:format(\"Welcome In UIPE NUB~n\").\n",
+  fs: "printfn \"Welcome In UIPE NUB\"\n",
+  ml: "let () = print_endline \"Welcome In UIPE NUB\"\n",
+  clj: "(println \"Welcome In UIPE NUB\")\n",
+  lisp: "(format t \"Welcome In UIPE NUB~%\")\n",
+  cob: "IDENTIFICATION DIVISION.\nPROGRAM-ID. HELLO.\nPROCEDURE DIVISION.\n    DISPLAY \"Welcome In UIPE NUB\".\n    STOP RUN.\n",
+  asm: "; NASM, x86-64 Linux\nsection .data\n    msg db \"Welcome In UIPE NUB\", 10\n    len equ $ - msg\n\nsection .text\n    global _start\n\n_start:\n    mov rax, 1\n    mov rdi, 1\n    mov rsi, msg\n    mov rdx, len\n    syscall\n\n    mov rax, 60\n    xor rdi, rdi\n    syscall\n",
+  dpr: "program Hello;\n\n{$APPTYPE CONSOLE}\n\nbegin\n  Writeln('Welcome In UIPE NUB');\nend.\n",
+  bas: "Attribute VB_Name = \"Module1\"\nOption Explicit\n\nSub Main()\n    MsgBox \"Welcome In UIPE NUB\"\nEnd Sub\n",
+  ps1: "Write-Host \"Welcome In UIPE NUB\"\n",
+  sol: "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\ncontract Hello {\n    string public message = \"Welcome In UIPE NUB\";\n\n    function greet() public view returns (string memory) {\n        return message;\n    }\n}\n",
+  cls: "public class Hello {\n    public static void run() {\n        System.debug('Welcome In UIPE NUB');\n    }\n}\n",
+  abap: "REPORT zhello.\n\nWRITE / 'Welcome In UIPE NUB'.\n",
+  sas: "data _null_;\n    put \"Welcome In UIPE NUB\";\nrun;\n",
+  plsql: "SET SERVEROUTPUT ON;\n\nBEGIN\n    DBMS_OUTPUT.PUT_LINE('Welcome In UIPE NUB');\nEND;\n/\n",
+  tsql: "-- SQL Server (T-SQL)\nPRINT 'Welcome In UIPE NUB';\n",
+  pro: ":- initialization(main).\n\nmain :-\n    write('Welcome In UIPE NUB'), nl,\n    halt.\n",
+  adb: "with Ada.Text_IO;\n\nprocedure Main is\nbegin\n    Ada.Text_IO.Put_Line (\"Welcome In UIPE NUB\");\nend Main;\n",
+  v: "fn main() {\n\tprintln('Welcome In UIPE NUB')\n}\n",
+  zig: "const std = @import(\"std\");\n\npub fn main() void {\n    std.debug.print(\"Welcome In UIPE NUB\\n\", .{});\n}\n",
+  groovy: "println \"Welcome In UIPE NUB\"\n",
 };
 
 /** @returns {Promise<File>} */

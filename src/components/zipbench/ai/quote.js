@@ -1,5 +1,5 @@
 /**
- * "Ask about this part": the student selects text inside one of UIP AI's answers and asks about just that part.
+ * "Ask about this part": the student selects text inside one of UIPE AI's answers and asks about just that part.
  * The quote travels INSIDE the question's text (so it is saved with the conversation without any server change):
  *
  *   <question>

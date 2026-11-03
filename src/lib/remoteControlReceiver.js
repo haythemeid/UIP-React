@@ -1,7 +1,7 @@
 /**
- * Remote-control receiver. A browser page cannot inject OS-level input, so "control my screen" works on the UIP pages themselves:
+ * Remote-control receiver. A browser page cannot inject OS-level input, so "control my screen" works on the UIPE pages themselves:
  * the meeting tab relays the controller's mouse/keyboard (already authorised by the server) over a same-origin BroadcastChannel,
- * and every OTHER open UIP tab applies it to its own page. Share a UIP tab (My PC, a project, the code editor...) and the controller
+ * and every OTHER open UIPE tab applies it to its own page. Share a UIPE tab (My PC, a project, the code editor...) and the controller
  * can click, scroll and type in it. Anything outside the browser (other apps, the desktop) is out of reach on purpose.
  * While control is active every receiving tab shows a visible badge with the controller's name and a Stop button.
  */

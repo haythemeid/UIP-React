@@ -23,7 +23,7 @@ export function ModeArt() {
 }
 
 /**
- * The switch for the virtual mode. Used in Settings ▸ UIP OS (inside the desktop) and in the portal's top bar launcher.
+ * The switch for the virtual mode. Used in Settings ▸ UIPE OS (inside the desktop) and in the portal's top bar launcher.
  * Turning it ON takes the student into the desktop; turning it OFF takes them back to the normal portal.
  */
 export default function ModeCard({ onDone, inDesktop = false }) {
@@ -55,7 +55,7 @@ export default function ModeCard({ onDone, inDesktop = false }) {
     <div className={`vm-card${vm.enabled ? ' is-on' : ''}`}>
       <ModeArt />
       <div className="vm-card__body">
-        <h3>{tt('UIP OS — Virtual mode', 'UIP OS — الوضع الافتراضي')}</h3>
+        <h3>{tt('UIPE OS — Virtual mode', 'UIPE OS — الوضع الافتراضي')}</h3>
         <p>{tt(
           'Work on the whole platform from inside your own computer: courses, exams, grades, messages and projects open as windows next to your files, with a Dock, a Start menu and your wallpaper.',
           'اشتغل على المنصة كلها من جوّه جهازك الخاص: المواد والامتحانات والدرجات والرسائل والمشاريع بتفتح كنوافذ جنب ملفاتك، مع Dock وقائمة Start وخلفيتك.',
@@ -65,12 +65,12 @@ export default function ModeCard({ onDone, inDesktop = false }) {
           <li><Icon name="check-circle" size={14} /> {tt('Several pages side by side, snap & virtual desktops', 'أكتر من صفحة جنب بعض، وSnap وأسطح مكتب متعددة')}</li>
           <li><Icon name="check-circle" size={14} /> {tt('Follows you to every device — switch back any time', 'بتتابعك على أي جهاز — وترجع للعادي في أي وقت')}</li>
         </ul>
-        {mobile && <p className="vm-card__note">{tt('On phones, UIP OS lives inside My PC: open My PC and tap the apps button.', 'على الموبايل، UIP OS بيشتغل جوه «جهازي»: افتح جهازي واضغط زرار التطبيقات.')}</p>}
+        {mobile && <p className="vm-card__note">{tt('On phones, UIPE OS lives inside My PC: open My PC and tap the apps button.', 'على الموبايل، UIPE OS بيشتغل جوه «جهازي»: افتح جهازي واضغط زرار التطبيقات.')}</p>}
         {unavailable && <p className="vm-card__note vm-card__note--warn">{tt('Virtual mode is not available for your account right now.', 'الوضع الافتراضي مش متاح لحسابك حاليًا.')}</p>}
         {err && <p className="vm-card__note vm-card__note--err" role="alert">{err}</p>}
         <div className="vm-card__btns">
           <button type="button" className={`btn ${vm.enabled ? 'btn-outline' : 'btn-primary'}`} disabled={vm.busy || unavailable} onClick={toggle}>
-            {vm.enabled ? tt('Switch back to the normal portal', 'الرجوع للمنصة العادية') : tt('Switch to UIP OS', 'التحويل إلى UIP OS')}
+            {vm.enabled ? tt('Switch back to the normal portal', 'الرجوع للمنصة العادية') : tt('Switch to UIPE OS', 'التحويل إلى UIPE OS')}
           </button>
           {vm.enabled && !inDesktop && <button type="button" className="btn btn-outline" onClick={() => navigate(myPcPath(user?.role))}>{tt('Open the desktop', 'فتح سطح المكتب')}</button>}
         </div>
@@ -87,7 +87,7 @@ export function VirtualLauncher() {
   const mobile = useIsMobileOS();
   const [open, setOpen] = useState(false);
   if (!vm.supported || !vm.available || vm.enabled || mobile) return null;
-  const label = ar ? 'الوضع الافتراضي (UIP OS)' : 'Virtual mode (UIP OS)';
+  const label = ar ? 'الوضع الافتراضي (UIPE OS)' : 'Virtual mode (UIPE OS)';
   return (
     <>
       <button type="button" className="topbar__icon-btn vm-launch" onClick={() => setOpen(true)} aria-label={label} title={label}>

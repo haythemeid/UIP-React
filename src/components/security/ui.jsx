@@ -108,7 +108,7 @@ export function SearchBox({ value, onChange, placeholder, onSubmit }) {
  * cards get `transform: translateY(-3px)` on hover (motion.css), and a transformed ancestor becomes the containing
  * block of `position: fixed`, which squeezed the overlay into the card and made the page flicker as hover toggled.
  */
-export function Modal({ open, title, eyebrow = 'UIP Security', onClose, children, footer, tone, wide }) {
+export function Modal({ open, title, eyebrow = 'UIPE Security', onClose, children, footer, tone, wide }) {
   const { locale } = useLanguage();
   useEffect(() => {
     if (!open) return undefined;

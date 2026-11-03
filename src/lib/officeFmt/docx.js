@@ -346,7 +346,7 @@ export async function htmlToDocx(root, ctx = {}) {
   const font = def.font; const sz = Math.round(def.size * 2);
   const hs = (lvl) => ({ id: `Heading${lvl}`, name: `heading ${lvl}`, basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { font, size: HEADING_STYLES[lvl].size, color: HEADING_STYLES[lvl].color, bold: true }, paragraph: { spacing: { before: HEADING_STYLES[lvl].before, after: HEADING_STYLES[lvl].after }, keepNext: true, outlineLevel: lvl - 1 } });
   const doc = new Document({
-    creator: 'UIP', numbering: { config: numbering },
+    creator: 'UIPE', numbering: { config: numbering },
     styles: {
       default: { document: { run: { font, size: sz, sizeComplexScript: sz }, paragraph: { spacing: { before: tw(def.before), after: tw(def.after), line: Math.round(def.line * 240), lineRule: LineRuleType.AUTO } } } },
       paragraphStyles: [

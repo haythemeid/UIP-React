@@ -6,7 +6,7 @@ export default {
   'Language': 'اللغة',
   'Security': 'الأمان',
   'Data Analyst': 'محلل بيانات',
-  'Choose how UIP looks for you.': 'اختر شكل UIP المناسب لك.',
+  'Choose how UIPE looks for you.': 'اختر شكل UIPE المناسب لك.',
   'Interface language for the whole portal.': 'لغة الواجهة في البوابة كلها.',
   'Theme': 'المظهر',
   'Account, appearance, and sign-in security.': 'الحساب، المظهر، وأمان تسجيل الدخول.',

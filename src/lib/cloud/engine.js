@@ -10,7 +10,7 @@ import { microsoft } from './microsoft';
 /**
  * Cloud backup engine (Google Drive / OneDrive). Google Drive and OneDrive can both be linked at once.
  *
- *  - "My PC" on the UIP server stays the FINAL copy (sharing, exams, the sandbox and the AI all read it).
+ *  - "My PC" on the UIPE server stays the FINAL copy (sharing, exams, the sandbox and the AI all read it).
  *  - This engine keeps a BACKUP copy on the student's own cloud drive, in a folder "UIP-NUB", sorted into one sub-folder per kind of file (Code, Documents, Images …).
  *  - It runs in the browser (tokens never reach the server; they live in sessionStorage) and is incremental: a file is uploaded
  *    again only when its signature (name / folder / sha1 / size / updated_at) changed. Deleted files are NOT removed from the

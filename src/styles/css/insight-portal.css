@@ -1,5 +1,5 @@
 /* ==========================================================================
-   insight-portal.css — "UIP Insight Platform" design for the Data Analysis
+   insight-portal.css — "UIPE Insight Platform" design for the Data Analysis
    portal. Everything is scoped under .app-shell--insight (set by
    DashboardLayout for role data_analyst) so the other portals keep their
    classic look. Colors come from variables.css tokens only, so light and

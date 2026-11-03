@@ -109,7 +109,7 @@ export function PhotoViewer({ user, onClose, onProfile }) {
     } catch (e) { setDlErr(errorMessage(e)); }
   };
 
-  const mark = `UIP #${me?.id ?? ''}`;
+  const mark = `UIPE #${me?.id ?? ''}`;
   const block = (e) => e.preventDefault();
   return createPortal(
     <div className="pfx-photo is-protected" role="dialog" aria-modal="true" aria-label={user?.full_name} onClick={onClose} onContextMenu={block} onDragStart={block}>

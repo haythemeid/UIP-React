@@ -520,7 +520,7 @@ export default function SharedItem() {
           </>
         )}
       </main>
-      <footer className="shp__foot"><Icon name="shield" size={13} /><span>{t('Shared securely · UIP — Ultimate Intelligent Platform', 'مشاركة آمنة · UIP — المنصة الذكية المتكاملة')}</span></footer>
+      <footer className="shp__foot"><Icon name="shield" size={13} /><span>{t('Shared securely · UIPE — Unified Integrated Platform Ecosystem', 'مشاركة آمنة · UIPE — المنصة الذكية المتكاملة')}</span></footer>
       {(away || shot) && !canDl && data && (
         <div className="shp__veil" role="status"><Icon name="eye-off" size={26} /><p>{t('Content is hidden while the window is not in focus.', 'المحتوى مخفي طول ما النافذة مش في التركيز.')}</p></div>
       )}

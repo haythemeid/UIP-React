@@ -18,7 +18,7 @@ const KIND_NOTE = {
 /**
  * Bottom panel for projects that need a real server (Laravel, Node, Flask/Django) or an interactive terminal.
  * The project runs inside an isolated container on the uip-sandbox gateway; this panel shows its terminal (xterm.js)
- * and the live preview (an iframe on the sandbox's own preview domain — never on the UIP origin).
+ * and the live preview (an iframe on the sandbox's own preview domain — never on the UIPE origin).
  */
 export default function SandboxPanel({ tt, sandbox, apps, allApps, app, onSelect, onRun, onClose, expanded, onToggleExpand, ai, fontSize = 13.5 }) {
   const fsRef = useRef(fontSize);

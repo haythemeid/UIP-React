@@ -78,7 +78,7 @@ function Activity({ share, ar, locale, tt, onBack, onToast, onChanged }) {
                       <span className="mp-sl__avatar" aria-hidden="true">{(p.name || '?').trim().charAt(0).toUpperCase()}</span>
                       <div>
                         <strong>{p.name || tt('Anonymous (password only)', 'مجهول (باسورد فقط)')}</strong>
-                        {p.account && <span className="mp-badge mp-badge--soft"><Icon name="shield" size={11} />{tt('UIP account', 'حساب UIP')}{p.account.name ? `: ${p.account.name}` : ''}</span>}
+                        {p.account && <span className="mp-badge mp-badge--soft"><Icon name="shield" size={11} />{tt('UIPE account', 'حساب UIPE')}{p.account.name ? `: ${p.account.name}` : ''}</span>}
                       </div>
                     </div>
                     <div className="mp-sl__pinfo">

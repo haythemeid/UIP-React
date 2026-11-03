@@ -20,7 +20,7 @@ const ROLE_BADGE = {
   security_officer: { en: 'Security', ar: 'الأمان' },
 };
 
-// Per-role identity: accent colour, icon, badge and the "what this person does on UIP" cards.
+// Per-role identity: accent colour, icon, badge and the "what this person does on UIPE" cards.
 // Keyed by `kind` = owner.profile.kind (doctor / ta / supervisor) or else owner.role.
 const hex2rgb = (h) => { const n = parseInt(h.slice(1), 16); return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`; };
 const KIND = {
@@ -88,7 +88,7 @@ KIND.data_analysis = KIND.data_analyst;
  * Talks to GET /api/v1/public/portfolios/{uuid} (owner.full_name, portfolio.headline/about,
  * featured_projects[]). 404 (missing user or non-public portfolio) is one "not found" state.
  *
- * Redesigned to match the new UIP portal design language (violet palette,
+ * Redesigned to match the new UIPE portal design language (violet palette,
  * 14px radius cards, Light + Dark). Styles: styles/css/pages/public-portfolio.css (scoped to .prf-page).
  * No new backend data is needed — everything shown comes from the existing response.
  */
@@ -258,7 +258,7 @@ export default function PublicPortfolio() {
             {kind && (
               <section className="prf-card prf-section animate-rise-in">
                 <div className="prf-section__head">
-                  <h2 className="prf-section__title"><Icon name={kind.icon} size={18} />{t('Role on UIP', 'الدور على المنصة')}</h2>
+                  <h2 className="prf-section__title"><Icon name={kind.icon} size={18} />{t('Role on UIPE', 'الدور على المنصة')}</h2>
                   <span className="prf-count prf-count--text">{isAr ? kind.tag.ar : kind.tag.en}</span>
                 </div>
                 <div className="prf-duties">
@@ -340,7 +340,7 @@ export default function PublicPortfolio() {
         </div>
 
         <p className="prf-credit">
-          {t('Public profile powered by', 'ملف عام تم إنشاؤه عبر')} <Link to="/">UIP</Link>
+          {t('Public profile powered by', 'ملف عام تم إنشاؤه عبر')} <Link to="/">UIPE</Link>
         </p>
       </div>
 

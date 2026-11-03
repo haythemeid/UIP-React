@@ -185,7 +185,7 @@ export default function PublicFacultyProfile() {
         </div>
 
         <p className="prf-credit">
-          {t('Public profile powered by', 'ملف عام تم إنشاؤه عبر')} <Link to="/">UIP</Link>
+          {t('Public profile powered by', 'ملف عام تم إنشاؤه عبر')} <Link to="/">UIPE</Link>
         </p>
       </div>
 

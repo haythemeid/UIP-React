@@ -27,6 +27,24 @@ export const OFFICE_CAROUSEL_EXT = ['pptx', 'docx', 'xlsx', 'csv', 'tsv'];
 const AUTO_MAX_BYTES = 25 * 1024 * 1024;
 export const canCarousel = (m) => OFFICE_CAROUSEL_EXT.includes((m.extension || '').toLowerCase()) && (Number(m.size_bytes) || 0) <= AUTO_MAX_BYTES;
 
+
+/** True once the element is actually in view (not just near it), one frame later — pages are laid out then, never while off-screen. */
+function useShownOnce() {
+  const ref = useRef(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || shown) return undefined;
+    let raf = 0;
+    const fire = () => { raf = requestAnimationFrame(() => { raf = requestAnimationFrame(() => setShown(true)); }); };
+    if (typeof IntersectionObserver === 'undefined') { fire(); return () => cancelAnimationFrame(raf); }
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { io.disconnect(); fire(); } }, { rootMargin: '0px', threshold: 0.01 });
+    io.observe(el);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+  }, [shown]);
+  return { ref, shown };
+}
+
 /** Horizontal scroll-snap rail state shared by every kind of page. */
 function useRail(total, pitch) {
   const railRef = useRef(null);
@@ -88,13 +106,14 @@ function PptxPages({ blob, media, chrome }) {
   }, [blob]);
   const total = state.deck?.slides.length || 0;
   const rail = useRail(total);
+  const vis = useShownOnce();
   if (state.err) return chrome.fail();
   if (!state.deck) return chrome.loading(16 / 9);
   const { deck } = state;
   return (
     <Chrome {...chrome.props} total={total} idx={rail.idx} go={rail.go}>
-      <div className="pp-doc__rail" ref={rail.railRef} onScroll={rail.onScroll}>
-        {deck.slides.map((sl) => (
+      <div className="pp-doc__rail" ref={(n) => { rail.railRef.current = n; vis.ref.current = n; }} onScroll={rail.onScroll} style={vis.shown ? undefined : { aspectRatio: `${deck.cx} / ${deck.cy}` }}>
+        {vis.shown && deck.slides.map((sl) => (
           <div key={sl.index} className="pp-doc__slide pp-doc__slide--deck" aria-label={`${chrome.props.tt('Slide', 'شريحة')} ${sl.index}`}>
             <Slide slide={sl} deck={deck} />
           </div>
@@ -186,12 +205,15 @@ function DocxPages({ blob, media, chrome }) {
 function SheetPages({ blob, media, chrome }) {
   const ext = (media.extension || '').toLowerCase();
   const { props } = chrome;
+  const vis = useShownOnce();
   return (
     <Chrome {...props} total={1} idx={0} go={() => {}} hint={props.tt('Sheet', 'جدول')}>
-      <div className="pp-sheet">
-        <Suspense fallback={<div className="pp-doc__spin" />}>
-          <XlsxPreview blob={blob} ext={ext === 'xlsx' ? 'xlsx' : ext} tt={props.tt} rtl={props.rtl} />
-        </Suspense>
+      <div className="pp-sheet" ref={vis.ref}>
+        {vis.shown ? (
+          <Suspense fallback={<div className="pp-doc__spin" />}>
+            <XlsxPreview blob={blob} ext={ext === 'xlsx' ? 'xlsx' : ext} tt={props.tt} rtl={props.rtl} />
+          </Suspense>
+        ) : <div className="pp-doc__spin" />
       </div>
     </Chrome>
   );

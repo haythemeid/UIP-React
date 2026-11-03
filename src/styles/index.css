@@ -1,4 +1,4 @@
-/* Re-exports the existing UIP design system (copied as-is from
+/* Re-exports the existing UIPE design system (copied as-is from
    public/assets/css) so React components can use the exact same classes
    and CSS variables as the current PHP views — no visual rewrite needed. */
 @import './css/reset.css';

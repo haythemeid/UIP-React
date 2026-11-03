@@ -140,7 +140,7 @@ export default function InfoPanel({
               <span>
                 {t('Save received media to phone', 'حفظ الملفات المستلمة على الموبايل')}
                 <small style={{ display: 'block', opacity: 0.7, fontSize: 12, marginTop: 2 }}>
-                  {t('Photos, videos and files are saved automatically into a "UIP" folder.', 'الصور والفيديوهات والملفات بتتحفظ تلقائيًا في مجلد "UIP".')}
+                  {t('Photos, videos and files are saved automatically into a "UIPE" folder.', 'الصور والفيديوهات والملفات بتتحفظ تلقائيًا في مجلد "UIPE".')}
                 </small>
               </span>
               <button type="button" className={`msg-switch${autoSave ? ' is-on' : ''}`} onClick={() => onAutoSave(!autoSave)} aria-pressed={autoSave} aria-label={t('Save received media to phone', 'حفظ الملفات المستلمة على الموبايل')} />

@@ -20,7 +20,7 @@ export function initials(user, locale) {
   return ((parts[0]?.[0] || '?') + (parts[1]?.[0] || '')).toUpperCase();
 }
 
-/** Event the sidebar's "UIP AI Assistant" button fires; AiAssistantWidget opens on it. */
+/** Event the sidebar's "UIPE AI Assistant" button fires; AiAssistantWidget opens on it. */
 export const OPEN_AI_EVENT = 'uip:open-ai-assistant';
 
 /**
@@ -116,11 +116,11 @@ export default function Sidebar({ role, user, isOpen, collapsed = false, unread 
   return (
     <aside data-portal={role} className={`sidebar glass-panel glass-panel--flat${isOpen ? ' is-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
       <div className="sidebar__brand">
-        {/* Every portal uses the same UIP logo mark (the Data Analyst design) — only the title/subtitle differ. */}
-        <img className="sidebar__logo" src="/images/logo/uip-mark.png" srcSet="/images/logo/uip-mark@2x.png 2x" alt="" width="36" height="36" />
+        {/* Every portal uses the same UIPE logo mark (the Data Analyst design) — only the title/subtitle differ. */}
+        <img className="sidebar__logo" src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark@2x.png 2x" alt="" width="36" height="36" />
         <div className="sidebar__brand-text">
           <div className="sidebar__brand-name">
-            {brand.name ? <>{brand.name.strong} <span className="sidebar__brand-light">{brand.name.light}</span></> : (brand.title ? pick(brand.title, locale) : 'UIP')}
+            {brand.name ? <>{brand.name.strong} <span className="sidebar__brand-light">{brand.name.light}</span></> : (brand.title ? pick(brand.title, locale) : 'UIPE')}
           </div>
           <span className="sidebar__brand-sub">{pick(brand.sub, locale)}</span>
         </div>
@@ -218,7 +218,7 @@ export default function Sidebar({ role, user, isOpen, collapsed = false, unread 
             className="sidebar__ai-btn"
             onClick={() => { window.dispatchEvent(new Event(OPEN_AI_EVENT)); onClose?.(); }}
           >
-            <Icon name="sparkles" size={16} /> <span>{locale === 'ar' ? 'مساعد UIP الذكي' : 'UIP AI Assistant'}</span>
+            <Icon name="sparkles" size={16} /> <span>{locale === 'ar' ? 'مساعد UIPE الذكي' : 'UIPE AI Assistant'}</span>
           </button>
         )}
       </div>

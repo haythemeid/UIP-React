@@ -90,13 +90,13 @@ export function SavedBadge({ show }) {
 
 const PREF_TEXT = {
   en: {
-    appearance: 'Appearance', appearanceHint: 'Choose how UIP looks for you — it applies to every page and is remembered on this device.', theme: 'Theme', light: 'Light', classic: 'Classic', dark: 'Dark',
+    appearance: 'Appearance', appearanceHint: 'Choose how UIPE looks for you — it applies to every page and is remembered on this device.', theme: 'Theme', light: 'Light', classic: 'Classic', dark: 'Dark',
     lightHint: 'Clean white', classicHint: 'Indigo on soft blue-grey', darkHint: 'Easy on the eyes at night',
     language: 'Language', languageHint: 'Interface language for the whole portal.',
     email: 'Email Notifications', emailHint: 'Get emailed about important activity.',
   },
   ar: {
-    appearance: 'المظهر', appearanceHint: 'اختر شكل UIP المناسب لك — يُطبَّق على كل الصفحات ويُحفظ على هذا الجهاز.', theme: 'السمة', light: 'فاتح', classic: 'كلاسيكي', dark: 'داكن',
+    appearance: 'المظهر', appearanceHint: 'اختر شكل UIPE المناسب لك — يُطبَّق على كل الصفحات ويُحفظ على هذا الجهاز.', theme: 'السمة', light: 'فاتح', classic: 'كلاسيكي', dark: 'داكن',
     lightHint: 'أبيض نظيف', classicHint: 'نيلي على رمادي مزرق هادئ', darkHint: 'مريح للعين ليلاً',
     language: 'اللغة', languageHint: 'لغة الواجهة في البوابة كلها.',
     email: 'إشعارات البريد', emailHint: 'استلم رسائل بريد عن النشاط المهم.',

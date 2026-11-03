@@ -64,7 +64,7 @@ export default function UserDetail({ uid, onClose }) {
         </div>
         <div className="mtc-actions mtc-actions--wrap">
           <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing((x) => !x)}><Icon name="settings" size={14} /> {L('Limits & state', 'الحدود والحالة')}</button>
-          <button type="button" className="btn btn-outline btn-sm" onClick={() => { clear(); downloadFrom(`${BASE}/users/${uid}/archive`, { all: 1 }, `UIP-PC-user-${uid}.zip`).catch((e) => setError(errorMessage(e))); }}><Icon name="download" size={14} /> {L('Download everything (ZIP)', 'تنزيل كل الملفات (ZIP)')}</button>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => { clear(); downloadFrom(`${BASE}/users/${uid}/archive`, { all: 1 }, `UIPE-PC-user-${uid}.zip`).catch((e) => setError(errorMessage(e))); }}><Icon name="download" size={14} /> {L('Download everything (ZIP)', 'تنزيل كل الملفات (ZIP)')}</button>
         </div>
       </header>
 
@@ -207,7 +207,7 @@ function Browser({ uid, trashed, initialParent, onChanged }) {
       )}
       <div className="mtc-actions mtc-actions--wrap">
         {sel.length > 0 && !trashed && <>
-          <button type="button" className="btn btn-outline btn-sm" onClick={() => act(() => downloadFrom(`${BASE}/users/${uid}/archive?${sel.map((i) => `ids[]=${i}`).join('&')}`, undefined, `UIP-PC-user-${uid}.zip`))}><Icon name="download" size={13} /> {L('ZIP', 'ZIP')} ({sel.length})</button>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => act(() => downloadFrom(`${BASE}/users/${uid}/archive?${sel.map((i) => `ids[]=${i}`).join('&')}`, undefined, `UIPE-PC-user-${uid}.zip`))}><Icon name="download" size={13} /> {L('ZIP', 'ZIP')} ({sel.length})</button>
           <button type="button" className="btn btn-outline btn-sm mtc-btn-danger-outline" onClick={() => ask(L('Move to recycle bin?', 'نقل للمحذوفات؟'), L(`${sel.length} item(s) will move to the user’s recycle bin.`, `${sel.length} عنصر هيتنقل لمحذوفات المستخدم.`), L('Move', 'نقل'), () => post('files/trash', { ids: sel }))}><Icon name="trash" size={13} /> {L('Move to bin', 'نقل للمحذوفات')}</button></>}
         {sel.length > 0 && trashed && <>
           <button type="button" className="btn btn-outline btn-sm" onClick={() => post('files/restore', { ids: sel })}><Icon name="refresh" size={13} /> {L('Restore', 'استرجاع')} ({sel.length})</button>

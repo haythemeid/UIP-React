@@ -9,9 +9,9 @@ import { parseServerDate } from '../../utils/serverDate';
 
 export const AI_STRINGS = {
   en: {
-    title: 'UIP AI Assistant', newChat: 'New chat', search: 'Search chats', searchPlaceholder: 'Search conversations…',
-    placeholder: 'Ask the UIP AI Assistant… (Shift+Enter for new line)', send: 'Send', stop: 'Stop generating',
-    welcomeTitle: 'How can I help you today?', welcomeBody: 'I understand your role, portal and current page — ask me anything about your work on UIP.',
+    title: 'UIPE AI Assistant', newChat: 'New chat', search: 'Search chats', searchPlaceholder: 'Search conversations…',
+    placeholder: 'Ask the UIPE AI Assistant… (Shift+Enter for new line)', send: 'Send', stop: 'Stop generating',
+    welcomeTitle: 'How can I help you today?', welcomeBody: 'I understand your role, portal and current page — ask me anything about your work on UIPE.',
     pinned: 'Pinned', recent: 'Recent', rename: 'Rename', pin: 'Pin', unpin: 'Unpin', archive: 'Archive', unarchive: 'Unarchive',
     del: 'Delete', exportChat: 'Export', share: 'Share', copy: 'Copy', copied: 'Copied!', regenerate: 'Regenerate', edit: 'Edit',
     recCancel: 'Discard recording', recPause: 'Pause', recResume: 'Resume', recDone: 'Finish and attach', recListening: 'Recording…', recPaused: 'Paused',
@@ -26,7 +26,7 @@ export const AI_STRINGS = {
     unavailable: 'The AI Assistant is not configured yet. Ask your platform admin to add an AI provider in Admin → AI Controls.',
     rateLimited: 'You are sending messages too fast. Please wait a moment.', errorGeneric: 'Something went wrong. Please try again.',
     timeoutError: 'This is taking longer than expected and the server stopped responding. Please try again.',
-    you: 'You', assistant: 'UIP AI Assistant', renamePrompt: 'New conversation title', typing: 'Thinking…', dragDrop: 'Drop files to attach',
+    you: 'You', assistant: 'UIPE AI Assistant', renamePrompt: 'New conversation title', typing: 'Thinking…', dragDrop: 'Drop files to attach',
     close: 'Close', backToList: 'Back to conversations', newChatShort: 'New',
     expand: 'Expand chat', collapseSize: 'Collapse chat', fullScreen: 'Full screen', exitFullScreen: 'Exit full screen',
     select: 'Select', cancelSelect: 'Cancel', selectAll: 'Select all', clearSelection: 'Clear selection', deleteSelected: 'Delete selected', deleteAll: 'Delete all',
@@ -35,10 +35,10 @@ export const AI_STRINGS = {
     wall_none: 'Clean', wall_aurora: 'Aurora', wall_lagoon: 'Lagoon', wall_forest: 'Forest', wall_rose: 'Rose', wall_amber: 'Amber', wall_graphite: 'Graphite', wall_midnight: 'Midnight', menu: 'Menu',
     myPhotos: 'My photos', uploadBg: 'Upload a photo as background', useBg: 'Use this photo', deleteBg: 'Delete this photo',
     bgNotImage: 'Choose an image file.', bgTooBig: 'This image is larger than 15 MB.', bgLimit: 'You reached the limit of 12 saved backgrounds — delete one first.', bgStorage: 'Could not save this image on this device.',
-    subtitle: 'Ask about your UIP workspace', newChatLabel: 'New Chat', tryAsking: 'Try asking', suggestionsCount: 'suggestions',
-    disclaimer: 'UIP AI can make mistakes. Review important information.', history: 'History', conversationHistory: 'Conversation history',
+    subtitle: 'Ask about your UIPE workspace', newChatLabel: 'New Chat', tryAsking: 'Try asking', suggestionsCount: 'suggestions',
+    disclaimer: 'UIPE AI can make mistakes. Review important information.', history: 'History', conversationHistory: 'Conversation history',
     recentChats: 'Recent chats', today: 'Today', yesterday: 'Yesterday', previous7: 'Previous 7 days', older: 'Older',
-    helpful: 'Helpful', analyzing: 'UIP AI is analyzing…', streamingResponse: 'Streaming response', stopShort: 'Stop',
+    helpful: 'Helpful', analyzing: 'UIPE AI is analyzing…', streamingResponse: 'Streaming response', stopShort: 'Stop',
     errorTitle: 'Error', permissionTitle: 'No Permission', serviceTitle: 'Service Error', retry: 'Retry', tryAgain: 'Try Again',
     permissionText: "I can't access that information. Your current account doesn't have permission to view this data.",
     expandedWorkspace: 'Expanded AI Workspace', followUp: 'Ask a follow-up question…', ago: 'ago',
@@ -49,9 +49,9 @@ export const AI_STRINGS = {
     playVideo: 'Play video', loadFailed: 'Could not load — tap to retry', download: 'Download',
   },
   ar: {
-    title: 'مساعد UIP الذكي', newChat: 'محادثة جديدة', search: 'بحث في المحادثات', searchPlaceholder: 'ابحث في المحادثات…',
-    placeholder: 'اسأل مساعد UIP… (Shift+Enter لسطر جديد)', send: 'إرسال', stop: 'إيقاف التوليد',
-    welcomeTitle: 'كيف يمكنني مساعدتك اليوم؟', welcomeBody: 'أنا أفهم دورك والبوابة الحالية وصفحتك — اسألني عن أي شيء يخص عملك على UIP.',
+    title: 'مساعد UIPE الذكي', newChat: 'محادثة جديدة', search: 'بحث في المحادثات', searchPlaceholder: 'ابحث في المحادثات…',
+    placeholder: 'اسأل مساعد UIPE… (Shift+Enter لسطر جديد)', send: 'إرسال', stop: 'إيقاف التوليد',
+    welcomeTitle: 'كيف يمكنني مساعدتك اليوم؟', welcomeBody: 'أنا أفهم دورك والبوابة الحالية وصفحتك — اسألني عن أي شيء يخص عملك على UIPE.',
     pinned: 'مثبتة', recent: 'الأحدث', rename: 'إعادة تسمية', pin: 'تثبيت', unpin: 'إلغاء التثبيت', archive: 'أرشفة', unarchive: 'إلغاء الأرشفة',
     del: 'حذف', exportChat: 'تصدير', share: 'مشاركة', copy: 'نسخ', copied: 'تم النسخ!', regenerate: 'إعادة توليد', edit: 'تعديل',
     recCancel: 'إلغاء التسجيل', recPause: 'إيقاف مؤقت', recResume: 'متابعة', recDone: 'إنهاء وإرفاق', recListening: 'جارٍ التسجيل…', recPaused: 'متوقف مؤقتًا',
@@ -66,7 +66,7 @@ export const AI_STRINGS = {
     unavailable: 'لم يتم تفعيل المساعد الذكي بعد. اطلب من مسؤول المنصة إضافة مزوّد ذكاء اصطناعي من لوحة التحكم.',
     rateLimited: 'أنت ترسل رسائل بسرعة كبيرة. الرجاء الانتظار قليلاً.', errorGeneric: 'حدث خطأ ما. حاول مرة أخرى.',
     timeoutError: 'الاستجابة تأخرت أكثر من المتوقع وتوقف الخادم عن الرد. حاول مرة أخرى.',
-    you: 'أنت', assistant: 'مساعد UIP الذكي', renamePrompt: 'عنوان المحادثة الجديد', typing: 'يفكر…', dragDrop: 'أفلت الملفات هنا للإرفاق',
+    you: 'أنت', assistant: 'مساعد UIPE الذكي', renamePrompt: 'عنوان المحادثة الجديد', typing: 'يفكر…', dragDrop: 'أفلت الملفات هنا للإرفاق',
     close: 'إغلاق', backToList: 'العودة للمحادثات', newChatShort: 'جديد',
     expand: 'تكبير نافذة المحادثة', collapseSize: 'تصغير نافذة المحادثة', fullScreen: 'ملء الشاشة', exitFullScreen: 'الخروج من ملء الشاشة',
     select: 'تحديد', cancelSelect: 'إلغاء', selectAll: 'تحديد الكل', clearSelection: 'إلغاء التحديد', deleteSelected: 'حذف المحدد', deleteAll: 'حذف الكل',
@@ -75,10 +75,10 @@ export const AI_STRINGS = {
     wall_none: 'نظيف', wall_aurora: 'شفق', wall_lagoon: 'بحيرة', wall_forest: 'غابة', wall_rose: 'وردي', wall_amber: 'كهرماني', wall_graphite: 'جرافيت', wall_midnight: 'منتصف الليل', menu: 'القائمة',
     myPhotos: 'صوري', uploadBg: 'ارفع صورة كخلفية', useBg: 'استخدم الصورة دي', deleteBg: 'امسح الصورة دي',
     bgNotImage: 'اختار ملف صورة.', bgTooBig: 'الصورة أكبر من 15 ميجا.', bgLimit: 'وصلت للحد الأقصى (12 خلفية محفوظة) — امسح واحدة الأول.', bgStorage: 'مقدرتش أحفظ الصورة على الجهاز ده.',
-    subtitle: 'اسأل عن مساحة عملك في UIP', newChatLabel: 'محادثة جديدة', tryAsking: 'جرّب أن تسأل', suggestionsCount: 'اقتراحات',
-    disclaimer: 'قد يخطئ مساعد UIP. راجع المعلومات المهمة.', history: 'السجل', conversationHistory: 'سجل المحادثات',
+    subtitle: 'اسأل عن مساحة عملك في UIPE', newChatLabel: 'محادثة جديدة', tryAsking: 'جرّب أن تسأل', suggestionsCount: 'اقتراحات',
+    disclaimer: 'قد يخطئ مساعد UIPE. راجع المعلومات المهمة.', history: 'السجل', conversationHistory: 'سجل المحادثات',
     recentChats: 'المحادثات الأخيرة', today: 'اليوم', yesterday: 'أمس', previous7: 'آخر 7 أيام', older: 'أقدم',
-    helpful: 'مفيد', analyzing: 'مساعد UIP يحلّل…', streamingResponse: 'جارٍ كتابة الرد', stopShort: 'إيقاف',
+    helpful: 'مفيد', analyzing: 'مساعد UIPE يحلّل…', streamingResponse: 'جارٍ كتابة الرد', stopShort: 'إيقاف',
     errorTitle: 'خطأ', permissionTitle: 'لا توجد صلاحية', serviceTitle: 'خطأ في الخدمة', retry: 'إعادة المحاولة', tryAgain: 'حاول مجددًا',
     permissionText: 'لا أستطيع الوصول إلى هذه المعلومات. حسابك الحالي لا يملك صلاحية عرض هذه البيانات.',
     expandedWorkspace: 'مساحة المساعد الموسّعة', followUp: 'اسأل سؤال متابعة…', ago: '',
@@ -115,10 +115,10 @@ export function roleContent(role, locale) {
   const label = {
     admin: ['ADMIN', 'الإدارة'], university: ['UNIVERSITY', 'الجامعة'], data_analyst: ['DATA ANALYSIS', 'تحليل البيانات'],
     security_admin: ['SECURITY', 'الأمان'], security_officer: ['SECURITY', 'الأمان'],
-  }[role] || ['UIP', 'UIP'];
+  }[role] || ['UIPE', 'UIPE'];
   return {
     eyebrow: ar ? `${label[1]} · المساعد الذكي` : `${label[0]} · AI ASSISTANT`,
-    body: ar ? 'أستطيع مساعدتك في فهم صفحتك الحالية ومتابعة عملك على UIP.' : 'I can help you understand your current page and follow your work on UIP.',
+    body: ar ? 'أستطيع مساعدتك في فهم صفحتك الحالية ومتابعة عملك على UIPE.' : 'I can help you understand your current page and follow your work on UIPE.',
     suggestions: ar
       ? ['ما الذي يحتاج انتباهي اليوم؟', 'لخّص آخر النشاطات', 'اشرح لي هذه الصفحة']
       : ['What needs my attention today?', 'Summarize recent activity', 'Explain this page'],

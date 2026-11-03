@@ -137,7 +137,7 @@ export default function PrivacyPolicy() {
   const submitContact = (e) => {
     e.preventDefault();
     const label = CONTACT_TYPES.find((c) => c[0] === form.type)?.[2][0] || form.type;
-    const subject = `[UIP] ${label}${form.name ? ` — ${form.name}` : ''}`;
+    const subject = `[UIPE] ${label}${form.name ? ` — ${form.name}` : ''}`;
     const body = `Type: ${label}\nName: ${form.name}\nReply-to: ${form.email}\n\n${form.message}`;
     window.location.href = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     setSent(true);
@@ -170,8 +170,8 @@ export default function PrivacyPolicy() {
             <h1>{t('Privacy Policy', 'سياسة الخصوصية')}</h1>
             <p>
               {t(
-                'This page explains what information the Ultimate Intelligent Platform (UIP) collects across its Student, University, and Faculty portals, how it is used, and what choices you have.',
-                'توضح هذه الصفحة المعلومات التي تجمعها منصة Ultimate Intelligent Platform (UIP) عبر بوابات الطلاب والجامعات والكليات والشركات والمستثمرين، وكيفية استخدامها، والخيارات المتاحة لك.'
+                'This page explains what information the Unified Integrated Platform Ecosystem (UIPE) collects across its Student, University, and Faculty portals, how it is used, and what choices you have.',
+                'توضح هذه الصفحة المعلومات التي تجمعها منصة Unified Integrated Platform Ecosystem (UIPE) عبر بوابات الطلاب والجامعات والكليات والشركات والمستثمرين، وكيفية استخدامها، والخيارات المتاحة لك.'
               )}
             </p>
             {updatedDisplay !== '' && (
@@ -201,18 +201,18 @@ export default function PrivacyPolicy() {
           <section id="s1" className="lp2-pv__sec">
             <h2><span className="lp2-pv__num">1</span>{t('Introduction', 'مقدمة')}</h2>
             <p>{t(
-              'UIP (Ultimate Intelligent Platform) is a campus platform that brings students, instructors, faculties and universities together in one place — messaging and video meetings, courses and exams, personal files and tools, a social community with profiles, posts and stories, and publishing of academic projects.',
-              'UIP (Ultimate Intelligent Platform) منصة جامعية تجمع الطلاب والدكاترة والكليات والجامعات في مكان واحد — مراسلة واجتماعات فيديو، ومواد وامتحانات، وملفات وأدوات شخصية، ومجتمع اجتماعي ببروفايلات ومنشورات وستوريز، ونشر المشاريع الأكاديمية.'
+              'UIPE (Unified Integrated Platform Ecosystem) is a campus platform that brings students, instructors, faculties and universities together in one place — messaging and video meetings, courses and exams, personal files and tools, a social community with profiles, posts and stories, and publishing of academic projects.',
+              'UIPE (Unified Integrated Platform Ecosystem) منصة جامعية تجمع الطلاب والدكاترة والكليات والجامعات في مكان واحد — مراسلة واجتماعات فيديو، ومواد وامتحانات، وملفات وأدوات شخصية، ومجتمع اجتماعي ببروفايلات ومنشورات وستوريز، ونشر المشاريع الأكاديمية.'
             )}</p>
             <p>{t(
-              'This Privacy Policy explains what information UIP collects through its portals, why it is collected, how it is used and shared, and the choices available to you as a user of the platform.',
-              'توضّح سياسة الخصوصية هذه المعلومات التي تجمعها UIP عبر بواباتها، وسبب جمعها، وكيفية استخدامها ومشاركتها، والخيارات المتاحة لك كمستخدم للمنصة.'
+              'This Privacy Policy explains what information UIPE collects through its portals, why it is collected, how it is used and shared, and the choices available to you as a user of the platform.',
+              'توضّح سياسة الخصوصية هذه المعلومات التي تجمعها UIPE عبر بواباتها، وسبب جمعها، وكيفية استخدامها ومشاركتها، والخيارات المتاحة لك كمستخدم للمنصة.'
             )}</p>
           </section>
 
           <section id="s2" className="lp2-pv__sec">
             <h2><span className="lp2-pv__num">2</span>{t('Information We Collect', 'المعلومات التي نجمعها')}</h2>
-            <p>{t('Depending on which portal you use, UIP may collect:', 'وفقًا للبوابة التي تستخدمها، قد تجمع UIP:')}</p>
+            <p>{t('Depending on which portal you use, UIPE may collect:', 'وفقًا للبوابة التي تستخدمها، قد تجمع UIPE:')}</p>
             <ul>
               <li><strong>{t('Account information', 'معلومات الحساب')}</strong> — {t('name, email, role, and login credentials.', 'الاسم والبريد الإلكتروني والدور وبيانات الدخول.')}</li>
               <li><strong>{t('Student information', 'معلومات الطالب')}</strong> — {t('enrollment/department details, submitted graduation projects, certificates.', 'بيانات القيد/القسم، مشاريع التخرج المُقدَّمة، الشهادات.')}</li>
@@ -268,16 +268,16 @@ export default function PrivacyPolicy() {
               <li>{t('Other members of a project team collaborating on the same submission.', 'أعضاء فريق المشروع الآخرين المتعاونين على نفس المشروع المقدَّم.')}</li>
             </ul>
             <p>{t(
-              'UIP does not sell personal information, and does not share it with third parties beyond what is described in this policy.',
-              'لا تقوم UIP ببيع المعلومات الشخصية، ولا تشاركها مع أطراف ثالثة بما يتجاوز ما هو موضح في هذه السياسة.'
+              'UIPE does not sell personal information, and does not share it with third parties beyond what is described in this policy.',
+              'لا تقوم UIPE ببيع المعلومات الشخصية، ولا تشاركها مع أطراف ثالثة بما يتجاوز ما هو موضح في هذه السياسة.'
             )}</p>
           </section>
 
           <section id="s6" className="lp2-pv__sec">
             <h2><span className="lp2-pv__num">6</span>{t('Data Security', 'أمان البيانات')}</h2>
             <p>{t(
-              'UIP relies on authentication, role-based authorization, and access control to help protect information from unauthorized access, together with administrative audit logging so account actions can be reviewed.',
-              'تعتمد UIP على التحقق من الهوية والتفويض القائم على الأدوار والتحكم في الوصول للمساعدة في حماية المعلومات من الوصول غير المصرح به، إلى جانب سجل تدقيق إداري يتيح مراجعة إجراءات الحسابات.'
+              'UIPE relies on authentication, role-based authorization, and access control to help protect information from unauthorized access, together with administrative audit logging so account actions can be reviewed.',
+              'تعتمد UIPE على التحقق من الهوية والتفويض القائم على الأدوار والتحكم في الوصول للمساعدة في حماية المعلومات من الوصول غير المصرح به، إلى جانب سجل تدقيق إداري يتيح مراجعة إجراءات الحسابات.'
             )}</p>
             <p>{t(
               'No online platform can guarantee absolute security. We work to apply reasonable safeguards, but we do not claim any specific security certification or compliance framework unless explicitly stated elsewhere on the platform.',
@@ -307,24 +307,24 @@ export default function PrivacyPolicy() {
           <section id="s9" className="lp2-pv__sec">
             <h2><span className="lp2-pv__num">9</span>{t('Cookies & Local Storage', 'ملفات تعريف الارتباط والتخزين المحلي')}</h2>
             <p>{t(
-              'UIP uses your session to keep you signed in while using the platform. On public, unauthenticated pages, your language and light/dark theme preference are stored locally in your browser (not on our servers) so the page renders consistently the next time you visit. UIP does not use third-party advertising or tracking cookies.',
-              'تستخدم UIP جلسة تسجيل الدخول لإبقائك متصلاً أثناء استخدام المنصة. في الصفحات العامة غير المصادَق عليها، يتم تخزين تفضيل اللغة والوضع الفاتح/الداكن محليًا في متصفحك (وليس على خوادمنا) بحيث تظهر الصفحة بشكل متسق في زيارتك التالية. لا تستخدم UIP ملفات تعريف ارتباط إعلانية أو تتبعية من أطراف ثالثة.'
+              'UIPE uses your session to keep you signed in while using the platform. On public, unauthenticated pages, your language and light/dark theme preference are stored locally in your browser (not on our servers) so the page renders consistently the next time you visit. UIPE does not use third-party advertising or tracking cookies.',
+              'تستخدم UIPE جلسة تسجيل الدخول لإبقائك متصلاً أثناء استخدام المنصة. في الصفحات العامة غير المصادَق عليها، يتم تخزين تفضيل اللغة والوضع الفاتح/الداكن محليًا في متصفحك (وليس على خوادمنا) بحيث تظهر الصفحة بشكل متسق في زيارتك التالية. لا تستخدم UIPE ملفات تعريف ارتباط إعلانية أو تتبعية من أطراف ثالثة.'
             )}</p>
           </section>
 
           <section id="s10" className="lp2-pv__sec">
             <h2><span className="lp2-pv__num">10</span>{t('Third-Party Links', 'روابط خارجية')}</h2>
             <p>{t(
-              'Projects and profiles on UIP may link to external resources such as GitHub repositories, live project demos, or social media. UIP is not responsible for the privacy practices or content of any external website you reach through such links.',
-              'قد تتضمن المشاريع والملفات الشخصية على UIP روابط لموارد خارجية مثل مستودعات GitHub أو العروض التجريبية للمشاريع أو مواقع التواصل الاجتماعي. UIP ليست مسؤولة عن ممارسات الخصوصية أو محتوى أي موقع خارجي تصل إليه عبر هذه الروابط.'
+              'Projects and profiles on UIPE may link to external resources such as GitHub repositories, live project demos, or social media. UIPE is not responsible for the privacy practices or content of any external website you reach through such links.',
+              'قد تتضمن المشاريع والملفات الشخصية على UIPE روابط لموارد خارجية مثل مستودعات GitHub أو العروض التجريبية للمشاريع أو مواقع التواصل الاجتماعي. UIPE ليست مسؤولة عن ممارسات الخصوصية أو محتوى أي موقع خارجي تصل إليه عبر هذه الروابط.'
             )}</p>
           </section>
 
           <section id="s11" className="lp2-pv__sec">
             <h2><span className="lp2-pv__num">11</span>{t("Minors' Privacy", 'خصوصية القُصَّر')}</h2>
             <p>{t(
-              'UIP is built for university students, staff, and industry partners, and is not directed at children. If you believe a minor has provided personal information to the platform, please contact us so the matter can be reviewed.',
-              'تم تصميم UIP لطلاب الجامعات والموظفين والشركاء الصناعيين، وهي ليست موجهة للأطفال. إذا كنت تعتقد أن أحد القُصَّر قد قدّم معلومات شخصية إلى المنصة، يُرجى التواصل معنا لمراجعة الأمر.'
+              'UIPE is built for university students, staff, and industry partners, and is not directed at children. If you believe a minor has provided personal information to the platform, please contact us so the matter can be reviewed.',
+              'تم تصميم UIPE لطلاب الجامعات والموظفين والشركاء الصناعيين، وهي ليست موجهة للأطفال. إذا كنت تعتقد أن أحد القُصَّر قد قدّم معلومات شخصية إلى المنصة، يُرجى التواصل معنا لمراجعة الأمر.'
             )}</p>
           </section>
 

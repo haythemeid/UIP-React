@@ -72,7 +72,7 @@ export function CloudPanel({ tt, usage }) {
       </Section>
 
       <Section title={tt('Cloud backup', 'النسخ الاحتياطي السحابي')}>
-        <p className="os-set__hint">{tt('A copy of your My PC files is kept in your own Google Drive or OneDrive, in a folder called “UIP My PC”. Exams, submissions and results never leave the university server.', 'نسخة من ملفات جهازي بتتحفظ في Google Drive أو OneDrive بتاعك، في فولدر اسمه “UIP My PC”. الامتحانات والتسليمات والنتائج بتفضل على سيرفر الجامعة بس.')}</p>
+        <p className="os-set__hint">{tt('A copy of your My PC files is kept in your own Google Drive or OneDrive, in a folder called “UIPE My PC”. Exams, submissions and results never leave the university server.', 'نسخة من ملفات جهازي بتتحفظ في Google Drive أو OneDrive بتاعك، في فولدر اسمه “UIPE My PC”. الامتحانات والتسليمات والنتائج بتفضل على سيرفر الجامعة بس.')}</p>
         {!anyAvailable && <p className="os-set__hint">{cl.ready ? tt('Cloud backup is not available here yet (it has to be enabled by the platform admin, and it does not run inside the Android app).', 'النسخ السحابي مش متاح هنا لسه (لازم الأدمن يفعّله، ومش بيشتغل جوه تطبيق الأندرويد).') : tt('Loading…', 'جارٍ التحميل…')}</p>}
         <div className="sc-prov">
           {ids.filter((i) => cloud.available(i) || cl.links[i]).map((id) => {

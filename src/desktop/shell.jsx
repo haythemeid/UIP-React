@@ -268,7 +268,7 @@ const RUN_ITEMS = [
   { cmd: 'notes', en: 'Notes', ar: 'الملاحظات', glyph: 'notes' },
   { cmd: 'calendar', en: 'Calendar', ar: 'التقويم', glyph: 'calendar' },
   { cmd: 'calculator', en: 'Calculator', ar: 'الآلة الحاسبة', glyph: 'calculator' },
-  { cmd: 'terminal', en: 'UIP Terminal', ar: 'ترمينال UIP', glyph: 'terminal' },
+  { cmd: 'terminal', en: 'UIPE Terminal', ar: 'ترمينال UIPE', glyph: 'terminal' },
   { cmd: 'lock', en: 'Lock screen', ar: 'قفل الشاشة', glyph: 'lock' },
   { cmd: 'portal', en: 'Back to portal', ar: 'الرجوع للموقع', glyph: 'portal' },
   { cmd: 'logout', en: 'Sign out', ar: 'تسجيل الخروج', glyph: 'logout' },
@@ -544,8 +544,8 @@ export function LockScreen({ ar, tt, user, lockEnabled, onUnlock, onPortal, hide
       <div className="lk-scroll">
         <header className="lk-top">
           <div className="lk-brand">
-            <img className="lk-brand__mark" src="/images/logo/uip-mark.png" srcSet="/images/logo/uip-mark.png 1x, /images/logo/uip-mark@2x.png 2x" alt="" width="52" height="52" decoding="async" />
-            <span className="lk-brand__txt"><b>UIP</b><small>Ultimate<br />Intelligent<br />Platform</small></span>
+            <img className="lk-brand__mark" src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark.png 1x, /images/logo/uipe-mark@2x.png 2x" alt="" width="52" height="52" decoding="async" />
+            <span className="lk-brand__txt"><b>UIPE</b><small>Unified Integrated Platform Ecosystem</small></span>
           </div>
           <div className="lk-clock" dir={dir}><Clock ar={ar} big /></div>
           <div className="lk-tools" dir="ltr">

@@ -184,7 +184,7 @@ export default function AiAssistantWidget({ role, user }) {
     } catch { /* not remembered */ }
   }, [isOpen, size, activeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // The Student sidebar's "UIP AI Assistant" button (components/Sidebar.jsx)
+  // The Student sidebar's "UIPE AI Assistant" button (components/Sidebar.jsx)
   // fires this event so the floating button isn't the only way in.
   const openRef = useRef(open);
   openRef.current = open;
@@ -343,7 +343,7 @@ export default function AiAssistantWidget({ role, user }) {
       const res = await api.get(`${API}/conversations/${id}`);
       const msgs = ((res.data && res.data.messages) || []).filter((m) => (m.role === 'user' || m.role === 'assistant') && (m.content || '').trim());
       if (!msgs.length) throw new Error('empty');
-      const who = (m) => (m.role === 'user' ? (ar ? 'أنت' : 'You') : 'UIP AI');
+      const who = (m) => (m.role === 'user' ? (ar ? 'أنت' : 'You') : 'UIPE AI');
       // very long answers are split over several rows so no PDF row is taller than a page
       const CHUNK = 1100;
       const plain = (txt) => String(txt).replace(/```[a-z0-9]*\n?/gi, '').replace(/[*_`#>]+/g, '').replace(/\n{3,}/g, '\n\n').trim();

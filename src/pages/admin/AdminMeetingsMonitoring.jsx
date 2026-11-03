@@ -19,7 +19,7 @@ const translations = { ...i18nCommon, ...i18nPage };
  * this endpoint deliberately returns counters/aggregates only, never
  * meeting content itself (see that controller's own docblock: "Admins
  * should NOT automatically have access to private meeting content unless
- * the existing UIP policies explicitly allow it").
+ * the existing UIPE policies explicitly allow it").
  */
 
 const SECURITY_ACTION_LABELS = {

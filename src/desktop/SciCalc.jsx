@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { MULTI, fmt, natural, ratV, run, solve, varsIn } from './sciCalcEngine';
 import './sciCalc.css';
 
-/* UIP Scientific Calculator (modern):  SHIFT / ALPHA layers, natural (fraction / surd / π) results, S⇔D,
+/* UIPE Scientific Calculator (modern):  SHIFT / ALPHA layers, natural (fraction / surd / π) results, S⇔D,
  * Ans, A–F X Y M variables, STO, CALC, SOLVE, ∫ d/dx Σ, nPr nCr, hyp, DRG, history with ▲ ▼. */
 
 const S = (l, ins, extra) => ({ l, ins: ins ?? l, ...extra });
@@ -225,10 +225,10 @@ export default function SciCalc({ tt }) {
 
   const prev = !done && !pm && hist[0] && !text ? hist[0] : null;
   return (
-    <div className={`ucalc ${shift ? 'on-s' : ''} ${alpha ? 'on-a' : ''}`} ref={root} tabIndex={0} onKeyDown={onKey} dir="ltr" aria-label="UIP Scientific Calculator">
+    <div className={`ucalc ${shift ? 'on-s' : ''} ${alpha ? 'on-a' : ''}`} ref={root} tabIndex={0} onKeyDown={onKey} dir="ltr" aria-label="UIPE Scientific Calculator">
       <header className="ucalc-head">
         <span className="ucalc-logo"><Logo /></span>
-        <span className="ucalc-brand">UIP</span>
+        <span className="ucalc-brand">UIPE</span>
         <span className="ucalc-model"><b>Scientific</b><small>Natural Display</small></span>
         <button type="button" className={`ucalc-hbtn ${showHist ? 'on' : ''}`} onClick={() => setShowHist((v) => !v)} title={tt('History', 'السجل')} aria-label={tt('History', 'السجل')}>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l3 2" /></svg>

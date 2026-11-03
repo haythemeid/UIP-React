@@ -1,7 +1,7 @@
 /**
  * WhatsApp-style auto-save of chat media inside the Android app.
  * Every attachment (photo / video / file / audio) of a message the OTHER person sent is saved to the phone into
- * Pictures / Movies / Music / Documents  >  "UIP", once. Does nothing in a normal browser.
+ * Pictures / Movies / Music / Documents  >  "UIPE", once. Does nothing in a normal browser.
  *
  *  - only messages that arrived AFTER the feature was first used are saved, so opening an old chat never
  *    dumps its whole history onto the phone;
@@ -87,7 +87,7 @@ export function autoSaveMessages(messages) {
       queued.add(id);
       queue.push({
         id,
-        args: { url: a.url, filename: a.original_name || `UIP-${id}`, mimeType: a.mime_type, kind: a.kind },
+        args: { url: a.url, filename: a.original_name || `UIPE-${id}`, mimeType: a.mime_type, kind: a.kind },
       });
     });
   });
@@ -113,7 +113,7 @@ async function webDownload(url, name) {
 
 /**
  * "Save to phone" from the message action bar (long press on a photo / video / file / voice note / audio).
- * In the app it goes to Pictures / Movies / Music / Documents > UIP; in a browser it is a normal download.
+ * In the app it goes to Pictures / Movies / Music / Documents > UIPE; in a browser it is a normal download.
  * Always saves, even if auto-save already did (the person asked for it).
  */
 export async function saveAttachmentsToPhone(attachments) {
@@ -127,7 +127,7 @@ export async function saveAttachmentsToPhone(attachments) {
       const url = a.url;
       if (isNative) {
         const signed = await resolveMediaUrl(url);
-        await nativeSaveUrl({ url: signed, filename: a.original_name || `UIP-${a.id ?? Date.now()}`, mimeType: a.mime_type, kind: a.kind });
+        await nativeSaveUrl({ url: signed, filename: a.original_name || `UIPE-${a.id ?? Date.now()}`, mimeType: a.mime_type, kind: a.kind });
         remember(String(a.id ?? a.url));
       } else {
         await webDownload(url, a.original_name);
@@ -139,5 +139,5 @@ export async function saveAttachmentsToPhone(attachments) {
   }
   if (permission) showToast(ar ? 'اسمح للتطبيق بالوصول للتخزين ثم جرّب تاني' : 'Allow storage access for the app, then try again');
   else if (!ok) showToast(ar ? 'تعذّر الحفظ، جرّب تاني' : 'Could not save, please try again');
-  else if (isNative) showToast(ar ? `تم الحفظ في مجلد UIP${ok > 1 ? ` (${ok} ملفات)` : ''}` : `Saved to the UIP folder${ok > 1 ? ` (${ok} files)` : ''}`);
+  else if (isNative) showToast(ar ? `تم الحفظ في مجلد UIPE${ok > 1 ? ` (${ok} ملفات)` : ''}` : `Saved to the UIPE folder${ok > 1 ? ` (${ok} files)` : ''}`);
 }

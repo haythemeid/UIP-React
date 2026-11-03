@@ -486,7 +486,7 @@ function MailCard({ initial }) {
         <div className="grid-2" style={{ gap: 'var(--space-3)' }}>
           <div className="form-group">
             <label className="form-label">{t("From Name")}</label>
-            <input className="form-input" type="text" value={fromName} onChange={(e) => { setFromName(e.target.value); setSaved(false); }} placeholder={t('Ultimate Intelligent Platform')} />
+            <input className="form-input" type="text" value={fromName} onChange={(e) => { setFromName(e.target.value); setSaved(false); }} placeholder={t('Unified Integrated Platform Ecosystem')} />
           </div>
           <div className="form-group">
             <label className="form-label">{t("From Address")}</label>

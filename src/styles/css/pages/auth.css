@@ -137,11 +137,13 @@
   padding: calc(18px + env(safe-area-inset-top, 0px)) max(clamp(16px, 4vw, 48px), env(safe-area-inset-right, 0px)) 6px max(clamp(16px, 4vw, 48px), env(safe-area-inset-left, 0px));
   width: 100%; max-width: 1400px; margin-inline: auto;
 }
-.auth-brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; justify-self: start; min-width: 0; }
-.auth-brand img { width: 44px; height: 44px; border-radius: 13px; box-shadow: 0 10px 24px -8px rgba(60, 80, 255, 0.55); flex: none; }
-.auth-brand__text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
-.auth-brand__text strong { font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: var(--a-ink); }
-.auth-brand__text small { font-size: 0.6875rem; letter-spacing: 0.06em; color: var(--a-muted); font-weight: 600; }
+/* Brand lockup: always LTR (Latin wordmark + English name) so it looks identical in Arabic and English; only its place in the header follows the page direction. */
+.auth-brand { display: inline-flex; align-items: center; gap: 12px; direction: ltr; text-decoration: none; justify-self: start; min-width: 0; }
+.auth-brand__word { display: block; width: 112px; height: auto; flex: none; object-fit: contain; filter: drop-shadow(0 6px 14px rgba(20, 50, 140, 0.18)); }
+.auth-brand__text { display: flex; flex-direction: column; gap: 3px; line-height: 1.2; min-width: 0; text-align: start; max-width: 190px; }
+.auth-brand__text small { font-size: 0.625rem; letter-spacing: 0.07em; color: var(--a-ink); font-weight: 700; }
+.auth-brand__text em { font-style: normal; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; color: #b9831a; }
+html[data-theme="dark"] .auth-brand__word { background: #fff; border-radius: 12px; padding: 5px 9px; width: 112px; box-sizing: content-box; filter: none; }
 
 .auth-clock { display: flex; align-items: center; gap: 18px; justify-self: center; color: var(--a-muted); font-size: 0.8125rem; white-space: nowrap; }
 .auth-clock__time, .auth-clock__date { display: inline-flex; align-items: center; }
@@ -401,8 +403,8 @@ button.auth-role { width: 100%; font: inherit; text-align: start; cursor: var(--
 @media (max-width: 639px) {
   .auth-topbar { grid-template-columns: 1fr auto; }
   .auth-clock { display: none; }
-  .auth-brand img { width: 40px; height: 40px; }
-  .auth-brand__text small { display: none; }
+  .auth-brand__word { width: 92px; }
+  .auth-brand__text { display: none; }
   .auth-card { border-radius: 22px; padding: 22px 18px; }
   .auth-main { padding-top: 12px; row-gap: 20px; }
 }

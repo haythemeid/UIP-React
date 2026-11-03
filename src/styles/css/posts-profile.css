@@ -173,3 +173,8 @@
 .pfx-priv__row:last-child{border:0}
 .pfx-priv__row label.is-switch{display:flex;align-items:flex-start;gap:10px;cursor:pointer}
 .pfx-priv__row small{color:var(--pp-mut,#6b7280)}
+
+/* Bio bubble (same designs as chat) + editor inside the dialog */
+.pfx-biob{display:inline-block;max-width:min(100%,520px);margin:12px 0 0;font-size:14.5px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.pfx-bioed{min-width:0}
+.pfx-bioed .bio-ed__picker{max-height:300px;overflow:hidden;border-radius:14px}

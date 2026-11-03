@@ -5,7 +5,7 @@
    button that opens that same drawer for everything else. This is a
    mobile-specific navigation pattern (Category D), not a shrunk sidebar.
    Status: Active — Mobile Re-Architecture Phase 1 (Global Shell)
-   @package UIP */
+   @package UIPE */
 
 .bottom-nav { display: none; }
 

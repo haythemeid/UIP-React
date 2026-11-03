@@ -1,5 +1,5 @@
 /**
- * Keyboard shortcuts of the UIP desktop.
+ * Keyboard shortcuts of the UIPE desktop.
  *
  * Browsers own a few combos (Win+key, Alt+Tab, Alt+F4, Ctrl+W/T/N…) and never hand them to a page, so every
  * "Windows" shortcut has a browser-safe twin on Alt. Keys are matched by `event.code` (physical key), so they
@@ -52,7 +52,7 @@ export const SHORTCUTS = [
   { id: 'notes', keys: ['Alt+N'], win: '', group: 'apps', en: 'Notes', ar: 'الملاحظات' },
   { id: 'calendar', keys: ['Alt+C'], win: '', group: 'apps', en: 'Calendar', ar: 'التقويم' },
   { id: 'calculator', keys: ['Alt+Q'], win: '', group: 'apps', en: 'Calculator', ar: 'الآلة الحاسبة' },
-  { id: 'terminal', keys: ['Alt+T'], win: '⌃⌥T', group: 'apps', en: 'UIP Terminal', ar: 'ترمينال UIP' },
+  { id: 'terminal', keys: ['Alt+T'], win: '⌃⌥T', group: 'apps', en: 'UIPE Terminal', ar: 'ترمينال UIPE' },
   { id: 'help', keys: ['F1', 'Alt+K'], win: 'F1', group: 'apps', en: 'Keyboard shortcuts cheat-sheet', ar: 'قائمة اختصارات الكيبورد' },
   { id: 'taskview', keys: ['Alt+V'], win: '⌃↑', group: 'windows', en: 'Mission Control (all windows)', ar: 'عرض المهام (كل النوافذ)' },
   { id: 'deskNext', keys: ['Ctrl+Alt+ArrowRight'], win: '⌃→', group: 'windows', en: 'Next desktop (Space)', ar: 'المساحة التالية' },

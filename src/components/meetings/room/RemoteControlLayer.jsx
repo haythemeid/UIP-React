@@ -108,7 +108,7 @@ export default function RemoteControlLayer({ room, myKey, presenter, t }) {
           <div className="meeting-rc__card">
             <span className="meeting-rc__ico"><Icon name="monitor" size={22} /></span>
             <h3>{incoming.controllerName} {t('wants to control your screen')}</h3>
-            <p>{t('They will be able to click, scroll and type in the UIP page you are sharing (open in another tab). You can stop it at any time.')}</p>
+            <p>{t('They will be able to click, scroll and type in the UIPE page you are sharing (open in another tab). You can stop it at any time.')}</p>
             <div className="meeting-rc__actions">
               <button type="button" className="btn btn-outline" onClick={() => room.respondRemoteControl(incoming.controllerKey, false)}>{t('Deny')}</button>
               <button type="button" className="btn btn-primary" onClick={() => room.respondRemoteControl(incoming.controllerKey, true)}>{t('Allow control')}</button>

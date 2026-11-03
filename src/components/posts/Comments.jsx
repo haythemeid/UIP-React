@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ago } from '../feed/feedUi';
 import { Alert, Empty, PAvatar, REACTIONS, REPORT_REASONS, RichText, useTt } from './shared';
 import UserAvatar from './UserAvatar';
+import EmojiButton, { insertAtCaret } from './EmojiButton';
 import usePostsRealtime, { isOwnEcho, markLocalWrite } from '../../lib/usePostsRealtime';
 import { Dialog, useDialogs } from './Dialogs';
 
@@ -18,6 +19,7 @@ function Field({ value, onChange, onSubmit, onCancel, placeholder, autoFocus, bu
   useEffect(() => { const el = ref.current; if (!el) return; el.style.height = 'auto'; el.style.height = `${Math.min(el.scrollHeight, 180)}px`; }, [value]);
   useEffect(() => { if (autoFocus && ref.current) { ref.current.focus(); const n = ref.current.value.length; ref.current.setSelectionRange(n, n); } }, [autoFocus]);
   const near = value.length > MAX * 0.85;
+  const addEmoji = (e) => { const v = insertAtCaret(ref.current, value, e, MAX); if (v != null) onChange(v); };
   return (
     <div className={`pp-field${compact ? ' is-compact' : ''}`}>
       <textarea ref={ref} rows={1} dir="auto" value={value} maxLength={MAX} placeholder={placeholder} aria-label={label || placeholder} disabled={busy}
@@ -27,6 +29,7 @@ function Field({ value, onChange, onSubmit, onCancel, placeholder, autoFocus, bu
           if (e.key === 'Escape' && onCancel) { e.stopPropagation(); onCancel(); }
         }} />
       <div className="pp-field__bar">
+        {!busy && <EmojiButton onPick={addEmoji} className="pp-field__emo" size={17} up />}
         {near && <small className={value.length >= MAX ? 'pp-err' : 'pp-muted'}>{value.length}/{MAX}</small>}
         {onCancel && sendLabel?.cancel && label === 'edit' && <button type="button" className="pp-btn" onClick={onCancel} disabled={busy}>{sendLabel.cancel}</button>}
         <button type="button" className="pp-field__send" onClick={onSubmit} disabled={busy || !value.trim()} aria-label={sendLabel?.send}><Icon name="send" size={15} /></button>

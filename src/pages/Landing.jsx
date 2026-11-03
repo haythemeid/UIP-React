@@ -110,7 +110,7 @@ export default function Landing() {
   ];
 
   const faqs = [
-    [t('Is UIP free?', 'هل UIP مجانية؟'), t('It is free for students. You do not need a credit card to create an account.', 'مجانية للطلاب. مش محتاج كريدت كارد عشان تعمل حساب.')],
+    [t('Is UIPE free?', 'هل UIPE مجانية؟'), t('It is free for students. You do not need a credit card to create an account.', 'مجانية للطلاب. مش محتاج كريدت كارد عشان تعمل حساب.')],
     [t('Who can use it?', 'مين يقدر يستخدمها؟'), t('Students, instructors and supervisors, universities and faculties, and data and security teams. Each role gets its own tools under one account.', 'الطلاب والدكاترة والمشرفين والجامعات والكليات وفرق البيانات والأمن. كل دور بياخد أدواته تحت حساب واحد.')],
     [t('Can I use it on my phone?', 'أقدر أستخدمها على الموبايل؟'), t('Yes. It works in any browser and there is an Android app for calls, chat and notifications.', 'أيوه. بتشتغل في أي متصفح، وفي تطبيق أندرويد للمكالمات والشات والإشعارات.')],
     [t('Who sees my posts, photo and stories?', 'مين يشوف منشوراتي وصورتي والستوريز؟'), t('You choose. Each post and story has its own audience, you can lock your profile so only friends and followers see it, and your photo can be opened or downloaded only if you allow it.', 'إنت اللي بتختار. كل منشور وستوري ليهم جمهورهم، وتقدر تقفل بروفايلك ليشوفه أصدقاؤك ومتابعوك بس، وصورتك مش بتتفتح أو تتنزّل غير لو سمحت.')],
@@ -344,7 +344,7 @@ export default function Landing() {
           {featured.length > 0 && (
             <>
               <div className="lp4-row">
-                <h3>{t('Published on UIP', 'اتنشر على UIP')}</h3>
+                <h3>{t('Published on UIPE', 'اتنشر على UIPE')}</h3>
                 <Link to="/projects" className="btn btn-outline">{t('Explore all projects', 'استكشف كل المشاريع')} <Icon name="arrow-right" size={16} /></Link>
               </div>
               <div className="public-projects-grid">
@@ -423,9 +423,9 @@ export default function Landing() {
           <section className="lp4-section lp4-shell" id="app">
             <div className="lp4-app">
               <div className="lp4-app__info">
-                <span className="lp4-app__logo"><img src="/images/logo/uip-mark.png" srcSet="/images/logo/uip-mark@2x.png 2x" alt="UIP" /></span>
+                <span className="lp4-app__logo"><img src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark@2x.png 2x" alt="UIPE" /></span>
                 <div>
-                  <h2>{app.native ? t('Enjoying UIP? Share the app with your friends', 'عجبتك UIP؟ شارك التطبيق مع أصحابك') : t('Take UIP with you', 'خد UIP معاك')}</h2>
+                  <h2>{app.native ? t('Enjoying UIPE? Share the app with your friends', 'عجبتك UIPE؟ شارك التطبيق مع أصحابك') : t('Take UIPE with you', 'خد UIPE معاك')}</h2>
                   <p>{app.native ? t('Send the download link on WhatsApp, Telegram or anywhere you like.', 'ابعت رابط التحميل على واتساب أو تيليجرام أو أي مكان.') : t('Calls, chat and notifications work best in the Android app.', 'المكالمات والشات والإشعارات بتشتغل أحسن في تطبيق الأندرويد.')}</p>
                 </div>
               </div>

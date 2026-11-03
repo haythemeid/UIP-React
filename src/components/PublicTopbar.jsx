@@ -26,8 +26,8 @@ export default function PublicTopbar() {
   return (
     <div className="public-topbar">
       <Link to="/" className="public-brand">
-        <span className="mark"><img src="/images/logo/uip-mark.png" srcSet="/images/logo/uip-mark@2x.png 2x" alt="" /></span>
-        <strong>{t('UIP Platform', 'منصة UIP')}</strong>
+        <span className="mark"><img src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark@2x.png 2x" alt="" /></span>
+        <strong>{t('UIPE Platform', 'منصة UIPE')}</strong>
       </Link>
       <div className="public-topbar__actions">
         <Link className="public-pill-btn" to="/">

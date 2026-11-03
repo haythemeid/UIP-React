@@ -20,6 +20,7 @@ export default {
   'in one place': 'في مكان واحد',
   'Skip to form': 'تخطَّ إلى النموذج',
   'Privacy policy': 'سياسة الخصوصية',
-  'UIP — Ultimate Intelligent Platform': 'UIP — Ultimate Intelligent Platform',
-  'ULTIMATE INTELLIGENT PLATFORM': 'ULTIMATE INTELLIGENT PLATFORM',
+  'UIPE — Unified Integrated Platform Ecosystem': 'UIPE — Unified Integrated Platform Ecosystem',
+  'UNIFIED INTEGRATED PLATFORM ECOSYSTEM': 'UNIFIED INTEGRATED PLATFORM ECOSYSTEM',
+  'One Platform. Endless Connections.': 'One Platform. Endless Connections.',
 };

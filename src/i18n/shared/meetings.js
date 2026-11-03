@@ -373,7 +373,7 @@ export default {
   'Your control request was declined.': 'تم رفض طلب التحكم.',
   'Remote control ended.': 'انتهى التحكم عن بُعد.',
   'wants to control your screen': 'عايز يتحكم في شاشتك',
-  'They will be able to click, scroll and type in the UIP page you are sharing (open in another tab). You can stop it at any time.': 'هيقدر يضغط ويعمل سكرول ويكتب في صفحة UIP اللي بتشاركها (مفتوحة في تاب تاني). تقدر توقفه في أي وقت.',
+  'They will be able to click, scroll and type in the UIPE page you are sharing (open in another tab). You can stop it at any time.': 'هيقدر يضغط ويعمل سكرول ويكتب في صفحة UIPE اللي بتشاركها (مفتوحة في تاب تاني). تقدر توقفه في أي وقت.',
   'Deny': 'رفض',
   'Allow control': 'السماح بالتحكم',
   'Today': 'اليوم',

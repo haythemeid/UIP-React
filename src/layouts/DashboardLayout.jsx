@@ -22,7 +22,7 @@ import { VirtualGuard } from '../virtual/virtualMode';
 import { isEmbedded } from '../lib/embed';
 import '../styles/css/embed.css';
 
-// "UIP / DASHBOARD" eyebrow shown above every Insight-portal page title.
+// "UIPE / DASHBOARD" eyebrow shown above every Insight-portal page title.
 function useEyebrow(role, enabled) {
   const { pathname } = useLocation();
   const { locale } = useLanguage();
@@ -33,7 +33,7 @@ function useEyebrow(role, enabled) {
     .sort((a, b) => b.route.length - a.route.length)[0];
   const seg = pathname.split('/').filter(Boolean).slice(1, 2)[0] || '';
   const name = hit ? (hit[locale] || hit.en) : seg.replace(/-/g, ' ');
-  return `UIP / ${name}`;
+  return `UIPE / ${name}`;
 }
 
 // Ported from layouts/header.php + layouts/footer.php's <div class="app-shell">

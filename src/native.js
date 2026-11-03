@@ -425,7 +425,7 @@ export function hideSplash() {
 
 // ---- Staff sign-in (admin / data analyst / security) ----------------------------
 // The staff page is deliberately not linked anywhere and the app has no address bar, so it is reached by
-//  1) tapping the UIP logo 7 times in a row (within 4 s) on any public/sign-in screen, or
+//  1) tapping the UIPE logo 7 times in a row (within 4 s) on any public/sign-in screen, or
 //  2) opening a link:  uip://staff-access  (or https://uip-nub.vercel.app/staff-access if the phone is set
 //     to open that site's links in the app).
 function goTo(path) {
@@ -436,7 +436,7 @@ function goTo(path) {
 function setupStaffAccess() {
   let taps = 0, timer = null;
   document.addEventListener('click', (e) => {
-    const logo = e.target.closest && e.target.closest('.auth-brand, img[src*="logo/uip-mark"]');
+    const logo = e.target.closest && e.target.closest('.auth-brand, img[src*="logo/uipe-"]');
     if (!logo) return;
     taps += 1;
     clearTimeout(timer);
@@ -543,7 +543,7 @@ function setupExternalLinks() {
 
 // ---- Notifications ------------------------------------------------------------------
 // Asks Android 13+ for the notification permission and lets the app show a system notification when a new
-// UIP notification arrives (see Topbar). While the app is closed, phone notifications need push (Firebase)
+// UIPE notification arrives (see Topbar). While the app is closed, phone notifications need push (Firebase)
 // on the backend as well - that is not part of this build.
 let notifReady = false;
 let localTapListening = false;
@@ -675,7 +675,7 @@ async function ensureCallScreenPermissions() {
     try { localStorage.setItem(CALL_PROMPT_KEY, JSON.stringify({ n: log.n + 1, ts: Date.now() })); } catch { /* storage blocked */ }
     const pick = await permissionCard('uip-call-card',
       'عشان شاشة المكالمة تظهر لك على طول زي الواتساب حتى والتطبيق مقفول، فعّل "الظهور فوق التطبيقات الأخرى" للتطبيق.',
-      'So the call screen pops up instantly like WhatsApp, even with the app closed, allow "Display over other apps" for UIP.',
+      'So the call screen pops up instantly like WhatsApp, even with the app closed, allow "Display over other apps" for UIPE.',
       [{ id: 'go', ar: 'تفعيل', en: 'Enable', primary: true }, { id: 'later', ar: 'لاحقًا', en: 'Later' }]);
     if (pick === 'go') await NativeLinksPerm.openCallScreenSettings({ kind: st.overlay === false ? 'overlay' : 'fsi' });
   } catch { /* old APK without the new native methods */ }
@@ -799,7 +799,7 @@ async function requestNotificationPermission() {
     const { LocalNotifications } = await import('@capacitor/local-notifications');
     const p = await LocalNotifications.checkPermissions(); // only checks: the asking (and its twice-a-day cap) is requestStartupPermissions
     if (p.display === 'granted') {
-      await LocalNotifications.createChannel({ id: 'uip', name: 'UIP', description: 'UIP notifications', importance: 4, visibility: 1, vibration: true });
+      await LocalNotifications.createChannel({ id: 'uip', name: 'UIPE', description: 'UIPE notifications', importance: 4, visibility: 1, vibration: true });
       await LocalNotifications.createChannel(ALERT_CHANNEL);
       if (!localTapListening) {
         localTapListening = true;
@@ -824,7 +824,7 @@ export async function nativeNotify(title, body, opts = {}) {
     await LocalNotifications.schedule({ notifications: [{
       // alerts about the same screen replace each other instead of piling up
       id: alert && opts.link ? hashId(opts.link) : Math.floor(Date.now() % 2147483000),
-      title: title || 'UIP', body: String(body || '').split('\n')[0], largeBody: body || '', summaryText: alert ? 'UIP' : undefined,
+      title: title || 'UIPE', body: String(body || '').split('\n')[0], largeBody: body || '', summaryText: alert ? 'UIPE' : undefined,
       channelId: alert ? ALERT_CHANNEL.id : 'uip', smallIcon: 'ic_stat_uip', iconColor: alert ? '#E5484D' : '#4F5BE8',
       extra: { link_url: opts.link || '' },
     }] });
@@ -835,7 +835,7 @@ export async function nativeNotify(title, body, opts = {}) {
 // Android only shows its permission dialog when the page first calls getUserMedia. For exams that would be
 // in the middle of the attempt, so ask as soon as the student opens an exam page (and the microphone too for
 // meetings). The system dialog appears once; if it was refused, the app falls back to its own
-// "camera blocked" message and the permission can be turned on in Settings > Apps > UIP > Permissions.
+// "camera blocked" message and the permission can be turned on in Settings > Apps > UIPE > Permissions.
 const mediaAsked = { video: false, audio: false };
 
 async function ensureMedia({ video, audio }) {
@@ -951,7 +951,7 @@ export function watchExamMode(onLost) {
 // @media print CSS. In a normal browser this is just window.print().
 const NativePrint = isNative ? registerPlugin('NativePrint') : null;
 
-export async function printPage({ name = 'UIP', landscape = false } = {}) {
+export async function printPage({ name = 'UIPE', landscape = false } = {}) {
   if (NativePrint) {
     try { await NativePrint.print({ name, landscape }); return; } catch {
       toast(document.documentElement.lang === 'ar' || localStorage.getItem('uip_locale') === 'ar'
@@ -988,7 +988,7 @@ function blobToBase64(blob) {
 
 /**
  * Chat media auto-save: the phone downloads the file straight from its URL (streamed natively, never through JS)
- * into Pictures / Movies / Music / Documents  >  "UIP". Rejects if the plugin is missing (old APK) or the storage
+ * into Pictures / Movies / Music / Documents  >  "UIPE". Rejects if the plugin is missing (old APK) or the storage
  * permission is not granted yet (Android 9-), so the caller can simply try again later.
  */
 export async function nativeSaveUrl({ url, filename, mimeType, kind }) {
@@ -1137,7 +1137,7 @@ async function nativeTokenFallback() {
     try { if (localStorage.getItem(PUSH_TOKEN_KEY)) return; } catch { /* storage blocked */ }
     try {
       const r = await NativeLinksPerm.getPushToken();
-      try { console.log('[UIP-PUSH] native token ' + (r?.token ? 'ok' : 'empty')); } catch { /* ignore */ }
+      try { console.log('[UIPE-PUSH] native token ' + (r?.token ? 'ok' : 'empty')); } catch { /* ignore */ }
       if (r?.token) {
         try { localStorage.setItem(PUSH_TOKEN_KEY, String(r.token)); } catch { /* storage blocked */ }
         sendPushToken();
@@ -1154,7 +1154,7 @@ async function ensurePushRegistered() {
   try {
     const p = await Push.checkPermissions();
     if (p.receive !== 'granted') { pushDebug('notification permission is not granted'); return; }
-    await Push.createChannel({ id: 'uip', name: 'UIP', description: 'UIP notifications', importance: 4, visibility: 1, vibration: true, lights: true });
+    await Push.createChannel({ id: 'uip', name: 'UIPE', description: 'UIPE notifications', importance: 4, visibility: 1, vibration: true, lights: true });
     await Push.createChannel(ALERT_CHANNEL);
     await Push.register();
     nativeTokenFallback();
@@ -1185,7 +1185,7 @@ export async function registerPush() {
   if (!isNative) return;
   pushWanted = true;
   try { localStorage.removeItem(PUSH_SENT_KEY); } catch { /* storage blocked */ } // signed in / app started: send the token once for this account
-  try { console.log('[UIP-PUSH] registerPush start'); } catch { /* ignore */ }
+  try { console.log('[UIPE-PUSH] registerPush start'); } catch { /* ignore */ }
   // Status banner + native token path do not depend on the Capacitor push plugin, so a plugin that fails to load is visible, not silent.
   if (!window.__uipPushStatusShown) { window.__uipPushStatusShown = true; setTimeout(pushStatusBanner, 10000); }
   nativeTokenFallback();

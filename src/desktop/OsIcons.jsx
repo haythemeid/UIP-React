@@ -144,7 +144,7 @@ export function LaunchpadGlyph({ size = 48 }) {
   );
 }
 
-/** UIP monogram used for the menu-bar logo and the start-up screen. */
+/** UIPE monogram used for the menu-bar logo and the start-up screen. */
 export function UipMark({ size = 18 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">

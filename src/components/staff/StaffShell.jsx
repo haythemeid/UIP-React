@@ -84,7 +84,7 @@ export default function StaffShell({ titleId = 'sl-title', children }) {
     font.href = FONT_HREF;
     document.head.append(meta, font);
     const prevTitle = document.title;
-    document.title = 'UIP';
+    document.title = 'UIPE';
     return () => { meta.remove(); font.remove(); document.title = prevTitle; };
   }, []);
 
@@ -126,8 +126,8 @@ export default function StaffShell({ titleId = 'sl-title', children }) {
         <section className="sl-side">
           <Aperture />
           <div className="sl-side__top">
-            <img src="/images/logo/uip-mark.png" alt="" width="38" height="38" />
-            <span>UIP</span>
+            <img src="/images/logo/uipe-mark.png" alt="" width="38" height="38" />
+            <span>UIPE</span>
           </div>
 
           <ul className="sl-lanes">

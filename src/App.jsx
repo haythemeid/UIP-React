@@ -295,7 +295,7 @@ const MeetingPreJoin = lazy(() => import('./pages/meetings/MeetingPreJoin'));
 const MyMeetings = lazy(() => import('./pages/meetings/MyMeetings'));
 const MeetingCalendar = lazy(() => import('./pages/meetings/MeetingCalendar'));
 const MeetingDetails = lazy(() => import('./pages/meetings/MeetingDetails'));
-// Remote control: every UIP tab except the meeting room can be driven by an approved controller (see lib/remoteControlReceiver.js)
+// Remote control: every UIPE tab except the meeting room can be driven by an approved controller (see lib/remoteControlReceiver.js)
 installRemoteControlReceiver({ isMeetingRoute: () => /\/meetings\/[^/]+\/room/.test(window.location.pathname) });
 
 const MeetingRoom = lazy(() => import('./pages/meetings/MeetingRoom'));
@@ -318,7 +318,7 @@ export default function App() {
         <AuthProvider>
           <AccountSettingsSync />
           <ActivityTracker />
-          {/* Virtual mode (UIP OS): the student's choice to run the whole platform inside the My PC desktop. */}
+          {/* Virtual mode (UIPE OS): the student's choice to run the whole platform inside the My PC desktop. */}
           <VirtualModeProvider>
           <RealtimeBridge />
           <SaveCenterHost />

@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   UIP Mobile shell (see MobileShell.jsx). Everything lives under .os--mobile / .mos so the desktop CSS is untouched.
+   UIPE Mobile shell (see MobileShell.jsx). Everything lives under .os--mobile / .mos so the desktop CSS is untouched.
    Layers (z-index): wallpaper 0 · home 5 · status 20 · dock / fab / action bar 30 · apps 40 · gesture bar 60 · switcher 70 · sheets 80
    Desktop dialogs (.os-scrim 200), toast 250, lock screen 500 stay above all of it.
    ────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -286,7 +286,7 @@
 .mos-sec__t { margin: 6px 6px 10px; font-size: 12.5px; font-weight: 700; letter-spacing: .02em; color: var(--mos-text); opacity: .8; text-shadow: 0 1px 4px rgba(0, 0, 0, .35); }
 .mos.is-lightwp .mos-sec__t { text-shadow: none; }
 
-/* ── UIP OS entry (platform button, promo card, intro sheet) ── */
+/* ── UIPE OS entry (platform button, promo card, intro sheet) ── */
 .mos-searchrow { display: flex; gap: 10px; align-items: stretch; }
 .mos-searchrow .mos-search { flex: 1; min-width: 0; }
 .mos-platbtn {

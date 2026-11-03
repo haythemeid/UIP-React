@@ -156,7 +156,7 @@ button.pp-doc--wait{cursor:pointer}
 .pp-docx__text hr[data-pb]::after{display:none}
 .pp-docx__text table,.pp-docx__text img{break-inside:avoid}
 .pp-docx__snap{position:absolute;top:0;height:1px;scroll-snap-align:start;pointer-events:none}
-.pp-sheet{height:420px;max-height:60vh;overflow:auto;background:#fff;position:relative}
+.pp-sheet{display:flex;flex-direction:column;height:420px;max-height:60vh;overflow:hidden;background:#fff;position:relative}.pp-sheet>.sx-preview{flex:1 1 auto;min-height:0;height:100%}
 .pp-doc__bar .pp-doc__full{display:inline-grid;place-items:center;padding:2px 4px}
 .pp-doc__slide--deck .px__slide{box-shadow:none!important}
 .pp-doc--office .pp-docx__rail{background:#fff}

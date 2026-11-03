@@ -61,10 +61,10 @@ const SEAL_EDGE = (() => {
   return `${d}Z`;
 })();
 
-/** The UIP seal: scalloped edge, lettering around a ring, monogram and issue year in the centre. */
+/** The UIPE seal: scalloped edge, lettering around a ring, monogram and issue year in the centre. */
 function UipSeal({ year, number }) {
   return (
-    <svg className="cv-seal" viewBox="0 0 200 200" role="img" aria-label="UIP">
+    <svg className="cv-seal" viewBox="0 0 200 200" role="img" aria-label="UIPE">
       <defs>
         <path id="cv-seal-top" d="M30 100 A70 70 0 0 1 170 100" />
         <path id="cv-seal-bottom" d="M23 100 A77 77 0 0 0 177 100" />
@@ -75,7 +75,7 @@ function UipSeal({ year, number }) {
           <circle cx="100" cy="100" r="56" fill="none" strokeWidth="1.4" />
           <circle cx="100" cy="100" r="52" fill="none" strokeWidth=".6" />
           <g stroke="none" fontFamily="'Inter','Cairo',system-ui,sans-serif" fontSize="10.5" fontWeight="600" letterSpacing="2.2">
-            <text><textPath href="#cv-seal-top" startOffset="50%" textAnchor="middle">UIP INSIGHT PLATFORM</textPath></text>
+            <text><textPath href="#cv-seal-top" startOffset="50%" textAnchor="middle">UIPE PLATFORM</textPath></text>
             <text><textPath href="#cv-seal-bottom" startOffset="50%" textAnchor="middle">VERIFIED CERTIFICATE</textPath></text>
           </g>
           <text stroke="none" fontFamily="'Inter',system-ui,sans-serif" fontSize="2.7" fontWeight="600">
@@ -83,7 +83,7 @@ function UipSeal({ year, number }) {
           </text>
           <circle cx="31" cy="100" r="2.2" stroke="none" />
           <circle cx="169" cy="100" r="2.2" stroke="none" />
-          <text x="100" y="93" stroke="none" textAnchor="middle" fontFamily="'Newsreader',Georgia,serif" fontSize="27" fontWeight="600" letterSpacing="1">UIP</text>
+          <text x="100" y="93" stroke="none" textAnchor="middle" fontFamily="'Newsreader',Georgia,serif" fontSize="27" fontWeight="600" letterSpacing="1">UIPE</text>
           <path d="M72 131 H128" fill="none" strokeWidth=".7" />
           <text x="100" y="145" stroke="none" textAnchor="middle" fontFamily="'Inter',system-ui,sans-serif" fontSize="9.5" fontWeight="500" letterSpacing="1.5">{year}</text>
         </g>
@@ -198,7 +198,7 @@ function GuillocheFrame() {
  *  resolves under magnification, and it is different on every certificate, so a copied seal
  *  from another certificate never matches its own number. */
 const microLine = (number) => {
-  const unit = `${number || 'UIP'} • UIP VERIFIED • `;
+  const unit = `${number || 'UIPE'} • UIPE VERIFIED • `;
   return unit.repeat(Math.max(2, Math.ceil(230 / unit.length)));
 };
 const MICRO_LEN = 2 * Math.PI * 87.5;
@@ -219,7 +219,7 @@ function UipWatermark({ year, number }) {
           <circle cx="100" cy="100" r="56" fill="none" strokeWidth="1.4" />
           <circle cx="100" cy="100" r="52" fill="none" strokeWidth=".6" />
           <text stroke="none" fontFamily="'Inter','Cairo',system-ui,sans-serif" fontSize="10.5" fontWeight="600" letterSpacing="2.2">
-            <textPath href="#cv-wm-top" startOffset="50%" textAnchor="middle">UIP INSIGHT PLATFORM</textPath>
+            <textPath href="#cv-wm-top" startOffset="50%" textAnchor="middle">UIPE PLATFORM</textPath>
           </text>
           <text stroke="none" fontFamily="'Inter','Cairo',system-ui,sans-serif" fontSize="10.5" fontWeight="600" letterSpacing="2.2">
             <textPath href="#cv-wm-bottom" startOffset="50%" textAnchor="middle">VERIFIED CERTIFICATE</textPath>
@@ -227,7 +227,7 @@ function UipWatermark({ year, number }) {
           <text stroke="none" fontFamily="'Inter',system-ui,sans-serif" fontSize="2.7" fontWeight="600">
             <textPath href="#cv-wm-micro" textLength={MICRO_LEN} lengthAdjust="spacing">{microLine(number)}</textPath>
           </text>
-          <text x="100" y="109" stroke="none" textAnchor="middle" fontFamily="'Newsreader',Georgia,serif" fontSize="34" fontWeight="600" letterSpacing="1">UIP</text>
+          <text x="100" y="109" stroke="none" textAnchor="middle" fontFamily="'Newsreader',Georgia,serif" fontSize="34" fontWeight="600" letterSpacing="1">UIPE</text>
           <path d="M78 118 H122" fill="none" strokeWidth=".8" />
           <text x="100" y="134" stroke="none" textAnchor="middle" fontFamily="'Inter',system-ui,sans-serif" fontSize="11" fontWeight="500" letterSpacing="1.5">{year}</text>
         </g>

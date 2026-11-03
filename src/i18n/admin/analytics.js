@@ -17,7 +17,7 @@ export default {
   'Not enough data yet to compute trends.': 'لا توجد بيانات كافية بعد لحساب الاتجاهات.',
   'Not enough data yet.': 'لا توجد بيانات كافية بعد.',
   'Submissions vs. the prior 30-day period, by category.': 'مقارنة عدد المشاريع المُقدَّمة مقابل الفترة السابقة، حسب المجال.',
-  'UIP Project Ecosystem': 'منظومة مشاريع UIP',
+  'UIPE Project Ecosystem': 'منظومة مشاريع UIPE',
   'Universities Ranked by Project Volume': 'ترتيب الجامعات حسب عدد المشاريع',
   'Users by Role': 'المستخدمون حسب الدور',
   'vs': 'مقابل',

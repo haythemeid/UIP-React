@@ -11,7 +11,7 @@ const translations = { ...i18nCommon, ...i18nMeetings };
  * Round 8 (Invitations & Calendar) — بند 13 ("The host should be able to
  * invite: Specific users, Students, Academic staff,
  * Supervisors, Faculties, Universities, Groups, Project
- * members" + "must respect UIP roles and permissions"). Used from
+ * members" + "must respect UIPE roles and permissions"). Used from
  * MeetingDetails.jsx, host/co-host only (the page already gates rendering
  * this on `isManager` — mirrors the backend's own canManage() check on
  * both endpoints this talks to).
@@ -22,7 +22,7 @@ const translations = { ...i18nCommon, ...i18nMeetings };
  * Round 8 MeetingsInvitationsApiController::bulk() (targets[] array —
  * this UI always sends exactly one target per submit, since the backend
  * itself resolves+unions any number of targets and picking several target
- * types in one go isn't a distinct UIP requirement here).
+ * types in one go isn't a distinct UIPE requirement here).
  *
  * The bulk target fields (university_id/faculty_id/department_id/
  * group_id/project_id) are plain numeric-ID inputs rather than live

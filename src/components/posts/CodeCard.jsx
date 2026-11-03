@@ -14,7 +14,7 @@ const MAX_LINES = 14;
 /** Thin scrollbars inside the preview frame instead of the OS default ones. */
 const SB_CSS = '<style>html{scrollbar-width:thin;scrollbar-color:#94a3b8 transparent}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:8px}::-webkit-scrollbar-track{background:transparent}</style>';
 
-/** HTML/CSS/JS runs in a locked-down iframe (no same-origin → can't touch the UIP session). */
+/** HTML/CSS/JS runs in a locked-down iframe (no same-origin → can't touch the UIPE session). */
 function htmlDoc(text, lang) {
   if (lang === 'html') return /<head[^>]*>/i.test(text) ? text.replace(/<head[^>]*>/i, (m) => m + SB_CSS) : SB_CSS + text;
   if (lang === 'css') return `<!doctype html><meta charset="utf-8">${SB_CSS}<style>${text}</style><body><h1>Heading</h1><p>Paragraph with <a href="#">link</a>.</p><button>Button</button>`;

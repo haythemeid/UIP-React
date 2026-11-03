@@ -317,7 +317,7 @@ export default function GroupInfoView({
               </>
             )}
             {onAutoSave && (
-              <Row icon="download" tone="teal" title={t('Save received media', 'حفظ الوسائط المستلمة')} hint={t('Saved automatically into a "UIP" folder', 'بتتحفظ تلقائيًا في مجلد "UIP"')}>
+              <Row icon="download" tone="teal" title={t('Save received media', 'حفظ الوسائط المستلمة')} hint={t('Saved automatically into a "UIPE" folder', 'بتتحفظ تلقائيًا في مجلد "UIPE"')}>
                 <Switch on={!!autoSave} onChange={onAutoSave} label={t('Save received media', 'حفظ الوسائط المستلمة')} />
               </Row>
             )}

@@ -6,7 +6,7 @@
    dropdowns and touch targets. Works alongside variables.css (fluid type
    tokens already scale headings) and app-shell.css (grids).
    Status: Active - Phase 3/4 (UI Wiring)
-   @package UIP
+   @package UIPE
    ========================================================================== */
 
 /* ---- Base: safe-area padding for notched devices, always on ------------ */

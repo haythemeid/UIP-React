@@ -365,11 +365,11 @@ export default function DesktopOS() {
       case 'portal': // leaving the desktop asks first: Enter (or the Exit button) confirms, Esc / Cancel stays
         setOverlay(null);
         if (virtual) { // virtual mode: "the portal" IS this desktop, so leaving it means switching the mode off
-          ask({ kind: 'confirm', title: tt('Switch back to the normal portal?', 'الرجوع للمنصة العادية؟'), text: tt('UIP OS (virtual mode) will be turned off. You can turn it on again from Settings ▸ UIP OS. Your files stay saved.', 'هيتقفل UIP OS (الوضع الافتراضي). تقدر تشغّله تاني من الإعدادات ▸ UIP OS. ملفاتك فاضلة محفوظة.'), action: tt('Switch back', 'رجوع'), icon: 'logout' })
+          ask({ kind: 'confirm', title: tt('Switch back to the normal portal?', 'الرجوع للمنصة العادية؟'), text: tt('UIPE OS (virtual mode) will be turned off. You can turn it on again from Settings ▸ UIPE OS. Your files stay saved.', 'هيتقفل UIPE OS (الوضع الافتراضي). تقدر تشغّله تاني من الإعدادات ▸ UIPE OS. ملفاتك فاضلة محفوظة.'), action: tt('Switch back', 'رجوع'), icon: 'logout' })
             .then((ok) => (ok ? vmode.setEnabled(false).then(() => navigate(roleHome(user?.role))).catch((e) => flash(e?.message || tt('Could not switch the mode.', 'مقدرناش نغيّر الوضع.'), 'error')) : null));
           break;
         }
-        ask({ kind: 'confirm', title: tt('Exit to the UIP portal?', 'الخروج إلى بوابة UIP؟'), text: tt('You will leave the desktop and go back to the portal. Your files stay saved.', 'هتخرج من سطح المكتب وترجع للبوابة. ملفاتك فاضلة محفوظة.'), action: tt('Exit', 'خروج'), icon: 'logout' })
+        ask({ kind: 'confirm', title: tt('Exit to the UIPE portal?', 'الخروج إلى بوابة UIPE؟'), text: tt('You will leave the desktop and go back to the portal. Your files stay saved.', 'هتخرج من سطح المكتب وترجع للبوابة. ملفاتك فاضلة محفوظة.'), action: tt('Exit', 'خروج'), icon: 'logout' })
           .then((ok) => { if (ok) navigate(roleHome(user?.role)); });
         break;
       case 'logout': // sign out of the ACCOUNT (not just the desktop): keep the data on this device, or erase it first (shared computers)
@@ -522,7 +522,7 @@ export default function DesktopOS() {
   const sysIcons = useMemo(() => [
     { key: 'sys:explorer', sys: true, label: tt('This PC', 'جهازي'), glyph: 'explorer', run: () => openExplorer({}) },
     { key: 'sys:bin', sys: true, label: tt('Recycle Bin', 'سلة المحذوفات'), glyph: 'bin', run: () => openExplorer({ view: 'trash' }) },
-    { key: 'sys:portal', sys: true, label: tt('UIP Portal', 'بوابة UIP'), glyph: 'portal', run: () => runCommand('portal') },
+    { key: 'sys:portal', sys: true, label: tt('UIPE Portal', 'بوابة UIPE'), glyph: 'portal', run: () => runCommand('portal') },
     { key: 'sys:logout', sys: true, label: tt('Sign out', 'تسجيل الخروج'), glyph: 'logout', run: () => runCommand('logout') },
     { key: 'sys:settings', sys: true, label: tt('Settings', 'الإعدادات'), glyph: 'settings', run: () => runCommand('settings') },
     { key: 'sys:shortcuts', sys: true, label: tt('Shortcuts', 'الاختصارات'), glyph: 'shortcuts', run: () => runCommand('shortcuts') },
@@ -790,7 +790,7 @@ export default function DesktopOS() {
   const dockSpecialMenu = (key, e) => {
     e.preventDefault(); e.stopPropagation();
     setOverlay(null);
-    const label = { launchpad: tt('Launchpad', 'لوحة التطبيقات'), lock: tt('Lock screen', 'قفل الشاشة'), portal: tt('UIP Portal', 'بوابة UIP'), logout: tt('Sign out', 'تسجيل الخروج'), bin: tt('Recycle Bin', 'سلة المحذوفات') }[key];
+    const label = { launchpad: tt('Launchpad', 'لوحة التطبيقات'), lock: tt('Lock screen', 'قفل الشاشة'), portal: tt('UIPE Portal', 'بوابة UIPE'), logout: tt('Sign out', 'تسجيل الخروج'), bin: tt('Recycle Bin', 'سلة المحذوفات') }[key];
     const act = { launchpad: () => setOverlay('start'), lock: confirmLock, portal: () => runCommand('portal'), logout: () => runCommand('logout'), bin: () => runCommand('bin') }[key];
     setMenu({ x: e.clientX, y: e.clientY - 110, items: [{ label, icon: 'eye', onClick: act }, 'sep', { label: tt('Remove from Dock', 'إزالة من الـ Dock'), icon: 'trash', danger: true, onClick: () => hideDockIcon(key, false) }] });
   };
@@ -834,7 +834,7 @@ export default function DesktopOS() {
         { label: tt('New PDF / other file…', 'ملف PDF / نوع آخر…'), icon: 'file-plus', onClick: () => newDoc('pdf'), disabled: !desk.id },
         'sep',
         { label: tt('Open This PC', 'فتح جهازي'), icon: 'monitor', hint: 'Alt+E', onClick: () => runCommand('explorer') },
-        { label: tt('Open UIP Terminal', 'فتح ترمينال UIP'), icon: 'terminal', hint: 'Alt+T', onClick: () => runCommand('terminal') },
+        { label: tt('Open UIPE Terminal', 'فتح ترمينال UIPE'), icon: 'terminal', hint: 'Alt+T', onClick: () => runCommand('terminal') },
         { label: tt('Personalize', 'تخصيص'), icon: 'palette', hint: 'Alt+P', onClick: () => runCommand('personalize') },
         { label: tt('Keyboard shortcuts', 'اختصارات الكيبورد'), icon: 'key', hint: 'F1', onClick: () => runCommand('shortcuts') },
       ],
@@ -1009,7 +1009,7 @@ export default function DesktopOS() {
   const fullscreen = () => { if (document.fullscreenElement) document.exitFullscreen?.(); else document.documentElement.requestFullscreen?.().catch(() => {}); };
 
   const sysApps = useMemo(() => [
-    ...(can('ai.assistant_use') ? [{ id: 'ai', en: 'UIP AI Assistant', ar: 'مساعد UIP الذكي', glyph: 'ai' }] : []),
+    ...(can('ai.assistant_use') ? [{ id: 'ai', en: 'UIPE AI Assistant', ar: 'مساعد UIPE الذكي', glyph: 'ai' }] : []),
     { id: 'explorer', en: 'This PC', ar: 'جهازي', glyph: 'explorer' },
     { id: 'bin', en: 'Recycle Bin', ar: 'سلة المحذوفات', glyph: 'bin' },
     { id: 'settings', en: 'Settings', ar: 'الإعدادات', glyph: 'settings' },
@@ -1017,12 +1017,12 @@ export default function DesktopOS() {
     { id: 'notes', en: 'Notes', ar: 'الملاحظات', glyph: 'notes' },
     { id: 'calendar', en: 'Calendar', ar: 'التقويم', glyph: 'calendar' },
     { id: 'calculator', en: 'Calculator', ar: 'الآلة الحاسبة', glyph: 'calculator' },
-    { id: 'terminal', en: 'UIP Terminal', ar: 'ترمينال UIP', glyph: 'terminal' },
+    { id: 'terminal', en: 'UIPE Terminal', ar: 'ترمينال UIPE', glyph: 'terminal' },
     { id: 'taskmgr', en: 'Task Manager', ar: 'مدير المهام', glyph: 'taskmgr' },
     { id: 'shortcuts', en: 'Keyboard shortcuts', ar: 'اختصارات الكيبورد', glyph: 'shortcuts' },
     { id: 'run', en: 'Run', ar: 'تشغيل', glyph: 'run' },
     { id: 'lock', en: 'Lock', ar: 'قفل', glyph: 'lock' },
-    { id: 'portal', en: 'UIP Portal', ar: 'بوابة UIP', glyph: 'portal' },
+    { id: 'portal', en: 'UIPE Portal', ar: 'بوابة UIPE', glyph: 'portal' },
     { id: 'logout', en: 'Sign out', ar: 'تسجيل الخروج', glyph: 'logout' },
   ], [can]);
   // virtual mode: the platform's pages first (grouped like the sidebar), then the system apps under their own heading
@@ -1089,7 +1089,7 @@ export default function DesktopOS() {
   const closeFloating = useCallback(() => { setOverlay(null); setMenu(null); }, []);
   const menus = [
     { id: 'sys', logo: true, items: [
-      { label: tt('About UIP Desktop', 'عن سطح مكتب UIP'), onClick: () => runCommand('settings') },
+      { label: tt('About UIPE Desktop', 'عن سطح مكتب UIPE'), onClick: () => runCommand('settings') },
       'sep',
       { label: tt('System Settings…', 'إعدادات النظام…'), onClick: () => runCommand('settings') },
       { label: tt('Personalize…', 'التخصيص…'), onClick: () => runCommand('personalize') },
@@ -1290,7 +1290,7 @@ export default function DesktopOS() {
       <Dock
         items={dockItems} tt={tt} mag={prefs.dockMag !== false && !prefs.reduceMotion} launchOn={overlay === 'start'} onLaunch={() => setOverlay((o) => (o === 'start' ? null : 'start'))}
         onBin={() => runCommand('bin')} binFull={desk.binFull} binLabel={tt('Recycle Bin', 'سلة المحذوفات')}
-        onPortal={() => runCommand('portal')} portalLabel={tt('UIP Portal', 'بوابة UIP')}
+        onPortal={() => runCommand('portal')} portalLabel={tt('UIPE Portal', 'بوابة UIPE')}
         onLogout={() => runCommand('logout')} logoutLabel={tt('Sign out', 'تسجيل الخروج')}
         onLock={confirmLock} lockLabel={tt('Lock screen', 'قفل الشاشة')}
         hidden={hiddenDock} onSpecialMenu={dockSpecialMenu}
@@ -1316,7 +1316,7 @@ export default function DesktopOS() {
       {brightness < 100 && <div className="os-dim" style={{ opacity: ((100 - brightness) / 100) * 0.7 }} aria-hidden="true" />}
       <div className={`os-boot${booting ? '' : ' is-done'}`} aria-hidden="true">
         <span className="os-boot__logo"><UipMark size={64} /></span>
-        <span className="os-boot__name"><b>UIP</b><em>NUB</em></span>
+        <span className="os-boot__name"><b>UIPE</b><em>NUB</em></span>
         <span className="os-boot__tag">{tt('Your workspace is getting ready', 'مساحة عملك بتتجهّز')}</span>
         <span className="os-boot__bar"><i /></span>
       </div>

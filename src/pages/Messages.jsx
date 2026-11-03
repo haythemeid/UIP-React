@@ -253,7 +253,7 @@ export default function Messages() {
   useEffect(() => {
     if (location.state?.selectChats) navigate(location.pathname, { replace: true, state: null });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  // Android app only: save media/files other people send to the phone (Pictures/Movies/Documents > UIP).
+  // Android app only: save media/files other people send to the phone (Pictures/Movies/Documents > UIPE).
   const [autoSave, setAutoSave] = useState(isAutoSaveOn);
   const onAutoSave = useCallback((on) => { setAutoSaveOn(on); setAutoSave(on); }, []);
   const wallAnim = settingsLoaded ? chatSettings.wallpaper.anim : readWallAnim();

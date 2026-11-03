@@ -46,11 +46,11 @@ export default function AuthLayout({ title, subtitle, error, success, wide = fal
       <a className="auth-skip" href="#auth-card">{t('Skip to form')}</a>
 
       <header className="auth-topbar">
-        <Link to="/" className="auth-brand" aria-label={t('UIP — Ultimate Intelligent Platform')}>
-          <img src="/images/logo/uip-mark.png" alt="" width="44" height="44" />
-          <span className="auth-brand__text">
-            <strong>UIP</strong>
-            <small>{t('ULTIMATE INTELLIGENT PLATFORM')}</small>
+        <Link to="/" className="auth-brand" aria-label={t('UIPE — Unified Integrated Platform Ecosystem')}>
+          <img className="auth-brand__word" src="/images/logo/uipe-wordmark-sm.png" srcSet="/images/logo/uipe-wordmark-sm.png 1x, /images/logo/uipe-wordmark.png 2x" alt="UIPE" width="112" height="44" />
+          <span className="auth-brand__text" dir="ltr">
+            <small>{t('UNIFIED INTEGRATED PLATFORM ECOSYSTEM')}</small>
+            <em>{t('One Platform. Endless Connections.')}</em>
           </span>
         </Link>
 

@@ -16,7 +16,7 @@ const unwrap = (r) => (r && r.data !== undefined ? r.data : r);
 const FRIENDLY = {
   denied: 'Google sign-in was cancelled.',
   expired_state: 'The sign-in took too long. Try again.',
-  no_refresh_token: 'Google did not allow lasting access. Remove "UIP" from your Google account permissions, then connect again.',
+  no_refresh_token: 'Google did not allow lasting access. Remove "UIPE" from your Google account permissions, then connect again.',
   scope_missing: 'Tick the Google Drive permission on the consent screen, then connect again.',
 };
 
