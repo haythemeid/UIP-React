@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import usePaperUnfold from '../hooks/usePaperUnfold';
+import usePanelStack from '../hooks/usePanelStack';
 import FaqSection from '../components/landing/FaqSection';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -33,7 +33,7 @@ export default function Landing() {
   const [featured, setFeatured] = useState([]);
   const [liveStats, setLiveStats] = useState(null);
   const [role, setRole] = useState('students');
-  usePaperUnfold('.lp4-section, .lp4-final-wrap');
+  usePanelStack('.pnl');
 
   useEffect(() => {
     let alive = true;
@@ -131,6 +131,7 @@ export default function Landing() {
       <LandingNav anchors />
 
       {/* ============================ HERO ============================ */}
+      <div className="pnl">
       <header className="lp4-hero">
         <div className="lp4-glow" aria-hidden="true" />
         <div className="lp4-shell lp4-hero__grid">
@@ -208,9 +209,11 @@ export default function Landing() {
           </ul>
         </div>
       </header>
+      </div>
 
       <main>
         {/* ============================ FEATURES (bento) ============================ */}
+        <div className="pnl">
         <section className="lp4-section lp4-shell" id="talk">
           <div className="lp4-head">
             <span className="lp4-eyebrow">{t('What you get', 'اللي هتلاقيه')}</span>
@@ -291,9 +294,11 @@ export default function Landing() {
             </article>
           </div>
         </section>
+</div>
 
 
         {/* ============================ COMMUNITY ============================ */}
+        <div className="pnl">
         <section className="lp4-section lp4-shell" id="community">
           <div className="lp4-head">
             <span className="lp4-eyebrow">{t('Community', 'المجتمع')}</span>
@@ -319,8 +324,10 @@ export default function Landing() {
             </ul>
           </div>
         </section>
+</div>
 
         {/* ============================ PROJECTS ============================ */}
+        <div className="pnl">
         <section className="lp4-section lp4-shell" id="projects">
           <div className="lp4-head">
             <span className="lp4-eyebrow">{t('Projects', 'المشاريع')}</span>
@@ -351,8 +358,10 @@ export default function Landing() {
             </>
           )}
         </section>
+</div>
 
         {/* ============================ ROLES ============================ */}
+        <div className="pnl">
         <section className="lp4-section lp4-shell" id="roles">
           <div className="lp4-head">
             <span className="lp4-eyebrow">{t('Roles', 'الأدوار')}</span>
@@ -369,9 +378,11 @@ export default function Landing() {
             </ul>
           </div>
         </section>
+</div>
 
 
         {/* ============================ TRUST ============================ */}
+        <div className="pnl">
         <section className="lp4-section lp4-shell" id="security">
           <div className="lp4-head">
             <span className="lp4-eyebrow">{t('Trust', 'الأمان')}</span>
@@ -383,8 +394,10 @@ export default function Landing() {
             ))}
           </div>
         </section>
+</div>
 
         {/* ============================ GET STARTED ============================ */}
+        <div className="pnl">
         <section className="lp4-section lp4-shell" id="start">
           <div className="lp4-head">
             <span className="lp4-eyebrow">{t('Get started', 'ابدأ')}</span>
@@ -401,11 +414,13 @@ export default function Landing() {
             ))}
           </ol>
         </section>
+</div>
 
         {/* ============================ FAQ ============================ */}
-        <FaqSection t={t} isAr={isAr} />
+        <div className="pnl"><FaqSection t={t} isAr={isAr} /></div>
 
         {app && (
+          <div className="pnl">
           <section className="lp4-section lp4-shell" id="app">
             <div className="lp4-app">
               <div className="lp4-app__info">
@@ -425,18 +440,21 @@ export default function Landing() {
             </div>
             {!app.native && <p className="lp2-app__note">{t('If Android asks, allow installing from this source. The file is an .apk.', 'لو أندرويد سألك، اسمح بالتثبيت من المصدر ده. الملف .apk.')}</p>}
           </section>
+</div>
         )}
 
-        <div className="lp4-shell lp4-final-wrap">
+        <div className="pnl">
+<div className="lp4-shell lp4-final-wrap">
           <div className="lp4-final">
             <h2>{t('Open your campus. It takes a minute.', 'افتح جامعتك. بياخد دقيقة.')}</h2>
             <p>{t('Free for students. No credit card.', 'مجاني للطلاب. من غير كريدت كارد.')}</p>
             <Link to="/auth/register" className="btn btn-lg">{t('Create a free account', 'اعمل حساب مجاني')}</Link>
           </div>
         </div>
+        </div>
       </main>
 
-      <SiteFooter />
+      <div className="pnl pnl--free"><SiteFooter /></div>
     </div>
   );
 }
