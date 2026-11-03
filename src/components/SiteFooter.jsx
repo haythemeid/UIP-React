@@ -56,8 +56,7 @@ export default function SiteFooter() {
         <div className="uip-footer__grid">
           <div className="uip-footer__brand">
             <Link to="/" className="uip-footer__logo">
-              <span className="uip-footer__mark"><img src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark@2x.png 2x" alt="" /></span>
-              <span>UIPE</span>
+              <img className="brand-chip uip-footer__word" src="/images/logo/uipe-wordmark-sm.png" srcSet="/images/logo/uipe-wordmark-sm.png 1x, /images/logo/uipe-wordmark.png 2x" alt="UIPE" width="120" height="47" />
             </Link>
             <p className="uip-footer__tagline">
               <strong style={{ display: 'block', marginBottom: 6 }}>One Platform. Endless Connections.</strong>

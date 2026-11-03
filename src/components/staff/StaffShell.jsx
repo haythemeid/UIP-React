@@ -126,8 +126,7 @@ export default function StaffShell({ titleId = 'sl-title', children }) {
         <section className="sl-side">
           <Aperture />
           <div className="sl-side__top">
-            <img src="/images/logo/uipe-mark.png" alt="" width="38" height="38" />
-            <span>UIPE</span>
+            <img className="brand-chip" src="/images/logo/uipe-wordmark-sm.png" srcSet="/images/logo/uipe-wordmark-sm.png 1x, /images/logo/uipe-wordmark.png 2x" alt="UIPE" width="110" height="43" />
           </div>
 
           <ul className="sl-lanes">

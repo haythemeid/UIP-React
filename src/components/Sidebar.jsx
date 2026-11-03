@@ -117,11 +117,14 @@ export default function Sidebar({ role, user, isOpen, collapsed = false, unread 
     <aside data-portal={role} className={`sidebar glass-panel glass-panel--flat${isOpen ? ' is-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
       <div className="sidebar__brand">
         {/* Every portal uses the same UIPE logo mark (the Data Analyst design) — only the title/subtitle differ. */}
-        <img className="sidebar__logo" src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark@2x.png 2x" alt="" width="36" height="36" />
+        <img className="sidebar__logo sidebar__logo--mark" src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark@2x.png 2x" alt="" width="36" height="36" />
+        <img className="brand-chip sidebar__word" src="/images/logo/uipe-wordmark-sm.png" srcSet="/images/logo/uipe-wordmark-sm.png 1x, /images/logo/uipe-wordmark.png 2x" alt="UIPE" width="92" height="36" />
         <div className="sidebar__brand-text">
-          <div className="sidebar__brand-name">
-            {brand.name ? <>{brand.name.strong} <span className="sidebar__brand-light">{brand.name.light}</span></> : (brand.title ? pick(brand.title, locale) : 'UIPE')}
-          </div>
+          {(brand.name || (brand.title && pick(brand.title, locale) !== 'UIPE')) && (
+            <div className="sidebar__brand-name">
+              {brand.name ? <>{brand.name.strong} <span className="sidebar__brand-light">{brand.name.light}</span></> : pick(brand.title, locale)}
+            </div>
+          )}
           <span className="sidebar__brand-sub">{pick(brand.sub, locale)}</span>
         </div>
         <button type="button" className="sidebar__close-btn" onClick={onClose} aria-label={locale === 'ar' ? 'إغلاق القائمة' : 'Close menu'}>

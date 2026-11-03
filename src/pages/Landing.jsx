@@ -89,7 +89,7 @@ export default function Landing() {
     ]],
   ];
   const community = [
-    ['image', t('Stories that disappear', 'ستوريز بتختفي'), t('Share a photo, video or text. You choose who sees it, and you see who watched.', 'شارك صورة أو فيديو أو نص. إنت اللي بتختار مين يشوفها وبتعرف مين شافها.')],
+    ['image', t('Stories that disappear', 'قصص بتختفي'), t('Share a photo, video or text. You choose who sees it, and you see who watched.', 'شارك صورة أو فيديو أو نص. إنت اللي بتختار مين يشوفها وبتعرف مين شافها.')],
     ['file', t('Posts with real files', 'منشورات بملفات حقيقية'), t('PDFs swipe like slides, code runs right in the post, plus video, voice and any file.', 'الـ PDF بتتقلّب زي الشرائح، والكود بيشتغل جوه المنشور، وفيديو وصوت وأي ملف.')],
     ['user', t('A real profile', 'بروفايل حقيقي'), t('Cover, photo, bio, friends and photos. Lock your profile so only friends and followers see it, and decide who can open or download your photo.', 'غلاف وصورة وبايو وأصدقاء وصور. اقفل بروفايلك ليشوفه أصدقاؤك ومتابعوك بس، وحدّد مين يفتح صورتك أو ينزّلها.')],
     ['users', t('Your network', 'شبكتك'), t('Connect with classmates and instructors, follow people, and see what your university shares.', 'اتصل بزمايلك ودكاترتك وتابع الناس وشوف اللي جامعتك بتنشره.')],
@@ -99,7 +99,7 @@ export default function Landing() {
     ['lock', t('Secure exam mode', 'وضع امتحان آمن'), t('Tab switches are logged and the instructor reviews every AI grading suggestion.', 'تبديل التابات بيتسجل والدكتور بيراجع كل اقتراح تصحيح من الذكاء الاصطناعي.')],
     ['shield', t('Two-step sign-in', 'دخول بخطوتين'), t('Protect your account with a second factor, with recovery if you lose access.', 'احمِ حسابك بعامل تحقق تاني، مع استعادة الحساب لو فقدت الوصول.')],
     ['monitor', t('Sessions and devices', 'الجلسات والأجهزة'), t('See where you are signed in and sign out devices you do not recognise.', 'شوف إنت داخل منين وسجّل خروج من أي جهاز مش معروف.')],
-    ['eye-off', t('Privacy you control', 'خصوصية في إيدك'), t('Lock your profile, protect your photo from saving, hide your friends list, and decide who sees your bio, last seen and stories or can message you.', 'اقفل بروفايلك، واحمِ صورتك من الحفظ، وأخفِ قائمة أصدقائك، واختار مين يشوف البايو وآخر ظهور والستوريز ومين يراسلك.')],
+    ['eye-off', t('Privacy you control', 'خصوصية في إيدك'), t('Lock your profile, protect your photo from saving, hide your friends list, and decide who sees your bio, last seen and stories or can message you.', 'اقفل بروفايلك، واحمِ صورتك من الحفظ، وأخفِ قائمة أصدقائك، واختار مين يشوف البايو وآخر ظهور والقصص ومين يراسلك.')],
     ['award', t('Verifiable certificates', 'شهادات تتحقق منها'), t('Anyone can check a graduation certificate by its number, with no sign-in.', 'أي جهة تقدر تتحقق من شهادة التخرج برقمها من غير تسجيل دخول.')],
     ['history', t('Audit trail', 'سجل مراجعة'), t('Important actions are logged so universities can follow up reports and incidents.', 'الإجراءات المهمة بتتسجل عشان الجامعات تتابع البلاغات والحوادث.')],
   ];
@@ -111,12 +111,12 @@ export default function Landing() {
   ];
 
   const faqs = [
-    [t('Is UIPE free?', 'هل UIPE مجانية؟'), t('It is free for students. You do not need a credit card to create an account.', 'مجانية للطلاب بالكامل، ومش محتاج كريدت كارد عشان تعمل حسابك.')],
-    [t('Who can use it?', 'مين يقدر يستخدمها؟'), t('Students, instructors and supervisors, universities and faculties, and data and security teams. Each role gets its own tools under one account.', 'الطلاب، الدكاترة والمشرفين، الجامعات والكليات، وفرق البيانات والأمن. كل دور بياخد أدواته الخاصة تحت حساب واحد.')],
-    [t('Can I use it on my phone?', 'أقدر أستخدمها من الموبايل؟'), t('Yes. It works in any browser, and there is an Android app for calls, chat and notifications.', 'أيوه. بتشتغل على أي متصفح، وفي تطبيق أندرويد للمكالمات والشات والإشعارات.')],
-    [t('Who sees my posts, photo and stories?', 'مين يشوف منشوراتي وصورتي والستوريز؟'), t('You choose. Each post and story has its own audience, you can lock your profile so only friends and followers see it, and your photo can be opened or downloaded only if you allow it.', 'إنت اللي بتختار. كل منشور وستوري ليه جمهوره، وتقدر تقفل بروفايلك فيشوفه أصدقاؤك ومتابعوك بس، وصورتك مش بتتفتح ولا بتتحمّل غير لو سمحت.')],
-    [t('How do exams stay fair?', 'إزاي الامتحانات بتفضل عادلة وآمنة؟'), t('Secure mode logs tab switches, and AI grading only suggests marks. The instructor approves them.', 'الوضع الآمن بيسجّل أي تبديل بين التابات، والذكاء الاصطناعي بيقترح الدرجات بس، والدكتور هو اللي بيعتمدها.')],
-    [t('How can an employer verify my certificate?', 'إزاي جهة العمل تتحقق من شهادتي؟'), t('Open the Verify a Certificate page, enter the number printed on it and see whether it is valid.', 'تفتح صفحة التحقق من الشهادة، وتدخل الرقم المطبوع عليها، وتعرف فورًا هل هي صحيحة.')],
+    [t('Is UIPE free?', 'هل UIPE مجانية؟'), t('It is free for students. You do not need a credit card to create an account.', 'نعم، مجانية للطلاب بالكامل، ولا تحتاج إلى بطاقة ائتمان لإنشاء حسابك.')],
+    [t('Who can use it?', 'من يمكنه استخدامها؟'), t('Students, instructors and supervisors, universities and faculties, and data and security teams. Each role gets its own tools under one account.', 'الطلاب وأعضاء هيئة التدريس والمشرفون، والجامعات والكليات، وفرق البيانات والأمن. لكل دور أدواته الخاصة ضمن حساب واحد.')],
+    [t('Can I use it on my phone?', 'هل أستطيع استخدامها من الهاتف؟'), t('Yes. It works in any browser, and there is an Android app for calls, chat and notifications.', 'نعم. تعمل على أي متصفح، ويتوفر تطبيق أندرويد للمكالمات والمحادثات والإشعارات.')],
+    [t('Who sees my posts, photo and stories?', 'من يرى منشوراتي وصورتي وقصصي؟'), t('You choose. Each post and story has its own audience, you can lock your profile so only friends and followers see it, and your photo can be opened or downloaded only if you allow it.', 'القرار لك. لكل منشور وقصة جمهوره الخاص، ويمكنك قفل ملفك الشخصي ليراه أصدقاؤك ومتابعوك فقط، ولا يمكن فتح صورتك أو تنزيلها إلا بإذنك.')],
+    [t('How do exams stay fair?', 'كيف تُحمى نزاهة الامتحانات؟'), t('Secure mode logs tab switches, and AI grading only suggests marks. The instructor approves them.', 'يسجّل الوضع الآمن أي تبديل بين علامات التبويب، ويقترح الذكاء الاصطناعي الدرجات فقط، بينما يعتمدها عضو هيئة التدريس.')],
+    [t('How can an employer verify my certificate?', 'كيف تتحقق جهة العمل من شهادتي؟'), t('Open the Verify a Certificate page, enter the number printed on it and see whether it is valid.', 'تفتح صفحة «التحقق من شهادة»، وتُدخل الرقم المطبوع على الشهادة، فتعرف فورًا إن كانت صحيحة.')],
   ];
   const activeRole = audiences.find(([k]) => k === role) || audiences[0];
 
@@ -229,7 +229,7 @@ export default function Landing() {
               <div className="lp4-tile__text">
                 <span className="lp4-icon"><Icon name="chat" size={18} /></span>
                 <h3>{t('Chat and calls', 'شات ومكالمات')}</h3>
-                <p>{t('Direct and group chat with voice notes, polls, location, stories and pinned messages. Voice and video calls for one person or a whole group.', 'شات فردي وجماعي مع رسائل صوتية واستطلاعات ولوكيشن وستوريز ورسائل مثبّتة. ومكالمات صوت وفيديو لشخص أو لمجموعة كاملة.')}</p>
+                <p>{t('Direct and group chat with voice notes, polls, location, stories and pinned messages. Voice and video calls for one person or a whole group.', 'شات فردي وجماعي مع رسائل صوتية واستطلاعات ولوكيشن وقصص ورسائل مثبّتة. ومكالمات صوت وفيديو لشخص أو لمجموعة كاملة.')}</p>
               </div>
               <div className="lp4-mini lp4-mini--bubbles" aria-hidden="true">
                 <span className="lp4-bub">{t('Lecture moved to 10 AM', 'المحاضرة اتنقلت 10 الصبح')}</span>
@@ -303,7 +303,7 @@ export default function Landing() {
           <div className="lp4-head">
             <span className="lp4-eyebrow">{t('Community', 'المجتمع')}</span>
             <h2>{t('A campus network that feels alive', 'شبكة جامعية حيّة')}</h2>
-            <p>{t('Stories, posts and profiles, built for students and instructors instead of strangers.', 'ستوريز ومنشورات وبروفايلات، متصممة للطلاب والدكاترة مش للغرباء.')}</p>
+            <p>{t('Stories, posts and profiles, built for students and instructors instead of strangers.', 'قصص ومنشورات وملفات شخصية، متصممة للطلاب والدكاترة مش للغرباء.')}</p>
           </div>
           <div className="lp5-comm">
             <div className="lp5-feed" aria-hidden="true">
@@ -412,8 +412,8 @@ export default function Landing() {
           <div className="lp6-faq">
             <aside className="lp6-faq__side">
               <span className="lp4-eyebrow">{t('FAQ', 'الأسئلة الشائعة')}</span>
-              <h2>{t('Got questions? We have answers.', 'عندك سؤال؟ هنا الإجابة.')}</h2>
-              <p>{t('Everything you need to know before you start. Still unsure? Create an account and try it free.', 'كل اللي محتاج تعرفه قبل ما تبدأ. لسه محتار؟ اعمل حسابك وجرّبها مجانًا.')}</p>
+              <h2>{t('Got questions? We have answers.', 'لديك سؤال؟ نجيبك هنا.')}</h2>
+              <p>{t('Everything you need to know before you start. Still unsure? Create an account and try it free.', 'كل ما تحتاج معرفته قبل أن تبدأ. ما زلت متردداً؟ أنشئ حسابك وجرّبها مجانًا.')}</p>
               <Link to="/auth/register" className="btn btn-primary">{t('Create a free account', 'اعمل حساب مجاني')} <Icon name="arrow-right" size={16} /></Link>
             </aside>
             <div className="lp6-faq__list">

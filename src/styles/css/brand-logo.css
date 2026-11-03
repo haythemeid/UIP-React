@@ -1,0 +1,19 @@
+/* Full UIPE wordmark everywhere the brand appears (the old square "Ui" mark cropped the logo). */
+.brand-chip { display: block; height: auto; max-width: 100%; object-fit: contain; background: #fff; border-radius: 12px; padding: 5px 10px; box-sizing: content-box; flex: none; }
+
+.unav__brand img.unav__word { width: auto; height: 38px; max-width: none; object-fit: contain; }
+html[data-theme="dark"] .unav__brand img.unav__word { background: #fff; border-radius: 10px; padding: 3px 9px; box-sizing: content-box; height: 32px; }
+@media (max-width: 380px) { .unav__brand img.unav__word { height: 32px; } }
+
+.uip-footer__logo { display: inline-flex; align-items: center; }
+.uip-footer__word { width: 120px; height: auto; }
+
+.public-brand__word { width: 92px; height: auto; padding: 4px 8px; }
+
+.sidebar .sidebar__word { width: 96px; height: auto; padding: 5px 9px; border-radius: 12px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .25), 0 6px 16px rgba(0, 0, 0, .22); }
+.sidebar .sidebar__logo--mark { display: none; }
+.sidebar.is-collapsed .sidebar__word { display: none; }
+.sidebar.is-collapsed .sidebar__logo--mark { display: block; }
+
+.lk-brand__mark.brand-chip { width: 104px; height: auto; border-radius: 12px; }
+.sl-side__top .brand-chip { width: 104px; height: auto; }

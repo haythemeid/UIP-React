@@ -64,8 +64,7 @@ export default function LandingNav({ anchors = false }) {
     <nav className="unav" aria-label={t('Main', 'الرئيسية')}>
       <div className="unav__bar">
         <Link to="/" className="unav__brand" aria-label="UIPE">
-          <img src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark@2x.png 2x" alt="" width="34" height="34" />
-          <span>UIPE</span>
+          <img className="unav__word" src="/images/logo/uipe-wordmark-sm.png" srcSet="/images/logo/uipe-wordmark-sm.png 1x, /images/logo/uipe-wordmark.png 2x" alt="UIPE" width="100" height="39" />
         </Link>
 
         <div className="unav__links">

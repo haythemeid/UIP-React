@@ -6,7 +6,11 @@
  * Icon/i18n imports, just the two CSS custom properties every theme
  * already defines (see src/styles/css/variables.css).
  */
+import { useEffect } from 'react';
+import { holdPaper } from '../lib/paperGate';
+
 export default function PageLoading() {
+  useEffect(() => holdPaper(), []); // keeps the paper reveal closed until the page chunk has loaded
   return (
     <div
       style={{

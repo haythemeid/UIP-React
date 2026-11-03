@@ -9,6 +9,7 @@
 @import './css/ui-kit.css';
 @import './css/layout.css';
 @import './css/animations.css';
+@import './css/paper-reveal.css';
 @import './css/ltr.css';
 @import './css/rtl.css';
 @import './css/themes/light.css';
@@ -155,3 +156,4 @@
 @import './css/meetings-control.css';
 @import './css/drive-control.css';
 @import './css/grading-scale.css';
+@import './css/brand-logo.css';

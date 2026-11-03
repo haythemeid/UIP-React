@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import PageLoading from './components/PageLoading';
+import PaperReveal from './components/PaperReveal';
 import { VirtualModeProvider } from './virtual/virtualMode';
 import MyPcAccessGate from './components/MyPcAccessGate';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -829,6 +830,7 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
+          <PaperReveal />
           </ErrorBoundary>
           </CallProvider>
           </AccessGate>
