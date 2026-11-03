@@ -8,11 +8,12 @@ import FilesTab from '../../components/admin/driveControl/FilesTab';
 import SharesTab from '../../components/admin/driveControl/SharesTab';
 import SettingsTab from '../../components/admin/driveControl/SettingsTab';
 import AuditTab from '../../components/admin/driveControl/AuditTab';
+import SearchTestPanel from '../../components/admin/driveControl/SearchTestPanel';
 import HealthTab from '../../components/admin/driveControl/HealthTab';
 
 /**
  * Admin → My PC Control. One place to run "My PC" for the whole platform:
- *   Overview · Users & quotas · All files · Share links · Features & system · Rules & limits · Activity log · Storage health.
+ *   Overview · Users & quotas · All files · Share links · Features & system · Search & browser · Rules & limits · Activity log · Storage health.
  * Talks to /api/v1/admin/drive/control/* (AdminDriveControlApiController). The active tab lives in the URL (?tab=…).
  */
 export default function AdminDriveControl() {
@@ -26,6 +27,7 @@ export default function AdminDriveControl() {
     ['files', L('All files', 'كل الملفات')],
     ['shares', L('Share links', 'روابط المشاركة')],
     ['features', L('Features & system', 'المفاتيح والنظام')],
+    ['tools', L('Search & browser', 'البحث والمتصفح')],
     ['rules', L('Rules & limits', 'القواعد والحدود')],
     ['audit', L('Activity log', 'سجل النشاط')],
     ['health', L('Storage health', 'سلامة التخزين')],
@@ -52,6 +54,7 @@ export default function AdminDriveControl() {
         {tab === 'files' && <FilesTab />}
         {tab === 'shares' && <SharesTab />}
         {tab === 'features' && <SettingsTab key="features" groups={['system', 'features', 'admin']} />}
+        {tab === 'tools' && <SettingsTab key="tools" groups={['tools']} footer={{ tools: (ctx) => <SearchTestPanel {...ctx} /> }} />}
         {tab === 'rules' && <SettingsTab key="rules" groups={['access', 'limits', 'versions', 'uploads', 'sharing']} />}
         {tab === 'audit' && <AuditTab />}
         {tab === 'health' && <HealthTab />}

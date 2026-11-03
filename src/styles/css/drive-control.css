@@ -17,3 +17,8 @@
 .dvc-rolemap__row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .dvc-rolemap__row > span:first-child { flex: 1; min-width: 0; }
 @media (max-width: 860px) { .dvc-grid2 { grid-template-columns: 1fr; } .dvc-bars li { grid-template-columns: 90px 1fr; } .dvc-bars li small { grid-column: 1 / -1; } }
+
+/* Search & browser tab */
+.dvc-secret { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dvc-searchtest { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border, rgba(128,128,128,.25)); }
+.dvc-searchtest .mtc-inline .form-input { flex: 1; min-width: 0; }

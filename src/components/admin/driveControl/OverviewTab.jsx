@@ -6,7 +6,7 @@ import { ConfirmModal } from '../adminUi';
 import { ErrorState, Kpi, KpiGrid, Skeleton } from '../AdminPage';
 import { BASE, SETTING_META, Switch, UsageBar, catLabel, fmtBytes, useBanner, useL } from './shared';
 
-const FEATURES = { uploads: 'feature_uploads', sharing: 'feature_sharing', archive: 'feature_archive', terminal: 'feature_terminal' };
+const FEATURES = { uploads: 'feature_uploads', sharing: 'feature_sharing', archive: 'feature_archive', terminal: 'feature_terminal', vscode: 'feature_vscode', browser: 'feature_browser' };
 
 export default function OverviewTab({ onGoto }) {
   const { ar, L } = useL();

@@ -3,14 +3,15 @@ import { api, errorMessage } from '../../../api/client';
 import Icon from '../../Icon';
 import { ConfirmModal } from '../adminUi';
 import { Skeleton } from '../AdminPage';
-import { BASE, GROUP_META, ROLE_LABELS, SETTING_META, Switch, useBanner, useL } from './shared';
+import { BASE, GROUP_META, ROLE_LABELS, SEARCH_PROVIDER_LABELS, SETTING_META, Switch, useBanner, useL } from './shared';
 
 const UNIT = { MB: ['MB', 'ميجا'], KB: ['KB', 'ك.ب'], day: ['days', 'يوم'] };
 const WIDE = ['list_role', 'list_ext', 'map_int'];
 const parseExt = (t) => [...new Set(String(t || '').split(/[\s,;]+/).map((x) => x.replace(/^\./, '').toLowerCase()).filter(Boolean))];
 
-/** Renders the My PC settings catalog (GET /control/settings) for the given groups. One Save; each override can be reset alone. */
-export default function SettingsTab({ groups }) {
+/** Renders the My PC settings catalog (GET /control/settings) for the given groups. One Save; each override can be reset alone.
+ *  `footer` = { [group]: (ctx) => node } renders extra UI under a group (ctx has the live draft values). Secrets are write-only: the API never returns them. */
+export default function SettingsTab({ groups, footer }) {
   const { ar, L } = useL();
   const { banner, setNotice, setError, clear } = useBanner();
   const [data, setData] = useState(null);
@@ -58,6 +59,7 @@ export default function SettingsTab({ groups }) {
     if (m.type === 'bool') return m.default ? L('On', 'مفعّل') : L('Off', 'مقفول');
     if (m.type === 'list_role' || m.type === 'list_ext') return (m.default || []).length ? m.default.join(', ') : (m.type === 'list_role' ? L('Everyone', 'الكل') : L('none', 'لا شيء'));
     if (m.type === 'map_int') return L('none', 'لا شيء');
+    if (m.type === 'secret') return L('the .env value', 'قيمة .env');
     return m.default === '' ? L('empty', 'فاضي') : String(m.default);
   }
 
@@ -77,7 +79,24 @@ export default function SettingsTab({ groups }) {
         </div>
       );
     }
-    if (m.type === 'string') return <input id={`dvs-${k}`} className="form-input" maxLength={m.max_length || 300} value={v} onChange={(e) => set(k, e.target.value)} />;
+    if (m.type === 'enum') {
+      return (
+        <select id={`dvs-${k}`} className="form-input" value={v} onChange={(e) => set(k, e.target.value)}>
+          {(m.options || []).map((o) => <option key={o} value={o}>{SEARCH_PROVIDER_LABELS[o] ? SEARCH_PROVIDER_LABELS[o][ar ? 1 : 0] : o}</option>)}
+        </select>
+      );
+    }
+    if (m.type === 'secret') {
+      const status = m.overridden ? L('Saved in the database', 'محفوظ في الداتابيز') : m.default_set ? L('Using the .env value', 'بيستخدم قيمة .env') : L('Not set', 'غير مظبوط');
+      return (
+        <div className="dvc-secret">
+          <input id={`dvs-${k}`} className="form-input" type="password" dir="ltr" autoComplete="new-password" maxLength={m.max_length || 500} value={v}
+            placeholder={m.hint || L('Paste a new key…', 'الصق مفتاح جديد…')} onChange={(e) => set(k, e.target.value)} />
+          <small className="mtc-muted">{status}{m.hint ? ` · ${m.hint}` : ''}</small>
+        </div>
+      );
+    }
+    if (m.type === 'string') return <input id={`dvs-${k}`} className="form-input" dir={sm.placeholder ? 'ltr' : undefined} maxLength={m.max_length || 300} placeholder={sm.placeholder} value={v} onChange={(e) => set(k, e.target.value)} />;
     if (m.type === 'list_ext') {
       const text = extText ?? (v || []).join(', ');
       return (
@@ -140,7 +159,8 @@ export default function SettingsTab({ groups }) {
       </div>
 
       {groups.map((g) => {
-        const keys = Object.keys(data.values).filter((k) => data.values[k].group === g);
+        const keys = Object.keys(data.values).filter((k) => data.values[k].group === g)
+          .filter((k) => { const sw = SETTING_META[k]?.showWhen; return !sw || sw.includes(val('web_search_provider')); });
         if (!keys.length) return null;
         const gm = GROUP_META[g] || { en: g, ar: g, icon: 'settings' };
         return (
@@ -165,6 +185,7 @@ export default function SettingsTab({ groups }) {
                 );
               })}
             </div>
+            {footer?.[g]?.({ val, draft, data })}
           </section>
         );
       })}
