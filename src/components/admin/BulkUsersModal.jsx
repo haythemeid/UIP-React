@@ -181,7 +181,7 @@ export default function BulkUsersModal({ roles, onClose, onDone }) {
               <div className="bu-paste">
                 <textarea
                   dir="ltr" rows={5} value={pasteText} onChange={(e) => setPasteText(e.target.value)}
-                  placeholder={'أحمد محمد علي | Ahmed Mohamed Ali | ahmed@example.com | Str0ng!Pass1 | +201000000000 | student'}
+                  placeholder={'هيثم محمد كامل | Haitham Mohamed Kamel | haitham@example.com | Str0ng!Pass1 | +201000000000 | student'}
                   className="bu-input bu-mono"
                 />
                 <div className="bu-paste__foot">

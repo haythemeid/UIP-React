@@ -139,7 +139,7 @@ export default function GoogleComplete() {
             icon="user"
             value={nameAr}
             onChange={(e) => setNameAr(e.target.value)}
-            placeholder="أحمد محمد علي"
+            placeholder="هيثم محمد كامل"
             autoComplete="off"
             lang="ar"
             hint={missing.includes('name_ar') ? L(`${provName} gave us your name in English only — please add it in Arabic.`, `${provNameAr} ادّانا اسمك بالإنجليزي بس — اكتبه بالعربي.`) : undefined}
@@ -155,7 +155,7 @@ export default function GoogleComplete() {
             ltr
             value={nameEn}
             onChange={(e) => setNameEn(e.target.value)}
-            placeholder="Ahmed Mohamed Ali"
+            placeholder="Haitham Mohamed Kamel"
             autoComplete="off"
             lang="en"
             hint={missing.includes('name_en') ? L(`${provName} gave us your name in Arabic only — please add it in English.`, `${provNameAr} ادّانا اسمك بالعربي بس — اكتبه بالإنجليزي.`) : undefined}

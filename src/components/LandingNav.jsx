@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import BrandWordmark from './BrandWordmark';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -64,7 +65,7 @@ export default function LandingNav({ anchors = false }) {
     <nav className="unav" aria-label={t('Main', 'الرئيسية')}>
       <div className="unav__bar">
         <Link to="/" className="unav__brand" aria-label="UIPE">
-          <img className="unav__word" src="/images/logo/uipe-wordmark-sm.png" srcSet="/images/logo/uipe-wordmark-sm.png 1x, /images/logo/uipe-wordmark.png 2x" alt="UIPE" width="100" height="39" />
+          <BrandWordmark className="unav__word" width={100} height={39} />
         </Link>
 
         <div className="unav__links">

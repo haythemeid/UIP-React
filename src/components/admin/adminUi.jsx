@@ -309,12 +309,12 @@ export function UserModal({ user, roles, onClose, onSaved }) {
               <h3 className="um-section__title">{isUni ? tr('University name', 'اسم الجامعة') : tr('Personal information', 'البيانات الشخصية')}</h3>
               <div className="um-grid">
                 <Field id="um-name_ar" label={isUni ? 'اسم الجامعة (بالعربي)' : tr('Name (Arabic)', 'الاسم بالعربي')} required error={errors.name_ar}>
-                  <input id="um-name_ar" className="um-input" dir="rtl" lang="ar" maxLength={NAME_MAX} value={names.name_ar} placeholder={isUni ? 'جامعة القاهرة' : 'أحمد محمد علي'}
+                  <input id="um-name_ar" className="um-input" dir="rtl" lang="ar" maxLength={NAME_MAX} value={names.name_ar} placeholder={isUni ? 'جامعة القاهرة' : 'هيثم محمد كامل'}
                     aria-invalid={errors.name_ar ? 'true' : undefined} onChange={(e) => { setNames((n) => ({ ...n, name_ar: e.target.value })); clearError('name_ar'); }} />
                 </Field>
                 <Field id="um-name_en" label={isUni ? 'University name (English)' : tr('Name (English)', 'الاسم بالإنجليزي')} required error={errors.name_en}
-                  hint={tr('Use English letters only, e.g. Ahmed Mohamed Ali', 'بحروف إنجليزية فقط، مثال: Ahmed Mohamed Ali')}>
-                  <input id="um-name_en" className="um-input" dir="ltr" lang="en" maxLength={NAME_MAX} value={names.name_en} placeholder={isUni ? 'Cairo University' : 'Ahmed Mohamed Ali'}
+                  hint={tr('Use English letters only, e.g. Haitham Mohamed Kamel', 'بحروف إنجليزية فقط، مثال: Haitham Mohamed Kamel')}>
+                  <input id="um-name_en" className="um-input" dir="ltr" lang="en" maxLength={NAME_MAX} value={names.name_en} placeholder={isUni ? 'Cairo University' : 'Haitham Mohamed Kamel'}
                     aria-invalid={errors.name_en ? 'true' : undefined} onChange={(e) => { setNames((n) => ({ ...n, name_en: e.target.value })); clearError('name_en'); }} />
                 </Field>
               </div>

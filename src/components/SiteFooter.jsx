@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import BrandWordmark from './BrandWordmark';
 import { useLanguage } from '../context/LanguageContext';
 import { api } from '../api/client';
 import Icon from './Icon';
@@ -56,7 +57,7 @@ export default function SiteFooter() {
         <div className="uip-footer__grid">
           <div className="uip-footer__brand">
             <Link to="/" className="uip-footer__logo">
-              <img className="brand-chip uip-footer__word" src="/images/logo/uipe-wordmark-sm.png" srcSet="/images/logo/uipe-wordmark-sm.png 1x, /images/logo/uipe-wordmark.png 2x" alt="UIPE" width="120" height="47" />
+              <BrandWordmark className="uip-footer__word" width={124} height={48} />
             </Link>
             <p className="uip-footer__tagline">
               <strong style={{ display: 'block', marginBottom: 6 }}>One Platform. Endless Connections.</strong>

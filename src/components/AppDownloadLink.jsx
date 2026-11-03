@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import BrandWordmark from './BrandWordmark';
 import Icon from './Icon';
 
 /** Native share sheet when the WebView has it, else copy the link. Resolves 'shared' | 'copied' | 'cancelled' | 'failed'. */
@@ -70,7 +71,7 @@ export default function AppDownloadLink({ app, className = '', iconSize = 16, wi
       {...(app.native ? { role: 'button' } : { target: '_blank', rel: 'noopener noreferrer' })}>
       {logo && (
         <span className="app-dl__logo" aria-hidden="true">
-          <img src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark@2x.png 2x" alt="" width={iconSize + 10} height={iconSize + 10} />
+          <BrandWordmark width={Math.round((iconSize + 14) * 2.5)} height={iconSize + 14} />
         </span>
       )}
       {withIcon && !logo && <Icon name={app.native ? 'share' : 'smartphone'} size={iconSize} />} {note || (app.native ? L.share : L.download)}

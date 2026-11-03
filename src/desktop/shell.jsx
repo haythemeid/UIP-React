@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../components/Icon';
+import BrandWordmark from '../components/BrandWordmark';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { drive, fetchDriveBlob } from '../lib/driveApi';
@@ -544,7 +545,7 @@ export function LockScreen({ ar, tt, user, lockEnabled, onUnlock, onPortal, hide
       <div className="lk-scroll">
         <header className="lk-top">
           <div className="lk-brand">
-            <img className="lk-brand__mark brand-chip" src="/images/logo/uipe-wordmark-sm.png" srcSet="/images/logo/uipe-wordmark-sm.png 1x, /images/logo/uipe-wordmark.png 2x" alt="UIPE" width="110" height="43" decoding="async" />
+            <BrandWordmark onDark className="lk-brand__mark" width={112} height={44} />
             <span className="lk-brand__txt"><small>Unified Integrated Platform Ecosystem</small></span>
           </div>
           <div className="lk-clock" dir={dir}><Clock ar={ar} big /></div>

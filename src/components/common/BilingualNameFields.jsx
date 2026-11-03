@@ -21,8 +21,8 @@ export default function BilingualNameFields({
   const uni = entity === 'university';
   const labelAr = uni ? (isAr ? 'اسم الجامعة (بالعربي)' : 'University name (Arabic)') : (isAr ? 'الاسم بالعربي' : 'Name (Arabic)');
   const labelEn = uni ? (isAr ? 'اسم الجامعة (بالإنجليزي)' : 'University name (English)') : (isAr ? 'الاسم بالإنجليزي' : 'Name (English)');
-  const phAr = uni ? 'جامعة القاهرة' : 'أحمد محمد علي';
-  const phEn = uni ? 'Cairo University' : 'Ahmed Mohamed Ali';
+  const phAr = uni ? 'جامعة القاهرة' : 'هيثم محمد كامل';
+  const phEn = uni ? 'Cairo University' : 'Haitham Mohamed Kamel';
 
   const input = (value, key, ph, dir) => (
     <input

@@ -227,7 +227,7 @@ export default function UniversityStudents() {
   ];
   const templateArgs = [
     ['name_ar', 'name_en', 'email', 'student_number', 'faculty', 'department', 'academic_year', 'current_semester', 'group', 'password'],
-    ['سارة أحمد', 'Sara Ahmed', 'sara@example.com', '2024001', '', '', '1', '1', '', ''],
+    ['هيثم محمد كامل', 'Haitham Mohamed Kamel', 'haitham@example.com', '2024001', '', '', '1', '1', '', ''],
   ];
 
   return (

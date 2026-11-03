@@ -150,7 +150,7 @@ export default function Register() {
               icon="user"
               value={nameAr}
               onChange={(e) => setNameAr(e.target.value)}
-              placeholder="أحمد محمد علي"
+              placeholder="هيثم محمد كامل"
               autoComplete="off"
               lang="ar"
               required
@@ -164,7 +164,7 @@ export default function Register() {
               ltr
               value={nameEn}
               onChange={(e) => setNameEn(e.target.value)}
-              placeholder="Ahmed Mohamed Ali"
+              placeholder="Haitham Mohamed Kamel"
               autoComplete="off"
               lang="en"
               required

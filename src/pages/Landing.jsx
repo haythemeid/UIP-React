@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import usePaperScroll from '../hooks/usePaperScroll';
+import FaqSection from '../components/landing/FaqSection';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -11,6 +13,7 @@ import CountUp from '../components/CountUp';
 import LandingNav from '../components/LandingNav';
 import useAppDownload from '../hooks/useAppDownload';
 import AppDownloadLink from '../components/AppDownloadLink';
+import BrandWordmark from '../components/BrandWordmark';
 import { roleHome } from '../config/roleHome';
 
 /**
@@ -30,7 +33,7 @@ export default function Landing() {
   const [featured, setFeatured] = useState([]);
   const [liveStats, setLiveStats] = useState(null);
   const [role, setRole] = useState('students');
-  const [faqOpen, setFaqOpen] = useState(0);
+  usePaperScroll('.lp4-section');
 
   useEffect(() => {
     let alive = true;
@@ -110,14 +113,6 @@ export default function Landing() {
     ['sparkles', t('Start working', 'ابدأ الشغل'), t('Chat, meet, study, take exams and publish your project from one place.', 'اتكلم واجتمع وذاكر وامتحن وانشر مشروعك من مكان واحد.')],
   ];
 
-  const faqs = [
-    [t('Is UIPE free?', 'هل UIPE مجانية؟'), t('It is free for students. You do not need a credit card to create an account.', 'نعم، مجانية للطلاب بالكامل، ولا تحتاج إلى بطاقة ائتمان لإنشاء حسابك.')],
-    [t('Who can use it?', 'من يمكنه استخدامها؟'), t('Students, instructors and supervisors, universities and faculties, and data and security teams. Each role gets its own tools under one account.', 'الطلاب وأعضاء هيئة التدريس والمشرفون، والجامعات والكليات، وفرق البيانات والأمن. لكل دور أدواته الخاصة ضمن حساب واحد.')],
-    [t('Can I use it on my phone?', 'هل أستطيع استخدامها من الهاتف؟'), t('Yes. It works in any browser, and there is an Android app for calls, chat and notifications.', 'نعم. تعمل على أي متصفح، ويتوفر تطبيق أندرويد للمكالمات والمحادثات والإشعارات.')],
-    [t('Who sees my posts, photo and stories?', 'من يرى منشوراتي وصورتي وقصصي؟'), t('You choose. Each post and story has its own audience, you can lock your profile so only friends and followers see it, and your photo can be opened or downloaded only if you allow it.', 'القرار لك. لكل منشور وقصة جمهوره الخاص، ويمكنك قفل ملفك الشخصي ليراه أصدقاؤك ومتابعوك فقط، ولا يمكن فتح صورتك أو تنزيلها إلا بإذنك.')],
-    [t('How do exams stay fair?', 'كيف تُحمى نزاهة الامتحانات؟'), t('Secure mode logs tab switches, and AI grading only suggests marks. The instructor approves them.', 'يسجّل الوضع الآمن أي تبديل بين علامات التبويب، ويقترح الذكاء الاصطناعي الدرجات فقط، بينما يعتمدها عضو هيئة التدريس.')],
-    [t('How can an employer verify my certificate?', 'كيف تتحقق جهة العمل من شهادتي؟'), t('Open the Verify a Certificate page, enter the number printed on it and see whether it is valid.', 'تفتح صفحة «التحقق من شهادة»، وتُدخل الرقم المطبوع على الشهادة، فتعرف فورًا إن كانت صحيحة.')],
-  ];
   const activeRole = audiences.find(([k]) => k === role) || audiences[0];
 
   const signals = [
@@ -311,7 +306,7 @@ export default function Landing() {
                 {['A', 'S', 'O', 'M', 'N'].map((c, i) => <span key={c} className={`lp5-story${i === 0 ? ' is-me' : ''}`}><b>{c}</b></span>)}
               </div>
               <div className="lp5-post">
-                <div className="lp5-post__head"><span className="lp4-av lp4-av--a">S</span><div><strong>{t('Sara · Student', 'سارة · طالبة')}</strong><small>{t('2h · Everyone', 'منذ ساعتين · الجميع')}</small></div></div>
+                <div className="lp5-post__head"><span className="lp4-av lp4-av--a">{t('H', 'هـ')}</span><div><strong>{t('Haitham · Student', 'هيثم · طالب')}</strong><small>{t('2h · Everyone', 'منذ ساعتين · الجميع')}</small></div></div>
                 <p>{t('Slides for my machine learning project are ready. Feedback welcome!', 'شرائح مشروع تعلّم الآلة جاهزة. محتاجة رأيكم!')}</p>
                 <div className="lp5-slide"><strong>{t('Handling missing data', 'التعامل مع البيانات الناقصة')}</strong><span /><span /><span className="is-short" /><em>2 / 12</em></div>
                 <div className="lp5-react"><span>👍 ❤️ 💡 <b>42</b></span><small>{t('9 comments', '9 تعليقات')}</small></div>
@@ -408,41 +403,13 @@ export default function Landing() {
         </section>
 
         {/* ============================ FAQ ============================ */}
-        <section className="lp4-section lp4-shell" id="faq">
-          <div className="lp6-faq">
-            <aside className="lp6-faq__side">
-              <span className="lp4-eyebrow">{t('FAQ', 'الأسئلة الشائعة')}</span>
-              <h2>{t('Got questions? We have answers.', 'لديك سؤال؟ نجيبك هنا.')}</h2>
-              <p>{t('Everything you need to know before you start. Still unsure? Create an account and try it free.', 'كل ما تحتاج معرفته قبل أن تبدأ. ما زلت متردداً؟ أنشئ حسابك وجرّبها مجانًا.')}</p>
-              <Link to="/auth/register" className="btn btn-primary">{t('Create a free account', 'اعمل حساب مجاني')} <Icon name="arrow-right" size={16} /></Link>
-            </aside>
-            <div className="lp6-faq__list">
-              {faqs.map(([q, a], i) => {
-                const open = faqOpen === i;
-                return (
-                  <div key={q} className={`lp6-faq__item${open ? ' is-open' : ''}`}>
-                    <h3>
-                      <button type="button" id={`faq-q-${i}`} aria-expanded={open} aria-controls={`faq-a-${i}`} onClick={() => setFaqOpen(open ? -1 : i)}>
-                        <span className="lp6-faq__num">{String(i + 1).padStart(2, '0')}</span>
-                        <span className="lp6-faq__q">{q}</span>
-                        <span className="lp6-faq__ic"><Icon name="plus" size={16} /></span>
-                      </button>
-                    </h3>
-                    <div className="lp6-faq__a" id={`faq-a-${i}`} role="region" aria-labelledby={`faq-q-${i}`}>
-                      <div><p>{a}</p></div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
+        <FaqSection t={t} isAr={isAr} />
 
         {app && (
           <section className="lp4-section lp4-shell" id="app">
             <div className="lp4-app">
               <div className="lp4-app__info">
-                <span className="lp4-app__logo"><img src="/images/logo/uipe-mark.png" srcSet="/images/logo/uipe-mark@2x.png 2x" alt="UIPE" /></span>
+                <span className="lp4-app__logo"><BrandWordmark width={104} height={40} /></span>
                 <div>
                   <h2>{app.native ? t('Enjoying UIPE? Share the app with your friends', 'عجبتك UIPE؟ شارك التطبيق مع أصحابك') : t('Take UIPE with you', 'خد UIPE معاك')}</h2>
                   <p>{app.native ? t('Send the download link on WhatsApp, Telegram or anywhere you like.', 'ابعت رابط التحميل على واتساب أو تيليجرام أو أي مكان.') : t('Calls, chat and notifications work best in the Android app.', 'المكالمات والشات والإشعارات بتشتغل أحسن في تطبيق الأندرويد.')}</p>

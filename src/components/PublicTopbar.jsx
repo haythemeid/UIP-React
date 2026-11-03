@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import BrandWordmark from './BrandWordmark';
 import { useTheme } from '../context/ThemeContext';
 import Icon from './Icon';
 
@@ -26,7 +27,7 @@ export default function PublicTopbar() {
   return (
     <div className="public-topbar">
       <Link to="/" className="public-brand">
-        <img className="brand-chip public-brand__word" src="/images/logo/uipe-wordmark-sm.png" srcSet="/images/logo/uipe-wordmark-sm.png 1x, /images/logo/uipe-wordmark.png 2x" alt={t('UIPE Platform', 'منصة UIPE')} width="96" height="37" />
+        <BrandWordmark className="public-brand__word" width={96} height={37} alt="UIPE" />
       </Link>
       <div className="public-topbar__actions">
         <Link className="public-pill-btn" to="/">

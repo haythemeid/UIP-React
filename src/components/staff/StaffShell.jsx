@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import BrandWordmark from '../BrandWordmark';
 import { useTheme } from '../../context/ThemeContext';
 import Icon from '../Icon';
 import '../../styles/css/pages/staff-login.css';
@@ -126,7 +127,7 @@ export default function StaffShell({ titleId = 'sl-title', children }) {
         <section className="sl-side">
           <Aperture />
           <div className="sl-side__top">
-            <img className="brand-chip" src="/images/logo/uipe-wordmark-sm.png" srcSet="/images/logo/uipe-wordmark-sm.png 1x, /images/logo/uipe-wordmark.png 2x" alt="UIPE" width="110" height="43" />
+            <BrandWordmark onDark width={118} height={46} />
           </div>
 
           <ul className="sl-lanes">
