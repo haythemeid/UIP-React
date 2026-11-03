@@ -29,6 +29,8 @@ const GROUP_COLORS = {
   main: ['#60a5fa', '#2563eb'],
   academics: ['#a78bfa', '#6d28d9'],
   community: ['#34d399', '#059669'],
+  social: ['#22d3ee', '#0891b2'],
+  files: ['#94a3b8', '#475569'],
   account: ['#fbbf24', '#d97706'],
 };
 /** A few apps get their own colour so the Dock reads at a glance. */

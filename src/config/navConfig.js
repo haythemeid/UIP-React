@@ -4,6 +4,8 @@
  * getNavConfig() (Account is always last).
  */
 
+// Messages + Meetings live in the "Communication" group (see COMMON_SOCIAL_KEYS), the rest stays in Account.
+const COMMON_SOCIAL_KEYS = ['messages', 'meetings'];
 const COMMON_ACCOUNT_ITEMS = [
   { key: 'meetings', en: 'Meetings', ar: 'الاجتماعات', icon: 'video', built: true },
   { key: 'messages', en: 'Messages', ar: 'الرسائل', icon: 'message', perm: 'messaging.use', built: true },
@@ -19,13 +21,21 @@ const COMMON_ACCOUNT_ITEMS = [
  *   2. The role's day-to-day work comes next, grouped by topic under a
  *      titled section, and each group follows the real workflow order.
  *   3. Insights (analytics / reports) come after the operational groups.
- *   4. "Account" is always LAST: Public Profile (when the role has one),
- *      Messages, Notifications, Settings. getNavConfig() enforces this, so
- *      a new section added to a role can never end up below Account.
- *   5. No two entries point at the same route, and no two entries in a
+ *   4. Everything social lives together in ONE "Communication" group (every
+ *      portal): Posts, My network, Messages, Meetings (+ the role's own chat
+ *      entries, e.g. the student's Group Chat / Contacts). The role's own
+ *      `social` list in RAW_CONFIGS is appended to it. The group sits right
+ *      after "Community" when the role has one, otherwise right after the
+ *      first group.
+ *   5. "My Files" (My PC + My Library) is its own small group, right after
+ *      Communication.
+ *   6. "Account" is always LAST: Public Profile (when the role has one),
+ *      Notifications, Platform Guide, Settings. getNavConfig() enforces this,
+ *      so a new section added to a role can never end up below Account.
+ *   7. No two entries point at the same route, and no two entries in a
  *      portal share an icon.
  * Per-role `account` entries below are the personal extras that sit in
- * front of the common Messages / Notifications / Settings.
+ * front of the common Notifications / Guide / Settings.
  */
 const PUBLIC_PROFILE = (prefix) => ({
   key: 'portfolio', en: 'Public Profile', ar: 'الملف العام', icon: 'globe', route: `/${prefix}/portfolio`, built: true,
@@ -38,7 +48,6 @@ const RAW_CONFIGS = {
     main: [
       { key: 'dashboard', en: 'Dashboard', ar: 'لوحة التحكم', icon: 'dashboard', route: '/student/dashboard', built: true },
       { key: 'projects', en: 'My Projects', ar: 'مشاريعي', icon: 'projects', route: '/student/projects', built: true },
-      { key: 'my-pc', en: 'My PC', ar: 'جهازي', icon: 'monitor', route: '/student/my-pc', built: true },
       { key: 'ai-analysis', en: 'AI Analysis', ar: 'تحليل الذكاء الاصطناعي', icon: 'sparkles', route: '/student/ai-analysis', perm: 'ai.request_analysis', built: true },
       { key: 'github', en: 'GitHub Integration', ar: 'ربط GitHub', icon: 'github', route: '/student/github', built: true },
       { key: 'patents', en: 'Patent Portal', ar: 'بوابة براءات الاختراع', icon: 'shield', route: '/student/patents', built: true },
@@ -64,6 +73,9 @@ const RAW_CONFIGS = {
       { key: 'announcements', en: 'Announcements', ar: 'الإعلانات', icon: 'info', route: '/student/announcements', built: true },
       { key: 'discovery', en: 'Project Discovery', ar: 'استكشاف المشاريع', icon: 'search', route: '/student/discovery', built: true },
       { key: 'group-hub', en: 'Group Hub', ar: 'مركز المجموعة', icon: 'users', route: '/student/group-hub', built: true },
+    ],
+    // Joins the shared Communication group (after Posts / Network / Messages / Meetings).
+    social: [
       { key: 'group-chat', en: 'Group Chat', ar: 'دردشة المجموعة', icon: 'message-square', route: '/student/group-chat', built: true },
       { key: 'contacts', en: 'My Contacts', ar: 'جهات اتصالي', icon: 'inbox', route: '/student/contacts', built: true },
     ],
@@ -347,6 +359,8 @@ export const SECTION_TITLES = {
   analysis: { en: 'Analysis', ar: 'التحليل' },
   reporting: { en: 'Reporting', ar: 'التقارير والتصدير' },
   community: { en: 'Community', ar: 'المجتمع' },
+  social: { en: 'Communication', ar: 'التواصل' },
+  files: { en: 'My Files', ar: 'ملفاتي' },
   insights: { en: 'Insights', ar: 'الإحصاءات والتقارير' },
   securityPortal: { en: 'Threat Monitoring', ar: 'رصد التهديدات' },
   security: { en: 'Security & Audit', ar: 'الأمان والتدقيق' },
@@ -391,58 +405,53 @@ export function portalPrefix(role) {
   return PORTAL_PREFIX_OVERRIDES[role] || role || 'student';
 }
 
-/** "My PC" is in every portal (students list it themselves). It goes right after the dashboard in the first group;
- *  portals that already use the `monitor` icon (Sessions) get `hard-drive` so no two entries share an icon. */
-function withMyPc(sections, role, prefix) {
-  const all = Object.values(sections).flat();
-  if (all.some((i) => i.key === 'my-pc')) return sections;
-  const [firstKey, firstItems] = Object.entries(sections)[0];
-  const icon = all.some((i) => i.icon === 'monitor') ? 'hard-drive' : 'monitor';
-  const item = { key: 'my-pc', en: 'My PC', ar: 'جهازي', icon, route: `/${prefix}/my-pc`, built: true };
-  return { ...sections, [firstKey]: [firstItems[0], item, ...firstItems.slice(1)] };
-}
-
-/** "My Library" (مكتبتي) sits right after My PC in every portal: the same files, sorted by type. */
-function withLibrary(sections, prefix) {
-  const all = Object.values(sections).flat();
-  if (all.some((i) => i.key === 'my-library')) return sections;
-  const item = { key: 'my-library', en: 'My Library', ar: 'مكتبتي', icon: 'bookmark', route: `/${prefix}/my-library`, built: true };
+/** Rebuilds the sidebar groups of a role:
+ *   [role groups …] with two shared groups spliced in (same in every portal):
+ *   - `social` (Communication): Posts, My network, Messages, Meetings + the role's own `social` entries
+ *   - `files` (My Files): My PC, My Library
+ *  They go right after `community` when the role has it, otherwise right after the first group.
+ *  `account` is appended last. */
+function buildSections(role, prefix, raw, overrides) {
+  const { social: roleSocial = [], ...rest } = raw;
+  const all = Object.values(rest).flat();
+  const common = (key) => {
+    const item = COMMON_ACCOUNT_ITEMS.find((i) => i.key === key);
+    return { ...item, ...(overrides[key] || {}), route: `/${prefix}/${key}` };
+  };
+  // "My PC" is in every portal; portals that already use the `monitor` icon (Sessions) get `hard-drive` so no two entries share an icon.
+  const pcIcon = all.some((i) => i.icon === 'monitor') ? 'hard-drive' : 'monitor';
+  const social = [
+    { key: 'posts', en: 'Posts', ar: 'المنشورات', icon: 'megaphone', route: `/${prefix}/posts`, perm: 'posts.use', built: true },
+    { key: 'network', en: 'My network', ar: 'شبكتي', icon: 'network', route: `/${prefix}/network`, perm: 'posts.use', built: true },
+    ...COMMON_SOCIAL_KEYS.map(common),
+    ...roleSocial,
+  ];
+  const files = [
+    { key: 'my-pc', en: 'My PC', ar: 'جهازي', icon: pcIcon, route: `/${prefix}/my-pc`, built: true },
+    { key: 'my-library', en: 'My Library', ar: 'مكتبتي', icon: 'bookmark', route: `/${prefix}/my-library`, built: true },
+  ];
+  const keys = Object.keys(rest);
+  const anchor = keys.includes('community') ? 'community' : keys[0];
   const out = {};
-  for (const [k, items] of Object.entries(sections)) {
-    const i = items.findIndex((x) => x.key === 'my-pc');
-    out[k] = i >= 0 ? [...items.slice(0, i + 1), item, ...items.slice(i + 1)] : items;
+  for (const k of keys) {
+    out[k] = rest[k].filter((i) => i.key !== 'my-pc' && i.key !== 'my-library' && i.key !== 'posts' && i.key !== 'network');
+    if (k === anchor) { out.social = social; out.files = files; }
   }
   return out;
 }
 
-/** "Posts" (المنشورات) — the social feed, available in every portal right after My Library (gated by the posts.use permission). */
-function withPosts(sections, prefix) {
-  const all = Object.values(sections).flat();
-  if (all.some((i) => i.key === 'posts')) return sections;
-  const item = { key: 'posts', en: 'Posts', ar: 'المنشورات', icon: 'megaphone', route: `/${prefix}/posts`, perm: 'posts.use', built: true };
-  const network = { key: 'network', en: 'My network', ar: 'شبكتي', icon: 'network', route: `/${prefix}/network`, perm: 'posts.use', built: true };
-  const out = {};
-  for (const [k, items] of Object.entries(sections)) {
-    const i = items.findIndex((x) => x.key === 'my-library');
-    out[k] = i >= 0 ? [...items.slice(0, i + 1), item, network, ...items.slice(i + 1)] : items;
-  }
-  return out;
-}
-
-/** Returns { main: [...], <groups>..., account: [...] } for a role.
- *  Section order = the order written in RAW_CONFIGS; `account` is always
- *  appended last (personal extras first, then Messages/Notifications/Settings). */
+/** Returns { main: [...], <groups>..., social, files, account: [...] } for a role.
+ *  Section order = the order written in RAW_CONFIGS with the shared `social` / `files` groups spliced in
+ *  (see buildSections); `account` is always appended last (personal extras first, then Notifications/Guide/Settings). */
 export function getNavConfig(role, can) {
   const { account: accountExtras = [], ...rawSections } = RAW_CONFIGS[role] || RAW_CONFIGS.student;
   const prefix = portalPrefix(role);
-  const sections = withPosts(withLibrary(withMyPc(rawSections, role, prefix), prefix), prefix);
   const overrides = ACCOUNT_ITEM_OVERRIDES[role] || {};
-  const common = COMMON_ACCOUNT_ITEMS.map((item) => ({
-    ...item,
-    ...(overrides[item.key] || {}),
-    route: `/${prefix}/${item.key}`,
-  }));
-  const all = { ...sections, account: [...accountExtras, ...common] };
+  const sections = buildSections(role, prefix, rawSections, overrides);
+  const account = COMMON_ACCOUNT_ITEMS
+    .filter((item) => !COMMON_SOCIAL_KEYS.includes(item.key))
+    .map((item) => ({ ...item, ...(overrides[item.key] || {}), route: `/${prefix}/${item.key}` }));
+  const all = { ...sections, account: [...accountExtras, ...account] };
   if (typeof can !== 'function') return all;
   // Hide entries whose permission the role no longer has (item.perm); drop sections left empty.
   const out = {};
