@@ -49,37 +49,35 @@
 @media (prefers-reduced-motion: reduce) { .pr { display: none; } }
 html[data-motion="off"] .pr { display: none; }
 
-/* ---- Scroll reveal: a section unfolds out of a crumpled sheet as it enters the viewport (hooks/usePaperScroll.js) ---- */
+/* ---- Scroll reveal (hooks/usePaperScroll.js) ------------------------------------------------------------------
+   Each landing section is covered by a crumpled sheet (.pf) that UNFOLDS as you scroll it into view: the hook writes
+   --p (0 -> 1, eased) on the section and every facet derives its own progress from it, so the fold follows the wheel
+   (scrubbed, reversible-free: once open it stays open). transform + opacity only; the sheet is removed when done. */
+@property --p { syntax: '<number>'; inherits: true; initial-value: 0; }
 .pr-sec {
   --paper: #f3efe6; --paper-hi: 255, 255, 255; --paper-lo: 90, 70, 40;
   --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .22 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
-  position: relative;
-  opacity: 0;
-  clip-path: polygon(22% 10%, 40% 2%, 58% 8%, 78% 3%, 86% 24%, 76% 42%, 84% 60%, 66% 70%, 48% 62%, 30% 72%, 16% 50%, 26% 30%);
-  transform-origin: 50% 0;
-  will-change: transform, opacity, clip-path;
+  position: relative; --p: 0; transition: --p .32s cubic-bezier(.2, .7, .2, 1);
 }
 [data-theme="dark"] .pr-sec { --paper: #1a1c26; --paper-lo: 0, 0, 0; }
-.pr-sec::after {
-  content: ""; position: absolute; inset: 10px 0; z-index: 3; pointer-events: none; border-radius: 28px; opacity: 0;
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%23000' stroke-opacity='.2' stroke-width='.2' vector-effect='non-scaling-stroke'%3E%3Cpath d='M0 0 52 46 100 0M52 46 100 38M52 46 100 100M52 46 40 100M52 46 0 100M52 46 0 40M20 22 34 14M72 24 84 44M68 74 86 66M26 76 14 62'/%3E%3C/g%3E%3C/svg%3E") center / 100% 100% no-repeat,
-    linear-gradient(115deg, rgba(var(--paper-hi), .25), rgba(var(--paper-lo), .14) 55%, rgba(var(--paper-hi), .18)),
-    var(--noise), var(--paper);
-}
-.pr-sec.is-in { animation: pr-sec-open .95s cubic-bezier(.22, .75, .2, 1) both; }
-.pr-sec.is-in::after { animation: pr-sec-sheet .8s ease-out .12s both; }
-.pr-sec.pr-done { animation: none; opacity: 1; clip-path: none; transform: none; will-change: auto; }
-.pr-sec.pr-done::after { display: none; }
-@keyframes pr-sec-open {
-  0%   { opacity: 0; transform: perspective(1400px) translate3d(0, 70px, 0) rotateX(16deg) scale(.94);
-         clip-path: polygon(22% 10%, 40% 2%, 58% 8%, 78% 3%, 86% 24%, 76% 42%, 84% 60%, 66% 70%, 48% 62%, 30% 72%, 16% 50%, 26% 30%); }
-  25%  { opacity: 1; }
-  100% { opacity: 1; transform: perspective(1400px) translate3d(0, 0, 0) rotateX(0) scale(1);
-         clip-path: polygon(0 0, 33% 0, 66% 0, 100% 0, 100% 33%, 100% 66%, 100% 100%, 66% 100%, 33% 100%, 0 100%, 0 66%, 0 33%); }
-}
-@keyframes pr-sec-sheet { 0% { opacity: .95; } 100% { opacity: 0; } }
-@media (max-width: 640px) { .pr-sec { --m: 1; } @keyframes pr-sec-open { 0% { opacity: 0; transform: translate3d(0, 40px, 0) scale(.97); clip-path: polygon(22% 10%, 40% 2%, 58% 8%, 78% 3%, 86% 24%, 76% 42%, 84% 60%, 66% 70%, 48% 62%, 30% 72%, 16% 50%, 26% 30%); } 30% { opacity: 1; } 100% { opacity: 1; transform: none; clip-path: polygon(0 0, 33% 0, 66% 0, 100% 0, 100% 33%, 100% 66%, 100% 100%, 66% 100%, 33% 100%, 0 100%, 0 66%, 0 33%); } } }
-@media (prefers-reduced-motion: reduce) { .pr-sec { opacity: 1 !important; clip-path: none !important; animation: none !important; } .pr-sec::after { display: none; } }
-html[data-motion="off"] .pr-sec { opacity: 1 !important; clip-path: none !important; animation: none !important; }
-html[data-motion="off"] .pr-sec::after { display: none; }
+.pf { position: absolute; inset: 6px 0; z-index: 6; pointer-events: none; overflow: hidden; border-radius: 30px; perspective: 1300px; contain: layout paint;
+  box-shadow: 0 30px 60px -30px rgba(40, 30, 10, calc(.35 * (1 - var(--p)))); }
+.pf__sheet { position: absolute; inset: 0; }
+.pf__f { position: absolute; inset: 0; will-change: transform, opacity; backface-visibility: hidden;
+  --d: 0; --tx: 0%; --ty: 0%; --rx: 0deg; --ry: 0deg;
+  --fp: min(1, max(0, calc((var(--p) - var(--d)) / (1 - var(--d)))));
+  transform: translate3d(calc(var(--tx) * var(--fp)), calc(var(--ty) * var(--fp)), 0) rotateX(calc(var(--rx) * var(--fp))) rotateY(calc(var(--ry) * var(--fp))) scale(calc(1 - .32 * var(--fp)));
+  opacity: calc(1 - var(--fp) * var(--fp) * var(--fp));
+  background: linear-gradient(var(--a, 135deg), rgba(var(--paper-hi), var(--hi, .18)), rgba(var(--paper-lo), var(--lo, .12))), var(--noise), var(--paper); }
+.pf__f--1 { clip-path: polygon(47% 51%, 0 0, 46% 0);        transform-origin: 25% 0;    --a: 160deg; --hi: .22; --lo: .06; --rx: 85deg;  --ty: -34%; --d: 0; }
+.pf__f--2 { clip-path: polygon(47% 51%, 46% 0, 100% 0);     transform-origin: 75% 0;    --a: 200deg; --hi: .05; --lo: .2;  --rx: 85deg;  --ty: -34%; --d: .08; }
+.pf__f--3 { clip-path: polygon(47% 51%, 100% 0, 100% 54%);  transform-origin: 100% 25%; --a: 250deg; --hi: .2;  --lo: .08; --ry: 85deg;  --tx: 34%;  --d: .14; }
+.pf__f--4 { clip-path: polygon(47% 51%, 100% 54%, 100% 100%); transform-origin: 100% 75%; --a: 300deg; --hi: .04; --lo: .22; --ry: 85deg; --tx: 34%; --d: .2; }
+.pf__f--5 { clip-path: polygon(47% 51%, 100% 100%, 57% 100%); transform-origin: 78% 100%; --a: 20deg;  --hi: .18; --lo: .1;  --rx: -85deg; --ty: 34%;  --d: .14; }
+.pf__f--6 { clip-path: polygon(47% 51%, 57% 100%, 0 100%);  transform-origin: 28% 100%; --a: 340deg; --hi: .06; --lo: .2;  --rx: -85deg; --ty: 34%;  --d: .08; }
+.pf__f--7 { clip-path: polygon(47% 51%, 0 100%, 0 44%);     transform-origin: 0 72%;    --a: 70deg;  --hi: .2;  --lo: .07; --ry: -85deg; --tx: -34%; --d: .03; }
+.pf__f--8 { clip-path: polygon(47% 51%, 0 44%, 0 0);        transform-origin: 0 22%;    --a: 110deg; --hi: .05; --lo: .18; --ry: -85deg; --tx: -34%; --d: .2; }
+.pf .pf__creases { position: absolute; inset: 0; pointer-events: none; opacity: calc(.6 * (1 - var(--p) * var(--p))); }
+.pr-sec.pr-done > .pf { display: none; }
+@media (prefers-reduced-motion: reduce) { .pf { display: none; } }
+html[data-motion="off"] .pf { display: none; }

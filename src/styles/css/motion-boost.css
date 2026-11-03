@@ -38,13 +38,6 @@
   html:not([data-motion="off"]) :is(.lp4-stats li:nth-child(2)) { animation-delay: .7s; }
   html:not([data-motion="off"]) :is(.lp4-stats li:nth-child(3)) { animation-delay: .8s; }
   html:not([data-motion="off"]) :is(.lp4-stats li:nth-child(4)) { animation-delay: .9s; }
-  html:not([data-motion="off"]) :is(.lp4-section.is-in :is(.lp4-tile, .lp4-steps > li, .lp5-trust > article, .lp5-list > li, .lp4-app, .lp5-feed, .lp4-roles)) { animation: lp4-rise .75s cubic-bezier(.2,.7,.2,1) backwards; }
-  html:not([data-motion="off"]) :is(.lp4-section.is-in :is(.lp4-tile, .lp4-steps > li, .lp5-trust > article, .lp5-list > li):nth-child(1)) { animation-delay: .25s; }
-  html:not([data-motion="off"]) :is(.lp4-section.is-in :is(.lp4-tile, .lp4-steps > li, .lp5-trust > article, .lp5-list > li):nth-child(2)) { animation-delay: .33s; }
-  html:not([data-motion="off"]) :is(.lp4-section.is-in :is(.lp4-tile, .lp4-steps > li, .lp5-trust > article, .lp5-list > li):nth-child(3)) { animation-delay: .41s; }
-  html:not([data-motion="off"]) :is(.lp4-section.is-in :is(.lp4-tile, .lp4-steps > li, .lp5-trust > article, .lp5-list > li):nth-child(4)) { animation-delay: .49s; }
-  html:not([data-motion="off"]) :is(.lp4-section.is-in :is(.lp4-tile, .lp4-steps > li, .lp5-trust > article, .lp5-list > li):nth-child(5)) { animation-delay: .57s; }
-  html:not([data-motion="off"]) :is(.lp4-section.is-in :is(.lp4-tile, .lp4-steps > li, .lp5-trust > article, .lp5-list > li):nth-child(n+6)) { animation-delay: .65s; }
   html:not([data-motion="off"]) :is(.lp4-final) { animation: lp4-pop .9s cubic-bezier(.2,.7,.2,1) backwards; }
   html:not([data-motion="off"]) :is(.app-shell .sidebar) { animation: app-side-in .6s cubic-bezier(.2,.7,.2,1) backwards; }
   html:not([data-motion="off"]) :is([dir="rtl"] .app-shell .sidebar) { animation-name: app-side-in-rtl; }
