@@ -639,7 +639,6 @@ export default function MobileShell(p) {
           <Row icon="palette" label={tt('Phone look', 'مظهر الهاتف')} sub={tt('Layout, clock, icons, Dynamic Island', 'الشكل، الساعة، الأيقونات، الجزيرة')} onClick={() => setSheet({ type: 'phoneset' })} />
           {showPlatform && <Row icon="grid" label={vm.enabled ? tt('Platform pages', 'صفحات المنصة') : tt('Enter UIPE OS', 'ادخل UIPE OS')} sub={vm.enabled ? undefined : tt('The whole platform inside My PC', 'المنصة كلها جوه جهازي')} onClick={() => setSheet({ type: vm.enabled ? 'nav' : 'uipos' })} />}
           <Row icon="settings" label={tt('Settings', 'الإعدادات')} onClick={after(() => runCommand('settings'))} />
-          {vm.enabled && <Row icon="logout" label={tt('Leave UIPE OS', 'الخروج من UIPE OS')} sub={tt('Back to the normal portal', 'الرجوع للمنصة العادية')} onClick={() => switchPlatform(false)} />}
           <Row icon="home" label={tt('Back to the portal', 'الرجوع للبوابة')} onClick={after(() => runCommand('portal'))} />
           <Row icon="logout" label={tt('Sign out', 'تسجيل الخروج')} onClick={after(() => runCommand('logout'))} />
         </Sheet>

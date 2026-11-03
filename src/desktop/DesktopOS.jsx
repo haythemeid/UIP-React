@@ -368,9 +368,8 @@ export default function DesktopOS() {
       case 'security': openApp('settings', { tab: 'security' }); break;
       case 'portal': // leaving the desktop asks first: Enter (or the Exit button) confirms, Esc / Cancel stays
         setOverlay(null);
-        if (virtual) { // virtual mode: "the portal" IS this desktop, so leaving it means switching the mode off
-          ask({ kind: 'confirm', title: tt('Switch back to the normal portal?', 'الرجوع للمنصة العادية؟'), text: tt('UIPE OS (virtual mode) will be turned off. You can turn it on again from Settings ▸ UIPE OS. Your files stay saved.', 'هيتقفل UIPE OS (الوضع الافتراضي). تقدر تشغّله تاني من الإعدادات ▸ UIPE OS. ملفاتك فاضلة محفوظة.'), action: tt('Switch back', 'رجوع'), icon: 'logout' })
-            .then((ok) => (ok ? vmode.setEnabled(false).then(() => navigate(roleHome(user?.role))).catch((e) => flash(e?.message || tt('Could not switch the mode.', 'مقدرناش نغيّر الوضع.'), 'error')) : null));
+        if (virtual) { // UIPE OS is pinned: "the portal" IS this desktop, so this opens the platform's home window instead of leaving
+          if (VM_BY_KEY.dashboard) openVirtualPath(VM_BY_KEY.dashboard.route);
           break;
         }
         ask({ kind: 'confirm', title: tt('Exit to the UIPE portal?', 'الخروج إلى بوابة UIPE؟'), text: tt('You will leave the desktop and go back to the portal. Your files stay saved.', 'هتخرج من سطح المكتب وترجع للبوابة. ملفاتك فاضلة محفوظة.'), action: tt('Exit', 'خروج'), icon: 'logout' })

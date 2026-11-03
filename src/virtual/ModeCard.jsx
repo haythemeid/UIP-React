@@ -1,11 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
 import { useLanguage } from '../context/LanguageContext';
-import { useAuth } from '../context/AuthContext';
-import { roleHome } from '../config/roleHome';
-import { myPcPath } from '../config/myPc';
-import { useIsMobileOS } from '../desktop/useIsMobileOS';
 import { useVirtualMode } from './virtualMode';
 import './virtual.css';
 
@@ -22,85 +16,33 @@ export function ModeArt() {
   );
 }
 
-/**
- * The switch for the virtual mode. Used in Settings ▸ UIPE OS (inside the desktop) and in the portal's top bar launcher.
- * Turning it ON takes the student into the desktop; turning it OFF takes them back to the normal portal.
- */
-export default function ModeCard({ onDone, inDesktop = false }) {
+/** About UIPE OS (Settings ▸ UIPE OS). The mode is pinned: there is no switch, only a description. */
+export default function ModeCard() {
   const { locale } = useLanguage();
-  const ar = locale === 'ar';
-  const tt = (en, a) => (ar ? a : en);
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const tt = (en, a) => (locale === 'ar' ? a : en);
   const vm = useVirtualMode();
-  const mobile = useIsMobileOS();
-  const [err, setErr] = useState('');
-
   if (!vm.supported) return null;
-
-  const toggle = async () => {
-    setErr('');
-    const next = !vm.enabled;
-    try {
-      await vm.setEnabled(next);
-      onDone?.(next);
-      navigate(next ? myPcPath(user?.role) : roleHome(user?.role), { replace: !next });
-    } catch (e) {
-      setErr(e?.message || tt('Could not change the mode. Try again.', 'مقدرناش نغيّر الوضع. جرّب تاني.'));
-    }
-  };
-
-  const unavailable = !vm.available && !vm.enabled;
   return (
-    <div className={`vm-card${vm.enabled ? ' is-on' : ''}`}>
+    <div className="vm-card is-on">
       <ModeArt />
       <div className="vm-card__body">
-        <h3>{tt('UIPE OS — Virtual mode', 'UIPE OS — الوضع الافتراضي')}</h3>
+        <h3>{tt('UIPE OS', 'UIPE OS')}</h3>
         <p>{tt(
-          'Work on the whole platform from inside your own computer: courses, exams, grades, messages and projects open as windows next to your files, with a Dock, a Start menu and your wallpaper.',
-          'اشتغل على المنصة كلها من جوّه جهازك الخاص: المواد والامتحانات والدرجات والرسائل والمشاريع بتفتح كنوافذ جنب ملفاتك، مع Dock وقائمة Start وخلفيتك.',
+          'The whole platform runs inside your own computer: courses, exams, grades, messages and projects open as windows next to your files, with a Dock, a Start menu and your wallpaper.',
+          'المنصة كلها شغّالة من جوّه جهازك الخاص: المواد والامتحانات والدرجات والرسائل والمشاريع بتفتح كنوافذ جنب ملفاتك، مع Dock وقائمة Start وخلفيتك.',
         )}</p>
         <ul className="vm-card__pts">
           <li><Icon name="check-circle" size={14} /> {tt('Everything in the portal, as apps', 'كل اللي في المنصة كتطبيقات')}</li>
           <li><Icon name="check-circle" size={14} /> {tt('Several pages side by side, snap & virtual desktops', 'أكتر من صفحة جنب بعض، وSnap وأسطح مكتب متعددة')}</li>
-          <li><Icon name="check-circle" size={14} /> {tt('Follows you to every device — switch back any time', 'بتتابعك على أي جهاز — وترجع للعادي في أي وقت')}</li>
+          <li><Icon name="check-circle" size={14} /> {tt('Follows you to every device', 'بتتابعك على أي جهاز')}</li>
         </ul>
-        {mobile && <p className="vm-card__note">{tt('On phones, UIPE OS lives inside My PC: open My PC and tap the apps button.', 'على الموبايل، UIPE OS بيشتغل جوه «جهازي»: افتح جهازي واضغط زرار التطبيقات.')}</p>}
-        {unavailable && <p className="vm-card__note vm-card__note--warn">{tt('Virtual mode is not available for your account right now.', 'الوضع الافتراضي مش متاح لحسابك حاليًا.')}</p>}
-        {err && <p className="vm-card__note vm-card__note--err" role="alert">{err}</p>}
-        <div className="vm-card__btns">
-          <button type="button" className={`btn ${vm.enabled ? 'btn-outline' : 'btn-primary'}`} disabled={vm.busy || unavailable} onClick={toggle}>
-            {vm.enabled ? tt('Switch back to the normal portal', 'الرجوع للمنصة العادية') : tt('Switch to UIPE OS', 'التحويل إلى UIPE OS')}
-          </button>
-          {vm.enabled && !inDesktop && <button type="button" className="btn btn-outline" onClick={() => navigate(myPcPath(user?.role))}>{tt('Open the desktop', 'فتح سطح المكتب')}</button>}
-        </div>
+        {!vm.available && <p className="vm-card__note vm-card__note--warn">{tt('UIPE OS is not available for your account right now, so the normal portal is shown.', 'UIPE OS مش متاح لحسابك حاليًا، فبتتعرض المنصة العادية.')}</p>}
       </div>
     </div>
   );
 }
 
-/** Top-bar button of the normal portal: opens the card in a dialog. Hidden once the mode is on (the desktop has its own switch) and on phones. */
+/** The top-bar launcher is gone: UIPE OS is pinned, so there is nothing to open. Kept as a no-op so Topbar needs no change. */
 export function VirtualLauncher() {
-  const { locale } = useLanguage();
-  const ar = locale === 'ar';
-  const vm = useVirtualMode();
-  const mobile = useIsMobileOS();
-  const [open, setOpen] = useState(false);
-  if (!vm.supported || !vm.available || vm.enabled || mobile) return null;
-  const label = ar ? 'الوضع الافتراضي (UIPE OS)' : 'Virtual mode (UIPE OS)';
-  return (
-    <>
-      <button type="button" className="topbar__icon-btn vm-launch" onClick={() => setOpen(true)} aria-label={label} title={label}>
-        <Icon name="monitor" size={18} />
-      </button>
-      {open && (
-        <div className="modal-overlay vm-modal" role="dialog" aria-modal="true" aria-label={label} onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
-          <div className="vm-modal__box">
-            <button type="button" className="vm-modal__x" onClick={() => setOpen(false)} aria-label={ar ? 'إغلاق' : 'Close'}><Icon name="x" size={16} /></button>
-            <ModeCard onDone={() => setOpen(false)} />
-          </div>
-        </div>
-      )}
-    </>
-  );
+  return null;
 }

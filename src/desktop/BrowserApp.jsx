@@ -18,15 +18,16 @@ import './webApps.css';
 const TOKEN_PATH = '/api/v1/drive/browser-token';
 const RECENT_KEY = 'uip.browser.recent';
 
-// `cloud: true` = known not to allow framing (or needs real browser features): skip the probe
+// `cloud: true` = known not to allow framing (or needs real browser features): skip the probe.
+// `external: true` = GPU-heavy 3D editors: a cloud browser has no GPU (software WebGL + video stream = slow), so they open in the person's own browser tab.
 const TILES = [
   { id: 'photopea', name: 'Photopea', url: 'https://www.photopea.com/', color: '#18a497', hint: ['Photo editor', 'محرر صور'] },
   { id: 'excalidraw', name: 'Excalidraw', url: 'https://excalidraw.com/', color: '#6965db', hint: ['Whiteboard', 'سبورة رسم'] },
   { id: 'threejs', name: 'three.js editor', url: 'https://threejs.org/editor/', color: '#111827', hint: ['3D editor', 'محرر 3D'] },
-  { id: 'blender', name: 'Blender', url: 'https://www.blender.org/', color: '#ea7600', hint: ['Official site', 'الموقع الرسمي'], cloud: true },
-  { id: 'spline', name: 'Spline', url: 'https://spline.design/', color: '#7c3aed', hint: ['3D in the browser', 'تصميم 3D في المتصفح'], cloud: true },
-  { id: 'playcanvas', name: 'PlayCanvas', url: 'https://playcanvas.com/', color: '#f97316', hint: ['3D / game editor', 'محرر ألعاب 3D'], cloud: true },
-  { id: 'sketchfab', name: 'Sketchfab', url: 'https://sketchfab.com/', color: '#1caad9', hint: ['3D models', 'موديلات 3D'], cloud: true },
+  { id: 'blender', name: 'Blender', url: 'https://www.blender.org/', color: '#ea7600', hint: ['Official site', 'الموقع الرسمي'], external: true },
+  { id: 'spline', name: 'Spline', url: 'https://spline.design/', color: '#7c3aed', hint: ['3D in the browser', 'تصميم 3D في المتصفح'], external: true },
+  { id: 'playcanvas', name: 'PlayCanvas', url: 'https://playcanvas.com/', color: '#f97316', hint: ['3D / game editor', 'محرر ألعاب 3D'], external: true },
+  { id: 'sketchfab', name: 'Sketchfab', url: 'https://sketchfab.com/', color: '#1caad9', hint: ['3D models', 'موديلات 3D'], external: true },
   { id: 'desmos', name: 'Desmos', url: 'https://www.desmos.com/calculator', color: '#2f7d4d', hint: ['Graphing', 'رسم بياني'] },
   { id: 'geogebra', name: 'GeoGebra', url: 'https://www.geogebra.org/classic', color: '#6557d2', hint: ['Math', 'رياضيات'] },
   { id: 'wikipedia', name: 'Wikipedia', url: 'https://www.wikipedia.org/', color: '#475569', hint: ['Encyclopedia', 'موسوعة'] },
@@ -40,6 +41,8 @@ const readRecent = () => { try { const v = JSON.parse(localStorage.getItem(RECEN
 const writeRecent = (v) => { try { localStorage.setItem(RECENT_KEY, JSON.stringify(v)); } catch { /* private mode */ } };
 const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
 const payload = (r) => r?.data ?? r;
+/** The UIPE Browser Helper extension is installed: pages are shown directly in the window (own GPU), the cloud browser is only a fallback. */
+const hasHelper = () => typeof document !== 'undefined' && document.documentElement.getAttribute('data-uipe-embed-helper') === '1';
 const b64 = (s) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
 
 /** what the person typed -> { url } for an address, { q } for a search */
@@ -53,6 +56,7 @@ function parseInput(raw) {
 
 export default function BrowserApp({ tt, ar, req }) {
   const sbx = useSandbox('browser', TOKEN_PATH);
+  const helper = useMemo(hasHelper, []);
   const { phase, busy, previewUrl, error } = sbx;
   const sbxRef = useRef(sbx); sbxRef.current = sbx;
   const [view, setView] = useState({ type: 'home' }); // home | results | loading | direct | cloud
@@ -100,10 +104,10 @@ export default function BrowserApp({ tt, ar, req }) {
     setView({ type: 'loading', url });
     let embeddable = false;
     try { const d = payload(await api.get('/api/v1/drive/web-probe', { url })); embeddable = !!(d?.ok && d?.embeddable); if (d?.ok === false && d?.reason === 'blocked') { setView({ type: 'home' }); setMsg(tt('That address cannot be opened.', 'العنوان ده مينفعش يتفتح.')); return; } } catch { /* probe failed: use the cloud browser, it always works */ }
-    if (!embeddable) { toCloud(url); return; }
+    if (!embeddable && !helper) { toCloud(url); return; } // with the helper extension the page is framed anyway
     remember(url); if (record) push({ type: 'direct', url });
     setView({ type: 'direct', url }); setInput(url);
-  }, [push, remember, toCloud, tt]);
+  }, [helper, push, remember, toCloud, tt]);
 
   const search = useCallback(async (q, { record = true } = {}) => {
     setMsg(''); setInput(q);
@@ -161,6 +165,7 @@ export default function BrowserApp({ tt, ar, req }) {
           {view.type === 'direct' && <span className="os-wa__badge" title={tt('Shown directly — instant', 'معروض مباشرة — فوري')}>{tt('Direct', 'مباشر')}</span>}
         </div>
         {view.type === 'direct' && <button type="button" onClick={() => toCloud(view.url)} title={tt('Open this page in the cloud browser (for sites that do not work here)', 'افتح الصفحة في المتصفح السحابي (للمواقع اللي مش شغالة هنا)')}><Icon name="cloud" size={15} /><span className="os-wa__lbl">{tt('Cloud', 'سحابي')}</span></button>}
+        {view.type === 'cloud' && <a className="os-wa__btn" href={view.url} target="_blank" rel="noopener noreferrer" title={tt('Slow? Open this page in your own browser tab (uses your graphics card)', 'بطيء؟ افتح الصفحة في تبويب متصفحك أنت (بيستخدم كارت الشاشة بتاعك)')}><Icon name="external-link" size={15} /><span className="os-wa__lbl">{tt('Faster: new tab', 'أسرع: تبويب جديد')}</span></a>}
         {(view.type === 'direct') && <a className="os-wa__btn" href={view.url} target="_blank" rel="noopener noreferrer" title={tt('Open in a new tab', 'فتح في تبويب جديد')}><Icon name="external-link" size={15} /></a>}
         {cloudUp && cloudLive && <button type="button" onClick={saveDownloads} title={tt('Save files you downloaded in the cloud browser to My PC', 'احفظ الملفات اللي نزّلتها في المتصفح السحابي في جهازي')}><Icon name="download" size={15} /><span className="os-wa__lbl">{tt('Downloads', 'التنزيلات')}</span></button>}
         {cloudUp && cloudLive && <button type="button" onClick={() => { sbx.reset(); setCloudUp(false); if (view.type === 'cloud') goHome(); }} title={tt('Stop the cloud browser and free its resources', 'اقفل المتصفح السحابي وحرّر موارده')}><Icon name="stop" size={15} /></button>}
@@ -178,8 +183,8 @@ export default function BrowserApp({ tt, ar, req }) {
             </form>
             <div className="os-wa__tiles">
               {tiles.map((t) => (
-                <button type="button" key={t.id} className="os-wa__site" onClick={() => (t.search ? search(t.search) : openUrl(t.url, { cloud: !!t.cloud }))}>
-                  <b style={{ background: t.color }}>{t.name.slice(0, 1)}</b><span>{t.name}</span><small>{tt(t.hint[0], t.hint[1])}</small>
+                <button type="button" key={t.id} className="os-wa__site" onClick={() => (t.search ? search(t.search) : t.external && !helper ? window.open(t.url, '_blank', 'noopener,noreferrer') : openUrl(t.url, { cloud: !!t.cloud && !helper }))}>
+                  <b style={{ background: t.color }}>{t.name.slice(0, 1)}</b><span>{t.name}</span><small>{tt(t.hint[0], t.hint[1])}{t.external ? ' ↗' : ''}</small>
                 </button>
               ))}
             </div>
@@ -188,6 +193,7 @@ export default function BrowserApp({ tt, ar, req }) {
                 <div>{recent.map((r) => <button type="button" key={r.url} onClick={() => openUrl(r.url)} title={r.url}><Icon name="clock" size={12} />{r.host}</button>)}</div>
               </div>
             )}
+            {!helper && <p className="os-wa__foot">{tt('Faster option: install the UIPE Browser Helper extension (Chrome / Edge) and every site opens directly on your computer, with your graphics card.', 'خيار أسرع: ركّب إضافة UIPE Browser Helper (Chrome / Edge) وأي موقع هيفتح مباشرة على جهازك بكارت الشاشة بتاعك.')}</p>}
             <p className="os-wa__foot">{tt('Pages that allow it open instantly. Everything else — web apps, Google, YouTube — opens in a real cloud browser that runs for you on the server.', 'الصفحات اللي بتسمح بتفتح فورًا. أي حاجة تانية — تطبيقات ويب وجوجل ويوتيوب — بتتفتح في متصفح سحابي حقيقي شغال ليك على السيرفر.')}</p>
           </div>
         )}
