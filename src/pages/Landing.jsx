@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import usePaperScroll from '../hooks/usePaperScroll';
+import useSectionReveal from '../hooks/useSectionReveal';
 import FaqSection from '../components/landing/FaqSection';
 import BookReveal from '../components/landing/BookReveal';
 import { Link, Navigate } from 'react-router-dom';
@@ -34,7 +34,7 @@ export default function Landing() {
   const [featured, setFeatured] = useState([]);
   const [liveStats, setLiveStats] = useState(null);
   const [role, setRole] = useState('students');
-  usePaperScroll('.lp4-section:not(#talk)'); // #talk comes right after the book, which is its own transition
+  useSectionReveal('.lp4-section');
 
   useEffect(() => {
     let alive = true;
