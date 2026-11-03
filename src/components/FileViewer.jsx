@@ -32,6 +32,7 @@ const PptxPreview = lazy(() => import('./editor/PptxView').then((m) => ({ defaul
 /**
  * In-page file viewer (lightbox) — a project's files open right here, never in another page.
  *
+ *   (optional readOnly: viewers who are not the owner — ZIP files open without editing / AI / add / delete; canDownload / canRun mirror the publisher's choices)
  *   (optional projectId enables the sandbox: real servers / terminal for ZIP projects)
  *   (optional loadBlob(file, { signal, onProgress }) => Promise<Blob>: for PRIVATE files that need an authenticated
  *    request (My PC). Video / audio then load as blobs too, and the download / new-tab links are replaced by blob downloads.)
@@ -346,7 +347,7 @@ function AudioTranscript({ blob, url, name, tt }) {
   );
 }
 
-export default function FileViewer({ files, startIndex = 0, onClose: onCloseProp, locale = 'en', onSaveZip, onSaveFile, onEditText, projectId, loadBlob, sandboxTokenPathOf, embedded = false, registerGuard, canDownload = true }) {
+export default function FileViewer({ files, startIndex = 0, onClose: onCloseProp, locale = 'en', onSaveZip, onSaveFile, onEditText, projectId, loadBlob, sandboxTokenPathOf, embedded = false, registerGuard, canDownload = true, readOnly = false, canRun = true }) {
   const rtl = locale === 'ar';
   const tt = useCallback((en, ar) => (locale === 'ar' ? ar : en), [locale]);
   const list = useMemo(() => files.filter((f) => f && f.url), [files]);
@@ -756,7 +757,7 @@ export default function FileViewer({ files, startIndex = 0, onClose: onCloseProp
         )}
         {stage === 'zip' && (
           <Suspense fallback={<div className="st-fv__center"><Spinner /></div>}>
-            <ZipWorkbench key={rootOf(file)} blob={data.blob} fileName={downloadName} tt={tt} guardRef={guardRef} projectId={projectId} sandboxTokenPath={sandboxTokenPathOf ? sandboxTokenPathOf(file) : undefined} onSave={(onSaveFile || onSaveZip) ? saveFile : undefined} draftKey={draftKey} />
+            <ZipWorkbench key={rootOf(file)} blob={data.blob} fileName={downloadName} tt={tt} guardRef={guardRef} projectId={projectId} sandboxTokenPath={sandboxTokenPathOf ? sandboxTokenPathOf(file) : undefined} onSave={(onSaveFile || onSaveZip) ? saveFile : undefined} draftKey={draftKey} readOnly={readOnly} canDownload={canDownload} canRun={canRun} />
           </Suspense>
         )}
         {!editing && stage === 'table' && data.blob && ['xlsx', 'csv', 'tsv'].includes(ext) && (

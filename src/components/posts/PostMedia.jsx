@@ -9,7 +9,10 @@ import { postsApi } from '../../api/postsApi';
 import { fetchMediaBlob, fmtBytes, fmtDuration, mediaBaseOf, useMediaUrl, useSignedUrl } from '../../lib/postMedia';
 import PdfCarousel from './PdfCarousel';
 import CodeCard from './CodeCard';
+import { canCarousel } from './OfficeCarousel';
 
+
+const OfficeCarousel = lazy(() => import('./OfficeCarousel')); // Word / PowerPoint / Excel as swipeable pages (rendered in the browser)
 const FileViewer = lazy(() => import('../FileViewer')); // the platform's viewer / editor: PDF, Office, CSV / XLSX, ZIP, images, text, video, audio
 
 function Img({ m, onOpen, className = '' }) {
@@ -86,6 +89,13 @@ function Audio({ m, onOpen, openLabel }) {
 
 const EXT_COLOR = { pdf: '#e5484d', doc: '#3b82f6', docx: '#3b82f6', odt: '#3b82f6', rtf: '#3b82f6', txt: '#64748b', log: '#64748b', xls: '#16a34a', xlsx: '#16a34a', csv: '#16a34a', ppt: '#f97316', pptx: '#f97316', odp: '#f97316', zip: '#d4a017', rar: '#d4a017', '7z': '#d4a017' };
 
+/** Downloads a post attachment through the API (honours the author's "allow download" switch: the server refuses otherwise). */
+async function downloadMedia(m) {
+  const res = await api.blob(m.urls.download); const blob = await res.blob();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = m.original_name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
 /** An attachment with no inline preview: icon badge, name, size, Open (platform viewer / editor) and Download. */
 function FileCard({ m, canDownload, onOpen }) {
   const { locale } = useLanguage();
@@ -161,7 +171,9 @@ export default function PostMedia({ media = [], canDownload = true, canRun = tru
         const ext = (m.extension || '').toLowerCase();
         if (m.kind === 'video') return <Video key={m.id} m={m} onOpen={() => open(m)} openLabel={openLabel} />;
         if (m.kind === 'audio') return <Audio key={m.id} m={m} onOpen={() => open(m)} openLabel={openLabel} />;
-        if (m.kind === 'pdf' || (m.has_preview && m.kind === 'document')) return <PdfCarousel key={m.id} media={m} onOpenFull={() => open(m)} />;
+        const dlFn = canDownload && m.urls?.download ? () => downloadMedia(m).catch(() => {}) : undefined;
+        if (m.kind === 'pdf' || (m.has_preview && m.kind === 'document')) return <PdfCarousel key={m.id} media={m} onOpenFull={() => open(m)} onDownload={dlFn} />;
+        if (m.kind === 'document' && canCarousel(m)) return <Suspense key={m.id} fallback={<div className="pp-skel" style={{ height: 240 }} />}><OfficeCarousel media={m} onOpenFull={() => open(m)} onDownload={dlFn} /></Suspense>;
         if (m.kind === 'code' || (m.is_text && ext !== 'csv')) return <CodeCard key={m.id} canRun={canRun} media={{ ...m, urls: { ...m.urls, download: canDownload ? m.urls.download : null } }} />;
         return <FileCard key={m.id} m={m} canDownload={canDownload} onOpen={() => open(m)} />;
       })}
@@ -171,6 +183,7 @@ export default function PostMedia({ media = [], canDownload = true, canRun = tru
           <FileViewer
             files={files} startIndex={startIndex} locale={locale} onClose={() => setViewer(null)}
             loadBlob={loadBlob} canDownload={canDownload}
+            readOnly={!canEdit} canRun={canEdit || canRun}
             onSaveFile={canEdit ? saveFile : undefined}
           />
         </Suspense>

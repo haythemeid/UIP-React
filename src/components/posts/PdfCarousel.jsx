@@ -3,17 +3,25 @@ import Icon from '../Icon';
 import { useLanguage } from '../../context/LanguageContext';
 import { fetchMediaBlob, mediaBaseOf, useMediaUrl } from '../../lib/postMedia';
 import { pdfjsAssetOptions } from '../../lib/pdfjsOptions';
+import useNearScreen from '../../lib/useNearScreen';
+
+const AUTO_MAX_BYTES = 25 * 1024 * 1024; // no server thumbnail: the first page is drawn in the browser instead (up to this size)
 
 /**
  * PDF / converted presentation shown as a swipeable carousel (LinkedIn-style document post).
  * Cover = server thumbnail (cheap). The PDF itself is only downloaded once the reader presses the cover or arrows;
  * pages are drawn lazily (current ± 1) with pdf.js into canvases. Scroll-snap = native swipe on touch, arrows + keys on desktop.
  */
-export default function PdfCarousel({ media, previewOf = false, onOpenFull }) {
+export default function PdfCarousel({ media, previewOf = false, onOpenFull, onDownload }) {
   const { locale } = useLanguage();
   const tt = (en, ar) => (locale === 'ar' ? ar : en);
   const rtl = locale === 'ar';
   const [started, setStarted] = useState(false);
+  const { ref: wrapRef, seen } = useNearScreen();
+  const hasCover = !!media.urls?.thumbnail;
+  // No server thumbnail (poppler missing / old upload): open the document by itself when it scrolls into view, so page 1 is the cover
+  // instead of a grey placeholder with a play icon.
+  useEffect(() => { if (seen && !hasCover && !started && (Number(media.size_bytes) || 0) <= AUTO_MAX_BYTES) setStarted(true); }, [seen, hasCover, started, media.size_bytes]);
   const [pages, setPages] = useState(media.page_count || 0);
   const [idx, setIdx] = useState(0);
   const [err, setErr] = useState('');
@@ -85,16 +93,18 @@ export default function PdfCarousel({ media, previewOf = false, onOpenFull }) {
 
   if (!started) {
     return (
-      <button type="button" className="pp-doc pp-doc--cover" onClick={() => setStarted(true)} aria-label={tt('Open document', 'افتح المستند')}>
-        {cover.url ? <img src={cover.url} alt={media.alt_text || media.original_name} loading="lazy" /> : <span className="pp-doc__ph"><Icon name="file" size={44} /></span>}
-        <span className="pp-doc__badge"><Icon name="file" size={14} /> {media.original_name}{total ? ` · ${total} ${tt('pages', 'صفحة')}` : ''}</span>
-        <span className="pp-doc__play"><Icon name="play" size={22} /></span>
-      </button>
+      <div ref={wrapRef}>
+        <button type="button" className="pp-doc pp-doc--cover" onClick={() => setStarted(true)} aria-label={tt('Open document', 'افتح المستند')}>
+          {cover.url ? <img src={cover.url} alt={media.alt_text || media.original_name} loading="lazy" /> : <span className="pp-doc__ph"><Icon name="file" size={44} /></span>}
+          <span className="pp-doc__badge"><Icon name="file" size={14} /> {media.original_name}{total ? ` · ${total} ${tt('pages', 'صفحة')}` : ''}</span>
+          <span className="pp-doc__open"><Icon name="eye" size={14} /> {tt('View', 'عرض')}</span>
+        </button>
+      </div>
     );
   }
 
   return (
-    <div className="pp-doc" tabIndex={0} onKeyDown={onKey} role="region" aria-label={media.original_name}>
+    <div className="pp-doc" ref={wrapRef} tabIndex={0} onKeyDown={onKey} role="region" aria-label={media.original_name}>
       <div className="pp-doc__rail" ref={railRef} onScroll={onScroll}>
         {Array.from({ length: Math.max(total, 1) }, (_, i) => (
           <div key={i} className="pp-doc__slide" data-page={i + 1}>
@@ -115,6 +125,7 @@ export default function PdfCarousel({ media, previewOf = false, onOpenFull }) {
         <div className="pp-doc__dots" aria-hidden="true">
           {total > 1 && total <= 14 && Array.from({ length: total }, (_, i) => <i key={i} className={i === idx ? 'is-on' : ''} />)}
         </div>
+        {onDownload && <button type="button" className="pp-doc__full" onClick={onDownload} title={tt('Download', 'تنزيل')}><Icon name="download" size={15} /></button>}
         {onOpenFull && <button type="button" className="pp-doc__full" onClick={() => onOpenFull(media, idx)} title={tt('Full screen', 'ملء الشاشة')}><Icon name="maximize" size={15} /></button>}
       </div>
     </div>

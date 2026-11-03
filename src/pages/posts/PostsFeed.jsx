@@ -65,21 +65,25 @@ export default function PostsFeed() {
   const [col, setCol] = useState(''); // '' all | 'none' | folder id
   const [colBusy, setColBusy] = useState(false);
   const sentinel = useRef(null);
+  const reqId = useRef(0); // only the latest request may write: a slow answer from a previous tab can no longer overwrite the one you just opened
   const single = params.get('post');
 
   useEffect(() => { postsApi.config().then(setConfig).catch((e) => setErr(errorMessage(e))); }, []);
 
   const effMode = single ? 'single' : tag ? 'tag' : q ? 'search' : mode;
   const load = useCallback(async (p = 1, refresh = false) => {
+    const rid = ++reqId.current;
     setLoading(true); setErr('');
     try {
-      if (single) { const one = await postsApi.one(single); setItems([one]); setMore(false); return; }
+      if (single) { const one = await postsApi.one(single); if (rid !== reqId.current) return; setItems([one]); setMore(false); return; }
       const r = await postsApi.feed({ mode: effMode, page: p, per_page: 10, ...(tag ? { tag } : {}), ...(q ? { q } : {}), ...(effMode === 'mine' && status ? { status } : {}), ...(effMode === 'saved' && col ? { collection: col } : {}), ...(refresh ? { refresh: 1 } : {}) });
+      if (rid !== reqId.current) return; // a newer tab / filter was requested meanwhile
       setItems((prev) => (p === 1 ? r.items : [...prev, ...r.items.filter((n) => !prev.some((o) => o.id === n.id))]));
       setMore(!!r.meta.has_more); setPage(p);
-    } catch (e) { setErr(errorMessage(e)); } finally { setLoading(false); }
+    } catch (e) { if (rid === reqId.current) setErr(errorMessage(e)); } finally { if (rid === reqId.current) setLoading(false); }
   }, [effMode, tag, q, status, single, col]);
-  useEffect(() => { load(1); }, [load]);
+  // switching tab / filter: drop the previous tab's posts right away (no stale list under the new tab) and load page 1
+  useEffect(() => { setItems([]); setMore(false); setPage(1); load(1); }, [load]);
 
   // Realtime: other people's new posts → a "N new posts" pill (no jumping feed); reconnect → quiet reload of page 1
   const [fresh, setFresh] = useState(0);
@@ -189,7 +193,7 @@ export default function PostsFeed() {
             {items.map((p) => <PostCard key={p.id} post={p} onChange={replace} onRemoved={drop} onTag={pickTag} onEdit={setEditing} onSavedRemoved={unsavedHere} />)}
           </div>
           {loading && <div className="pp-skel" style={{ height: 220 }} />}
-          {!loading && !err && items.length === 0 && <Empty icon="inbox" title={tt('Nothing here yet', 'لا يوجد شيء هنا بعد')} text={effMode === 'saved' ? tt('Posts you save appear here.', 'المنشورات التي تحفظها تظهر هنا.') : effMode === 'following' ? tt('Follow people to fill this tab.', 'تابع أشخاصًا ليظهر محتواهم هنا.') : tt('Be the first to post.', 'كن أول من ينشر.')} />}
+          {!loading && !err && items.length === 0 && <Empty icon="inbox" title={tt('Nothing here yet', 'لا يوجد شيء هنا بعد')} text={effMode === 'saved' ? tt('Posts you save appear here.', 'المنشورات التي تحفظها تظهر هنا.') : effMode === 'following' ? tt('Posts from people you follow appear here. Follow someone from “People to follow” to fill this tab.', 'منشورات من تتابعهم تظهر هنا. تابع أشخاصًا من «أشخاص قد تتابعهم» ليمتلئ هذا التبويب.') : effMode === 'mine' ? tt('You have not posted anything here yet.', 'لم تنشر شيئًا هنا بعد.') : effMode === 'university' ? tt('No posts from your university yet.', 'لا توجد منشورات من جامعتك بعد.') : effMode === 'trending' ? tt('Nothing is trending yet.', 'لا يوجد شيء رائج الآن.') : tt('Be the first to post.', 'كن أول من ينشر.')} />}
           <div ref={sentinel} style={{ height: 1 }} />
           {!loading && !more && items.length > 5 && <p className="pp-muted pp-end">{tt("You're all caught up.", 'أنت على اطلاع بكل شيء.')}
             {effMode === 'for_you' && <> <button type="button" className="pp-link" onClick={() => load(1, true)}>{tt('Refresh recommendations', 'تحديث التوصيات')}</button></>}</p>}

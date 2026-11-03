@@ -74,7 +74,13 @@ function Badge({ path }) {
  */
 const MAX_SAVE_BYTES = 50 * 1024 * 1024; // matches the server's upload limit
 
-export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, projectId, sandboxTokenPath, draftKey }) {
+/**
+ * Permissions (set by the caller, e.g. a post's attachment viewer):
+ *   readOnly     — viewing only: no edit / add / rename / delete / move / save and NO AI (assistant, chat, autocomplete). Only the owner gets the full workbench.
+ *   canDownload  — shows "Download ZIP" / per-file / per-folder downloads (the publisher decides this for everyone else)
+ *   canRun       — shows the Run button and "Run this file"
+ */
+export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, projectId, sandboxTokenPath, draftKey, readOnly = false, canDownload = true, canRun = true }) {
   const [phase, setPhase] = useState('loading'); // loading | ready | error
   const [error, setError] = useState('');
   const [vfs, setVfs] = useState(() => new Map()); // path -> { path, dir, size, origPath, isNew }
@@ -124,8 +130,8 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
   const runner = useRunner();
   const sandbox = useSandbox(projectId, sandboxTokenPath); // real server / terminal on the uip-sandbox gateway (needs a project id)
   const { can } = useAuth();
-  const ai = useAiFix({ enabled: can('ai.code_assist'), tt, projectId }); // projectId: the supervising doctor may have set this project's AI mode
-  const chat = useAiChat({ tt, scope: projectId || '', label: fileName || '', enabled: !!ai.chatAvailable }); // side-panel chat (saved on the account): knows the open file, selection, terminal output and the other open tabs
+  const ai = useAiFix({ enabled: !readOnly && can('ai.code_assist'), tt, projectId }); // projectId: the supervising doctor may have set this project's AI mode
+  const chat = useAiChat({ tt, scope: projectId || '', label: fileName || '', enabled: !readOnly && !!ai.chatAvailable }); // side-panel chat (saved on the account): knows the open file, selection, terminal output and the other open tabs
   const [chatOpen, setChatOpen] = useState(false);
   const [chatRefs, setChatRefs] = useState([]); // code parts pinned to the next question: [{ id, path, from, to, text }] (max 5)
   const [chatCtx, setChatCtx] = useState({ file: true, selection: true, others: true, output: false }); // what the chat sends as context
@@ -607,6 +613,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
   };
 
   const downloadZip = () => {
+    if (!canDownload) return;
     setBusy(true);
     setTimeout(() => {
       try {
@@ -658,11 +665,13 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
   saveRef.current = () => doSave(false);
 
   const downloadFile = (path) => {
+    if (!canDownload) return;
     const bytes = getBytes(path);
     saveBlob(bytes, baseName(path), 'application/octet-stream');
   };
 
   const downloadFolder = (path) => {
+    if (!canDownload) return;
     const root = baseName(path);
     const out = {};
     vfsRef.current.forEach((v, k) => {
@@ -714,6 +723,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
   };
 
   const importItems = async (items, base, truncated) => {
+    if (readOnly) return;
     if (!items.length) return;
     setImporting(true);
     try {
@@ -749,6 +759,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
   };
 
   const pickUpload = (kind, base) => {
+    if (readOnly) return;
     uploadBase.current = base;
     const el = kind === 'dir' ? dirInput.current : fileInput.current;
     if (!el) return;
@@ -762,7 +773,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
     importItems(items, uploadBase.current, truncated);
   };
 
-  const startNew = (kind, base) => setDlg({ type: 'new', kind, value: base, base });
+  const startNew = (kind, base) => !readOnly && setDlg({ type: 'new', kind, value: base, base });
 
   // ---- drag & drop (files from the desktop, and moving entries inside the tree) --------------------
   const isFileDrag = (e) => [...(e.dataTransfer?.types || [])].includes('Files') || hasDriveIds(e.dataTransfer); // OS files, or My PC files dragged from an explorer window
@@ -783,6 +794,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
   };
   /** My PC files / folders (from an explorer window or a desktop icon) -> into the project, at `dest`. */
   const importDriveNodes = async (nodes, dest) => {
+    if (readOnly) return;
     setImporting(true);
     try {
       const items = await nodesToImportItems(nodes);
@@ -808,6 +820,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
   }, [phase]);
   const onDragLeave = (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDropDir(null); };
   const onDrop = async (e) => {
+    if (readOnly) return;
     const src = dragSrc.current;
     if (src) {
       e.preventDefault();
@@ -832,7 +845,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
     (navigator.clipboard?.writeText(text) || Promise.reject()).then(() => flash(tt('Path copied.', 'تم نسخ المسار.')), () => flash(text));
   };
 
-  const addItems = (base) => [
+  const addItems = (base) => readOnly ? [] : [
     { label: tt('New file', 'ملف جديد'), icon: 'file-plus', onClick: () => startNew('file', base) },
     { label: tt('New folder', 'مجلد جديد'), icon: 'folder-plus', onClick: () => startNew('folder', base) },
     { sep: true },
@@ -853,17 +866,26 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
     const base = dirOf(path);
     if (!path) return addItems('');
     const isDir = path.endsWith('/');
+    if (readOnly) {
+      return [
+        ...(isDir ? [] : [{ label: tt('Open', 'فتح'), icon: 'file', onClick: () => openFile(path) }]),
+        ...(!isDir && canDownload ? [{ label: tt('Download', 'تنزيل'), icon: 'download', onClick: () => downloadFile(path) }] : []),
+        ...(!isDir && canRun && runnableFile(path) ? [{ label: tt('Run this file', 'تشغيل هذا الملف'), icon: 'play', onClick: () => runThisFile(path) }] : []),
+        ...(isDir && canDownload ? [{ label: tt('Download as ZIP', 'تنزيل كـ ZIP'), icon: 'archive', onClick: () => downloadFolder(path) }] : []),
+        { label: tt('Copy path', 'نسخ المسار'), icon: 'link', onClick: () => copyPath(path) },
+      ];
+    }
     const items = isDir ? addItems(base) : [
       { label: tt('Open', 'فتح'), icon: 'file', onClick: () => openFile(path) },
-      { label: tt('Download', 'تنزيل'), icon: 'download', onClick: () => downloadFile(path) },
+      ...(canDownload ? [{ label: tt('Download', 'تنزيل'), icon: 'download', onClick: () => downloadFile(path) }] : []),
       { label: tt('Duplicate', 'تكرار'), icon: 'copy', onClick: () => duplicateFile(path) },
-      ...(runnableFile(path) ? [{ label: tt('Run this file', 'تشغيل هذا الملف'), icon: 'play', onClick: () => runThisFile(path) }] : []),
+      ...(canRun && runnableFile(path) ? [{ label: tt('Run this file', 'تشغيل هذا الملف'), icon: 'play', onClick: () => runThisFile(path) }] : []),
     ];
     items.push({ sep: true });
     items.push({ label: tt('Rename', 'إعادة تسمية'), icon: 'edit', hint: 'F2', onClick: () => setDlg({ type: 'rename', path, value: baseName(path) }) });
     items.push({ label: tt('Delete', 'حذف'), icon: 'trash', danger: true, hint: 'Del', onClick: () => setDlg({ type: 'delete', path }) });
     items.push({ sep: true });
-    if (isDir) items.push({ label: tt('Download as ZIP', 'تنزيل كـ ZIP'), icon: 'archive', onClick: () => downloadFolder(path) });
+    if (isDir && canDownload) items.push({ label: tt('Download as ZIP', 'تنزيل كـ ZIP'), icon: 'archive', onClick: () => downloadFolder(path) });
     items.push({ label: tt('Copy path', 'نسخ المسار'), icon: 'link', onClick: () => copyPath(path) });
     return items;
   };
@@ -1247,13 +1269,14 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
     const mod = e.ctrlKey || e.metaKey;
     if (mod && e.key.toLowerCase() === 's') {
       e.preventDefault();
-      if (onSave) doSave();
+      if (readOnly) flash(tt('This file is view-only for you.', 'الملف ده للعرض فقط بالنسبة لك.'));
+      else if (onSave) doSave();
       else flash(tt('Edits are kept here — press “Download ZIP” to export them.', 'التعديلات محفوظة هنا — اضغط «تنزيل ZIP» لتصديرها.'));
     }
     else if (mod && e.shiftKey && e.key.toLowerCase() === 'f') { e.preventDefault(); showSearch(); }
     else if (mod && e.key.toLowerCase() === 'b') { e.preventDefault(); setExplorer((v) => !v); }
     else if (e.altKey && e.key.toLowerCase() === 'w' && activeRef.current) { e.preventDefault(); closeTab(activeRef.current); }
-    else if ((e.key === 'F2' || e.key === 'Delete') && sel && e.target.closest?.('.zb-side') && !/INPUT|TEXTAREA/.test(e.target.tagName)) {
+    else if (!readOnly && (e.key === 'F2' || e.key === 'Delete') && sel && e.target.closest?.('.zb-side') && !/INPUT|TEXTAREA/.test(e.target.tagName)) {
       e.preventDefault();
       setDlg(e.key === 'F2' ? { type: 'rename', path: sel, value: baseName(sel) } : { type: 'delete', path: sel });
     }
@@ -1273,9 +1296,9 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
   }, [needle, vfs]);
 
   const activeDoc = active ? docs.current.get(active) : null;
-  const gridOn = !!(active && activeDoc?.kind === 'text' && isGridPath(active) && !rawText.has(active) && (edits.current.get(active) ?? origTexts.current.get(active) ?? '').length < 6000000);
+  const gridOn = !readOnly && !!(active && activeDoc?.kind === 'text' && isGridPath(active) && !rawText.has(active) && (edits.current.get(active) ?? origTexts.current.get(active) ?? '').length < 6000000);
   const jsonText = active && activeDoc?.kind === 'text' && isJsonFile(active) ? (edits.current.get(active) ?? origTexts.current.get(active) ?? '') : null;
-  const jsonValid = jsonText !== null && isEditableJson(jsonText);
+  const jsonValid = !readOnly && jsonText !== null && isEditableJson(jsonText);
   const jsonOn = jsonValid && !rawText.has(active);
   const mdOn = !!(active && activeDoc?.kind === 'text' && isMdFile(active));
   const mdText = mdOn ? (edits.current.get(active) ?? origTexts.current.get(active) ?? '') : '';
@@ -1299,7 +1322,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
           className={rowCls}
           style={{ '--d': depth }}
           data-dir={n.dir ? n.path : dirOf(n.path)}
-          draggable
+          draggable={!readOnly}
           onDragStart={(e) => { dragSrc.current = n.path; e.dataTransfer.setData('application/x-zb-path', n.path); e.dataTransfer.effectAllowed = 'move'; }}
           onDragEnd={() => { dragSrc.current = null; setDropDir(null); }}
           onContextMenu={(e) => openCtx(e, n.path)}
@@ -1315,7 +1338,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
             {(changed || added) && <span className={`zb-dot${added ? ' zb-dot--new' : ''}`} aria-hidden="true" />}
           </div>
           <span className="zb-row__acts">
-            {n.dir ? (
+            {readOnly ? null : n.dir ? (
               <>
                 <button type="button" aria-label={tt('New file', 'ملف جديد')} title={tt('New file', 'ملف جديد')} onClick={() => startNew('file', n.path)}><Icon name="file-plus" size={14} /></button>
                 <button type="button" aria-label={tt('New folder', 'مجلد جديد')} title={tt('New folder', 'مجلد جديد')} onClick={() => startNew('folder', n.path)}><Icon name="folder-plus" size={14} /></button>
@@ -1380,14 +1403,14 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
         <button type="button" className={`zb-ibtn${explorer && sideTab === 'search' ? ' is-on' : ''}`} onClick={showSearch} title={tt('Search in files (Ctrl+Shift+F)', 'بحث داخل الملفات (Ctrl+Shift+F)')} aria-label={tt('Search in files', 'بحث داخل الملفات')}><Icon name="search" size={17} /></button>
         <div className="zb-top__title"><strong>{fileName}</strong><small>{tt(`${fileCount} files`, `${fileCount} ملف`)}</small></div>
         <div className="zb-top__acts">
-          {runApps.length > 0 && (
+          {canRun && runApps.length > 0 && (
             <button type="button" className="zb-btn zb-btn--run" onClick={() => startRun()} disabled={runner.busy || sandbox.busy} title={runApp?.kind === 'sandbox' ? tt('Run the project on the sandbox server', 'شغّل المشروع على سيرفر الـ sandbox') : RUNNER_URL ? tt('Run the project in the browser', 'شغّل المشروع في المتصفح') : tt('The runner is not configured yet', 'الـ Runner لسه مش متظبط')}>
               <Icon name="play" size={15} /> <span>{tt('Run', 'تشغيل')}</span>
             </button>
           )}
-          <button type="button" className="zb-btn zb-btn--add" onClick={(e) => openMenuAt(e.currentTarget, addItems(target), target ? `/${target.replace(/\/$/, '')}` : tt('Archive root', 'جذر الأرشيف'))} title={tt('Add files or folders', 'إضافة ملفات أو مجلدات')} aria-haspopup="menu">
+          {!readOnly && <button type="button" className="zb-btn zb-btn--add" onClick={(e) => openMenuAt(e.currentTarget, addItems(target), target ? `/${target.replace(/\/$/, '')}` : tt('Archive root', 'جذر الأرشيف'))} title={tt('Add files or folders', 'إضافة ملفات أو مجلدات')} aria-haspopup="menu">
             <Icon name="plus" size={15} /> <span>{tt('Add', 'إضافة')}</span> <Icon name="chevron-down" size={12} />
-          </button>
+          </button>}
           {ai.chatAvailable && (
             <button type="button" className={`zb-ibtn${chatOpen ? ' is-on' : ''}`} onClick={() => (chatOpen ? closeChat() : openChat())} title={tt('AI chat', 'شات الذكاء الاصطناعي')} aria-label={tt('AI chat', 'شات الذكاء الاصطناعي')} aria-pressed={chatOpen}><Icon name="chat" size={17} /></button>
           )}
@@ -1401,9 +1424,9 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
           <button type="button" className="zb-ibtn zb-hide-sm" onClick={() => setFontSize((x) => Math.max(10, x - 1))} aria-label={tt('Smaller text', 'تصغير الخط')}>A−</button>
           <button type="button" className="zb-ibtn zb-hide-sm" onClick={() => setFontSize((x) => Math.min(22, x + 1))} aria-label={tt('Larger text', 'تكبير الخط')}>A+</button>
           <button type="button" className="zb-ibtn" onClick={(e) => openMenuAt(e.currentTarget, themeItems(), tt('Color theme', 'مظهر الألوان'))} title={`${tt('Color theme', 'مظهر الألوان')}: ${th.name}`} aria-label={tt('Color theme', 'مظهر الألوان')} aria-haspopup="menu"><Icon name="palette" size={17} /></button>
-          {changes > 0 && <DraftChip draft={draft} tt={tt} />}
-          {changes > 0 && <button type="button" className="zb-btn" onClick={() => setDlg({ type: 'reset' })}>{tt('Discard', 'تجاهل')}</button>}
-          {onSave && (
+          {!readOnly && changes > 0 && <DraftChip draft={draft} tt={tt} />}
+          {!readOnly && changes > 0 && <button type="button" className="zb-btn" onClick={() => setDlg({ type: 'reset' })}>{tt('Discard', 'تجاهل')}</button>}
+          {!readOnly && onSave && (
             <button
               type="button"
               className="zb-btn zb-btn--primary"
@@ -1414,9 +1437,9 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
               <Icon name="save" size={15} /> <span>{saving ? tt('Saving…', 'جاري الحفظ…') : tt('Save', 'حفظ')}</span>{changes > 0 && <b className="zb-pill">{changes}</b>}
             </button>
           )}
-          <button type="button" className={`zb-btn${onSave ? '' : ' zb-btn--primary'}`} onClick={downloadZip} disabled={busy || saving}>
+          {canDownload && <button type="button" className={`zb-btn${onSave ? '' : ' zb-btn--primary'}`} onClick={downloadZip} disabled={busy || saving}>
             <Icon name="download" size={15} /> <span>{busy ? tt('Building…', 'جاري البناء…') : tt('Download ZIP', 'تنزيل ZIP')}</span>{!onSave && changes > 0 && <b className="zb-pill">{changes}</b>}
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -1429,7 +1452,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
           </div>
           <SearchPanel tt={tt} off={sideTab !== 'search'} getFiles={getSearchFiles} readBatch={readBatch} onOpen={openMatch} focusKey={searchFocus} />
           <div className={`zb-pane${sideTab === 'files' ? '' : ' is-off'}`}>
-            <div className="zb-xbar">
+            {!readOnly && <div className="zb-xbar">
               <button type="button" onClick={() => startNew('file', target)} title={tt('New file', 'ملف جديد')} aria-label={tt('New file', 'ملف جديد')}><Icon name="file-plus" size={16} /></button>
               <button type="button" onClick={() => startNew('folder', target)} title={tt('New folder', 'مجلد جديد')} aria-label={tt('New folder', 'مجلد جديد')}><Icon name="folder-plus" size={16} /></button>
               <span className="zb-xbar__sep" />
@@ -1437,10 +1460,10 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
               <button type="button" onClick={() => pickUpload('dir', target)} title={tt('Upload folder', 'رفع مجلد')} aria-label={tt('Upload folder', 'رفع مجلد')}><Icon name="folder-up" size={16} /></button>
               <span className="zb-xbar__sp" />
               <button type="button" onClick={() => setOpen(new Set())} title={tt('Collapse all', 'طيّ الكل')} aria-label={tt('Collapse all', 'طيّ الكل')}><Icon name="collapse-all" size={16} /></button>
-            </div>
-            <div className="zb-target" title={tt('New files and uploads go here — select a folder to change it.', 'الملفات الجديدة والمرفوعة تُضاف هنا — اختر مجلدًا لتغييره.')}>
+            </div>}
+            {!readOnly && <div className="zb-target" title={tt('New files and uploads go here — select a folder to change it.', 'الملفات الجديدة والمرفوعة تُضاف هنا — اختر مجلدًا لتغييره.')}>
               <Icon name="folder-plus" size={12} /> <span>{tt('Adding to', 'الإضافة إلى')}</span> <b>{target ? `/${target.replace(/\/$/, '')}` : tt('archive root', 'جذر الأرشيف')}</b>
-            </div>
+            </div>}
             <div className="zb-search">
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tt('Filter files by name…', 'ابحث عن ملف بالاسم…')} aria-label={tt('Search files', 'بحث عن ملف')} />
               {query && <button type="button" onClick={() => setQuery('')} aria-label={tt('Clear', 'مسح')}><Icon name="x" size={13} /></button>}
@@ -1508,7 +1531,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
                     ))}
                   </div>
                 )}
-                {activeDoc && <button type="button" className="zb-crumbs__dl" onClick={() => downloadFile(active)} title={tt('Download this file', 'تنزيل هذا الملف')}><Icon name="download" size={13} /></button>}
+                {canDownload && activeDoc && <button type="button" className="zb-crumbs__dl" onClick={() => downloadFile(active)} title={tt('Download this file', 'تنزيل هذا الملف')}><Icon name="download" size={13} /></button>}
               </div>
             </>
           )}
@@ -1517,7 +1540,7 @@ export default function ZipWorkbench({ blob, fileName, tt, guardRef, onSave, pro
             {editorDoc && (
               <div className={`zb-cm-wrap${mdOn && mdView === 'split' ? ' zb-cm-wrap--split' : ''}`} style={{ display: cmShown ? 'block' : 'none' }}>
                 <Suspense fallback={<div className="zb--center"><span className="st-fv-spinner" /></div>}>
-                  <CodeEditor docId={editorDoc.docId} path={editorDoc.path} initialText={editorDoc.text} onChange={onEdit} onCursor={onCursorMove} onContext={onEditorContext} readOnly={false} wrap={wrap} fontSize={fontSize} reveal={reveal} theme={theme} ghost={ghostOpts} />
+                  <CodeEditor docId={editorDoc.docId} path={editorDoc.path} initialText={editorDoc.text} onChange={onEdit} onCursor={onCursorMove} onContext={onEditorContext} readOnly={readOnly} wrap={wrap} fontSize={fontSize} reveal={reveal} theme={theme} ghost={ghostOpts} />
                 </Suspense>
               </div>
             )}
