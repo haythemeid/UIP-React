@@ -53,7 +53,7 @@
 .lp2-nav__login:hover { background: var(--bg-muted); }
 .lp2-icon-btn { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-secondary); cursor: var(--cur-pointer, pointer); }
 .lp2-icon-btn:hover { color: var(--text-primary); border-color: var(--border-strong); background: var(--bg-muted); }
-@media (max-width: 1120px) { .lp2-nav__links { display: none; } }
+@media (max-width: 1280px) { .lp2-nav__links { display: none; } }
 @media (max-width: 480px) { .lp2-nav__login { display: none; } }
 
 /* ---- Hero ----------------------------------------------------------------- */
@@ -551,8 +551,8 @@ html:has(.lp2-pv) { scroll-behavior: smooth; }
 .lp2-nav__mobile a { padding: 12px 12px; border-radius: 10px; font-size: 15px; font-weight: 600; color: var(--text-primary); text-decoration: none; }
 .lp2-nav__mobile a:hover { background: var(--bg-muted); }
 .lp2-nav__mobile a[aria-current="page"] { color: var(--color-primary); background: rgba(var(--color-primary-rgb), .1); }
-@media (min-width: 1121px) { .lp2-nav__mobile { display: none; } }
-@media (max-width: 1120px) { .lp2-nav__burger { display: grid; } .lp2-nav__inner { gap: 12px; } }
+@media (min-width: 1281px) { .lp2-nav__mobile { display: none; } }
+@media (max-width: 1280px) { .lp2-nav__burger { display: grid; } .lp2-nav__inner { gap: 12px; } }
 /* never break words inside the top bar (tablet widths used to wrap "UIP" / "Projects" letter by letter) */
 .lp2-brand, .lp2-brand__text, .lp2-nav__links a, .lp2-nav__login, .lp2-nav__cta { white-space: nowrap; }
 .lp2-brand, .lp2-nav__actions { flex-shrink: 0; }
@@ -666,3 +666,10 @@ html:has(.lp2-pv) { scroll-behavior: smooth; }
 @keyframes app-dl-pulse { 0% { box-shadow: 0 0 0 2px rgba(255,255,255,.55), 0 0 0 0 rgba(var(--color-primary-rgb), .55); } 70%, 100% { box-shadow: 0 0 0 2px rgba(255,255,255,.55), 0 0 0 12px rgba(var(--color-primary-rgb), 0); } }
 @keyframes app-dl-shine { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 @media (prefers-reduced-motion: reduce) { .app-dl__logo, .app-dl::after { animation: none; } }
+
+/* Nav polish: links centred, never squeezed (the "Get the app" pill was being clipped), one clean row */
+.lp2-nav__links { flex: 1 1 auto; justify-content: center; align-items: center; gap: 2px; min-width: 0; margin-inline-start: 0; }
+.lp2-nav__links > * { flex: 0 0 auto; }
+.lp2-nav__links a { padding: 8px 13px; font-size: 14px; letter-spacing: .005em; transition: background .15s, color .15s; }
+.app-dl--nav { flex: 0 0 auto; white-space: nowrap; margin-inline-start: 8px; padding: 4px 14px 4px 5px; font-size: 13.5px; }
+[dir="rtl"] .app-dl--nav { padding: 4px 5px 4px 14px; }

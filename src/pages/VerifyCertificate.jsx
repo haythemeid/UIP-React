@@ -130,6 +130,15 @@ export default function VerifyCertificate() {
             )
           )}
         </div>
+        <section className="lp5-vc-info" aria-label={t('How verification works', 'إزاي بيتم التحقق')}>
+          <h2>{t('How verification works', 'إزاي بيتم التحقق')}</h2>
+          <ol>
+            <li><span>1</span><div><strong>{t('Find the number', 'اعرف الرقم')}</strong><p>{t('Every UIP graduation certificate carries a unique certificate number.', 'كل شهادة تخرج من UIP عليها رقم شهادة فريد.')}</p></div></li>
+            <li><span>2</span><div><strong>{t('Enter it above', 'اكتبه فوق')}</strong><p>{t('Type it exactly as printed. No sign-in is needed.', 'اكتبه زي ما هو مطبوع بالظبط. مش محتاج تسجيل دخول.')}</p></div></li>
+            <li><span>3</span><div><strong>{t('Read the result', 'اقرأ النتيجة')}</strong><p>{t('You see whether it is valid or revoked, with the details the university recorded.', 'هتعرف هل هي صحيحة أو ملغاة، مع البيانات اللي سجلتها الجامعة.')}</p></div></li>
+          </ol>
+          <p className="lp5-vc-note"><Icon name="info" size={14} /> {t('If a number is not found, check for typos first, then contact the issuing university.', 'لو الرقم مش موجود، راجع الكتابة الأول، وبعدين تواصل مع الجامعة المُصدرة.')}</p>
+        </section>
       </main>
       </div>
 

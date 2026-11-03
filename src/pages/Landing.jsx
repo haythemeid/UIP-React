@@ -87,6 +87,36 @@ export default function Landing() {
       t('Sessions and device control', 'التحكم في الجلسات والأجهزة'),
     ]],
   ];
+  const community = [
+    ['image', t('Stories that disappear', 'ستوريز بتختفي'), t('Share a photo, video or text. You choose who sees it, and you see who watched.', 'شارك صورة أو فيديو أو نص. إنت اللي بتختار مين يشوفها وبتعرف مين شافها.')],
+    ['file', t('Posts with real files', 'منشورات بملفات حقيقية'), t('PDFs swipe like slides, code runs right in the post, plus video, voice and any file.', 'الـ PDF بتتقلّب زي الشرائح، والكود بيشتغل جوه المنشور، وفيديو وصوت وأي ملف.')],
+    ['user', t('A real profile', 'بروفايل حقيقي'), t('Cover, photo, bio, friends and photos. Change your picture and share it as a post.', 'غلاف وصورة وبايو وأصدقاء وصور. غيّر صورتك وانشرها كمنشور.')],
+    ['users', t('Your network', 'شبكتك'), t('Connect with classmates and instructors, follow people, and see what your university shares.', 'اتصل بزمايلك ودكاترتك وتابع الناس وشوف اللي جامعتك بتنشره.')],
+  ];
+
+  const trust = [
+    ['lock', t('Secure exam mode', 'وضع امتحان آمن'), t('Tab switches are logged and the instructor reviews every AI grading suggestion.', 'تبديل التابات بيتسجل والدكتور بيراجع كل اقتراح تصحيح من الذكاء الاصطناعي.')],
+    ['shield', t('Two-step sign-in', 'دخول بخطوتين'), t('Protect your account with a second factor, with recovery if you lose access.', 'احمِ حسابك بعامل تحقق تاني، مع استعادة الحساب لو فقدت الوصول.')],
+    ['monitor', t('Sessions and devices', 'الجلسات والأجهزة'), t('See where you are signed in and sign out devices you do not recognise.', 'شوف إنت داخل منين وسجّل خروج من أي جهاز مش معروف.')],
+    ['eye-off', t('Privacy you control', 'خصوصية في إيدك'), t('Decide who sees your photo, bio, last seen and stories, and who can message or call you.', 'اختار مين يشوف صورتك والبايو وآخر ظهور والستوريز، ومين يراسلك أو يتصل بيك.')],
+    ['award', t('Verifiable certificates', 'شهادات تتحقق منها'), t('Anyone can check a graduation certificate by its number, with no sign-in.', 'أي جهة تقدر تتحقق من شهادة التخرج برقمها من غير تسجيل دخول.')],
+    ['history', t('Audit trail', 'سجل مراجعة'), t('Important actions are logged so universities can follow up reports and incidents.', 'الإجراءات المهمة بتتسجل عشان الجامعات تتابع البلاغات والحوادث.')],
+  ];
+
+  const start = [
+    ['user-plus', t('Create your account', 'اعمل حسابك'), t('Pick your role and your university. It takes a minute.', 'اختار دورك وجامعتك. بياخد دقيقة.')],
+    ['users', t('Join your campus', 'ادخل جامعتك'), t('Find classmates, courses and groups already waiting for you.', 'هتلاقي زمايلك ومواد وجروبات مستنياك.')],
+    ['sparkles', t('Start working', 'ابدأ الشغل'), t('Chat, meet, study, take exams and publish your project from one place.', 'اتكلم واجتمع وذاكر وامتحن وانشر مشروعك من مكان واحد.')],
+  ];
+
+  const faqs = [
+    [t('Is UIP free?', 'هل UIP مجانية؟'), t('It is free for students. You do not need a credit card to create an account.', 'مجانية للطلاب. مش محتاج كريدت كارد عشان تعمل حساب.')],
+    [t('Who can use it?', 'مين يقدر يستخدمها؟'), t('Students, instructors and supervisors, universities and faculties, and data and security teams. Each role gets its own tools under one account.', 'الطلاب والدكاترة والمشرفين والجامعات والكليات وفرق البيانات والأمن. كل دور بياخد أدواته تحت حساب واحد.')],
+    [t('Can I use it on my phone?', 'أقدر أستخدمها على الموبايل؟'), t('Yes. It works in any browser and there is an Android app for calls, chat and notifications.', 'أيوه. بتشتغل في أي متصفح، وفي تطبيق أندرويد للمكالمات والشات والإشعارات.')],
+    [t('Who sees my posts, photo and stories?', 'مين يشوف منشوراتي وصورتي والستوريز؟'), t('You choose. Each post and story has its own audience, and your photo, bio and last seen have privacy settings.', 'إنت اللي بتختار. كل منشور وستوري ليهم جمهورهم، وصورتك والبايو وآخر ظهور ليهم إعدادات خصوصية.')],
+    [t('How do exams stay fair?', 'الامتحانات بتتأمّن إزاي؟'), t('Secure mode logs tab switches, and AI grading only suggests marks. The instructor approves them.', 'الوضع الآمن بيسجل تبديل التابات، والذكاء الاصطناعي بيقترح الدرجات بس والدكتور هو اللي يعتمدها.')],
+    [t('How can an employer verify my certificate?', 'إزاي جهة العمل تتحقق من شهادتي؟'), t('Open the Verify a Certificate page, enter the number printed on it and see whether it is valid.', 'تفتح صفحة التحقق من شهادة وتدخل الرقم المطبوع عليها وتشوف هل هي صحيحة.')],
+  ];
   const activeRole = audiences.find(([k]) => k === role) || audiences[0];
 
   const signals = [
@@ -266,6 +296,34 @@ export default function Landing() {
           </div>
         </section>
 
+
+        {/* ============================ COMMUNITY ============================ */}
+        <section className="lp4-section lp4-shell" id="community">
+          <div className="lp4-head">
+            <span className="lp4-eyebrow">{t('Community', 'المجتمع')}</span>
+            <h2>{t('A campus network that feels alive', 'شبكة جامعية حيّة')}</h2>
+            <p>{t('Stories, posts and profiles, built for students and instructors instead of strangers.', 'ستوريز ومنشورات وبروفايلات، متصممة للطلاب والدكاترة مش للغرباء.')}</p>
+          </div>
+          <div className="lp5-comm">
+            <div className="lp5-feed" aria-hidden="true">
+              <div className="lp5-stories">
+                {['A', 'S', 'O', 'M', 'N'].map((c, i) => <span key={c} className={`lp5-story${i === 0 ? ' is-me' : ''}`}><b>{c}</b></span>)}
+              </div>
+              <div className="lp5-post">
+                <div className="lp5-post__head"><span className="lp4-av lp4-av--a">S</span><div><strong>{t('Sara · Student', 'سارة · طالبة')}</strong><small>{t('2h · Everyone', 'منذ ساعتين · الجميع')}</small></div></div>
+                <p>{t('Slides for my machine learning project are ready. Feedback welcome!', 'شرائح مشروع تعلّم الآلة جاهزة. محتاجة رأيكم!')}</p>
+                <div className="lp5-slide"><strong>{t('Handling missing data', 'التعامل مع البيانات الناقصة')}</strong><span /><span /><span className="is-short" /><em>2 / 12</em></div>
+                <div className="lp5-react"><span>👍 ❤️ 💡 <b>42</b></span><small>{t('9 comments', '9 تعليقات')}</small></div>
+              </div>
+            </div>
+            <ul className="lp5-list">
+              {community.map(([ic, title, desc]) => (
+                <li key={title}><span className="lp4-icon"><Icon name={ic} size={18} /></span><div><h3>{title}</h3><p>{desc}</p></div></li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
         {/* ============================ PROJECTS ============================ */}
         <section className="lp4-section lp4-shell" id="projects">
           <div className="lp4-head">
@@ -313,6 +371,51 @@ export default function Landing() {
             <ul className="lp4-roles__list" role="tabpanel">
               {activeRole[2].map((x) => <li key={x}><span><Icon name="check" size={14} /></span>{x}</li>)}
             </ul>
+          </div>
+        </section>
+
+
+        {/* ============================ TRUST ============================ */}
+        <section className="lp4-section lp4-shell" id="security">
+          <div className="lp4-head">
+            <span className="lp4-eyebrow">{t('Trust', 'الأمان')}</span>
+            <h2>{t('Built so universities can rely on it', 'متبنية عشان الجامعات تعتمد عليها')}</h2>
+          </div>
+          <div className="lp5-trust">
+            {trust.map(([ic, title, desc]) => (
+              <article key={title}><span className="lp4-icon"><Icon name={ic} size={18} /></span><h3>{title}</h3><p>{desc}</p></article>
+            ))}
+          </div>
+        </section>
+
+        {/* ============================ GET STARTED ============================ */}
+        <section className="lp4-section lp4-shell" id="start">
+          <div className="lp4-head">
+            <span className="lp4-eyebrow">{t('Get started', 'ابدأ')}</span>
+            <h2>{t('Up and running in three steps', 'شغّال في ثلاث خطوات')}</h2>
+          </div>
+          <ol className="lp4-steps lp5-start">
+            {start.map(([ic, title, desc], i) => (
+              <li key={title}>
+                <span className="lp4-step__ico"><Icon name={ic} size={20} /></span>
+                <span className="lp4-step__n">0{i + 1}</span>
+                <h3>{title}</h3>
+                <p>{desc}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* ============================ FAQ ============================ */}
+        <section className="lp4-section lp4-shell" id="faq">
+          <div className="lp4-head">
+            <span className="lp4-eyebrow">{t('Questions', 'أسئلة')}</span>
+            <h2>{t('Frequently asked questions', 'الأسئلة الشائعة')}</h2>
+          </div>
+          <div className="lp5-faq">
+            {faqs.map(([q, a]) => (
+              <details key={q}><summary>{q}<Icon name="chevron-down" size={16} /></summary><p>{a}</p></details>
+            ))}
           </div>
         </section>
 

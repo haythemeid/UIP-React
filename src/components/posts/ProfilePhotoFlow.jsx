@@ -60,8 +60,8 @@ function ShareDialog({ kind, file, onClose, onDone }) {
           <button type="button" className="pp-btn is-primary" disabled={busy} onClick={save}>{busy ? tt('Saving…', 'جارٍ الحفظ…') : tt('Save', 'حفظ')}</button>
         </>
       )}>
-      <div className={`pf-share__prev${profile ? ' is-round' : ''}`}><img src={url} alt="" /></div>
-      <label className="pf-share__check">
+      <div className={`pfx-share__prev${profile ? ' is-round' : ''}`}><img src={url} alt="" /></div>
+      <label className="pfx-share__check">
         <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} disabled={busy || !cfg || cfg.enabled === false} />
         <span><strong>{tt('Share this update as a post', 'انشر هذا التغيير كمنشور')}</strong>
           <small>{tt('People can react and comment on it, like Facebook.', 'يقدر الناس يتفاعلوا ويعلّقوا عليه زي فيسبوك.')}</small></span>
@@ -70,7 +70,7 @@ function ShareDialog({ kind, file, onClose, onDone }) {
         <>
           <textarea className="pp-input" rows={2} maxLength={500} value={caption} onChange={(e) => setCaption(e.target.value)} disabled={busy}
             placeholder={tt('Say something about it… (optional)', 'اكتب حاجة عنها… (اختياري)')} />
-          <label className="pf-share__aud">
+          <label className="pfx-share__aud">
             <span>{tt('Who can see it', 'مين يشوفها')}</span>
             <select className="pp-input" value={vis} onChange={(e) => setVis(e.target.value)} disabled={busy}>
               {options.map((v) => <option key={v} value={v}>{tt((VIS[v] || {}).en || v, (VIS[v] || {}).ar || v)}</option>)}

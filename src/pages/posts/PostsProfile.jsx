@@ -53,9 +53,9 @@ function PhotoTile({ item, onOpen }) {
   const { m, p } = item;
   const thumb = useMediaUrl(m, m.has_thumbnail ? 'thumbnail' : 'file');
   return (
-    <button type="button" className="pf-photo-tile" onClick={onOpen} title={p.body || m.original_name}>
+    <button type="button" className="pfx-photo-tile" onClick={onOpen} title={p.body || m.original_name}>
       {thumb.url ? <img src={thumb.url} alt={m.alt_text || m.original_name} loading="lazy" /> : <span className="pp-skel" />}
-      {p.subtype && <span className="pf-photo-tile__tag"><Icon name={p.subtype === 'cover_photo' ? 'image' : 'user'} size={11} /></span>}
+      {p.subtype && <span className="pfx-photo-tile__tag"><Icon name={p.subtype === 'cover_photo' ? 'image' : 'user'} size={11} /></span>}
     </button>
   );
 }
@@ -85,21 +85,21 @@ function FriendsTab({ userId, tt, isMe }) {
   const { user } = useAuth();
   const open = (p) => nav(`/${portalPrefix(user?.role)}/posts/u/${p.id}`);
   return (
-    <section className="pf-card">
-      <header className="pf-card__head">
+    <section className="pfx-card">
+      <header className="pfx-card__head">
         <h2>{tt('Friends', 'الأصدقاء')}</h2>
-        <form className="pf-search" onSubmit={(e) => { e.preventDefault(); setQ(qIn.trim()); }}>
+        <form className="pfx-search" onSubmit={(e) => { e.preventDefault(); setQ(qIn.trim()); }}>
           <Icon name="search" size={14} />
           <input value={qIn} onChange={(e) => setQIn(e.target.value)} placeholder={tt('Search friends', 'ابحث في الأصدقاء')} aria-label={tt('Search friends', 'ابحث في الأصدقاء')} />
         </form>
       </header>
       {err && <Alert tt={tt} onRetry={() => load(1)}>{err}</Alert>}
-      <ul className="pf-friends">
+      <ul className="pfx-friends">
         {items.map((f) => (
-          <li key={f.id} className="pf-friend">
+          <li key={f.id} className="pfx-friend">
             <UserAvatar user={f} size={60} />
-            <div className="pf-friend__main">
-              <button type="button" className="pf-friend__name" onClick={() => open(f)}>{f.full_name}</button>
+            <div className="pfx-friend__main">
+              <button type="button" className="pfx-friend__name" onClick={() => open(f)}>{f.full_name}</button>
               <small>{roleText(f.role, tt)}{f.mutual_connections > 0 ? ` · ${tt(`${f.mutual_connections} mutual`, `${f.mutual_connections} مشترك`)}` : ''}</small>
             </div>
             {!f.is_me && <PersonActions p={f} compact onPatch={patch} onRemove={(id) => { if (isMe) setItems((prev) => prev.filter((x) => x.id !== id)); }} onOpenProfile={open} />}
@@ -108,7 +108,7 @@ function FriendsTab({ userId, tt, isMe }) {
       </ul>
       {loading && <div className="pp-skel" style={{ height: 90 }} />}
       {!loading && !err && items.length === 0 && <Empty icon="users" title={tt('No friends to show', 'لا يوجد أصدقاء لعرضهم')} text={q ? tt('Try another name.', 'جرّب اسمًا آخر.') : undefined} />}
-      {more && !loading && <button type="button" className="pp-btn pf-more" onClick={() => load(page + 1)}>{tt('Show more', 'عرض المزيد')}</button>}
+      {more && !loading && <button type="button" className="pp-btn pfx-more" onClick={() => load(page + 1)}>{tt('Show more', 'عرض المزيد')}</button>}
     </section>
   );
 }
@@ -117,12 +117,12 @@ function About({ data, tt, locale, onEditBio }) {
   const org = locale === 'ar' ? (data.org_ar || data.org_en) : (data.org_en || data.org_ar);
   const fac = locale === 'ar' ? (data.faculty_ar || data.faculty_en) : (data.faculty_en || data.faculty_ar);
   const joined = data.joined_at ? parseServerDate(data.joined_at).toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long' }) : '';
-  const row = (icon, label, value) => (value ? <li><span className="pf-about__ico"><Icon name={icon} size={16} /></span><div><small>{label}</small><strong dir="auto">{value}</strong></div></li> : null);
+  const row = (icon, label, value) => (value ? <li><span className="pfx-about__ico"><Icon name={icon} size={16} /></span><div><small>{label}</small><strong dir="auto">{value}</strong></div></li> : null);
   return (
-    <section className="pf-card">
-      <header className="pf-card__head"><h2>{tt('About', 'نبذة')}</h2>{data.is_me && <button type="button" className="pp-btn" onClick={onEditBio}><Icon name="edit" size={14} /> {tt('Edit bio', 'تعديل البايو')}</button>}</header>
-      {data.bio ? <p className="pf-bio" dir="auto">{data.bio}</p> : <p className="pp-muted">{data.is_me ? tt('Add a short bio so people know who you are.', 'أضف بايو قصير ليعرفك الناس.') : tt('No bio to show.', 'لا يوجد بايو لعرضه.')}</p>}
-      <ul className="pf-about">
+    <section className="pfx-card">
+      <header className="pfx-card__head"><h2>{tt('About', 'نبذة')}</h2>{data.is_me && <button type="button" className="pp-btn" onClick={onEditBio}><Icon name="edit" size={14} /> {tt('Edit bio', 'تعديل البايو')}</button>}</header>
+      {data.bio ? <p className="pfx-bio" dir="auto">{data.bio}</p> : <p className="pp-muted">{data.is_me ? tt('Add a short bio so people know who you are.', 'أضف بايو قصير ليعرفك الناس.') : tt('No bio to show.', 'لا يوجد بايو لعرضه.')}</p>}
+      <ul className="pfx-about">
         {row('briefcase', tt('Role', 'الدور'), roleText(data.role, tt))}
         {row('building', tt('University', 'الجامعة'), org)}
         {row('graduation-cap', tt('Faculty', 'الكلية'), fac)}
@@ -212,29 +212,29 @@ function ProfileInner({ userId }) {
 
   if (err) {
     return (
-      <div className="pp-page pf-page"><Link to={`/${prefix}/posts`} className="pp-btn"><Icon name="arrow-left" size={14} /> {tt('Back to feed', 'العودة للموجز')}</Link>
+      <div className="pp-page pfx-page"><Link to={`/${prefix}/posts`} className="pp-btn"><Icon name="arrow-left" size={14} /> {tt('Back to feed', 'العودة للموجز')}</Link>
         <Empty icon="user-x" title={tt('Profile not available', 'البروفايل غير متاح')} text={err} /></div>
     );
   }
-  if (!data) return <div className="pp-page pf-page"><div className="pp-skel" style={{ height: 260, borderRadius: 18 }} /><div className="pp-skel" style={{ height: 120, marginTop: 14 }} /></div>;
+  if (!data) return <div className="pp-page pfx-page"><div className="pp-skel" style={{ height: 260, borderRadius: 18 }} /><div className="pp-skel" style={{ height: 120, marginTop: 14 }} /></div>;
 
   const org = locale === 'ar' ? (data.org_ar || data.org_en) : (data.org_en || data.org_ar);
   const cover = coverUrl(data.cover_path);
   const storyGroup = hub?.groupFor(data.id);
-  const stat = (n, en, ar, k) => <button type="button" className="pf-stat" onClick={() => k && setTab(k)}><strong>{n ?? '–'}</strong><span>{tt(en, ar)}</span></button>;
+  const stat = (n, en, ar, k) => <button type="button" className="pfx-stat" onClick={() => k && setTab(k)}><strong>{n ?? '–'}</strong><span>{tt(en, ar)}</span></button>;
   const relation = data.connection === 'connected' ? tt('Friends', 'أصدقاء') : data.connection === 'pending_sent' ? tt('Request sent', 'تم إرسال الطلب') : data.connection === 'pending_received' ? tt('Wants to connect', 'يرغب في الاتصال') : '';
 
   return (
-    <div className="pp-page pf-page" onClick={() => menu && setMenu(null)}>
-      <Link to={`/${prefix}/posts`} className="pf-back"><Icon name="arrow-left" size={14} /> {tt('Back to feed', 'العودة للموجز')}</Link>
+    <div className="pp-page pfx-page" onClick={() => menu && setMenu(null)}>
+      <Link to={`/${prefix}/posts`} className="pfx-back"><Icon name="arrow-left" size={14} /> {tt('Back to feed', 'العودة للموجز')}</Link>
 
-      <header className="pf-head">
-        <div className={`pf-cover${cover ? ' has-img' : ''}`} style={cover ? { backgroundImage: `url("${cover}")` } : undefined}>
+      <header className="pfx-head">
+        <div className={`pfx-cover${cover ? ' has-img' : ''}`} style={cover ? { backgroundImage: `url("${cover}")` } : undefined}>
           {isMe && (
-            <div className="pf-cover__edit" onClick={(e) => e.stopPropagation()}>
+            <div className="pfx-cover__edit" onClick={(e) => e.stopPropagation()}>
               <button type="button" className="pp-btn" onClick={() => setMenu(menu === 'cover' ? null : 'cover')} aria-expanded={menu === 'cover'}><Icon name="image" size={14} /> {cover ? tt('Edit cover', 'تعديل الغلاف') : tt('Add cover photo', 'إضافة غلاف')}</button>
               {menu === 'cover' && (
-                <div className="pf-pop">
+                <div className="pfx-pop">
                   <button type="button" onClick={() => { setMenu(null); flow.choose('cover'); }}><Icon name="upload" size={14} /> {tt('Upload a photo', 'رفع صورة')}</button>
                   {cover && <button type="button" className="is-danger" onClick={() => { setMenu(null); flow.remove('cover'); }}><Icon name="trash" size={14} /> {tt('Remove cover', 'إزالة الغلاف')}</button>}
                 </div>
@@ -243,14 +243,14 @@ function ProfileInner({ userId }) {
           )}
         </div>
 
-        <div className="pf-id">
-          <div className="pf-id__av" onClick={(e) => e.stopPropagation()}>
+        <div className="pfx-id">
+          <div className="pfx-id__av" onClick={(e) => e.stopPropagation()}>
             <UserAvatar user={data} size={128} />
             {isMe && (
               <>
-                <button type="button" className="pf-id__cam" aria-label={tt('Change profile picture', 'تغيير الصورة الشخصية')} onClick={() => setMenu(menu === 'avatar' ? null : 'avatar')}><Icon name="image" size={15} /></button>
+                <button type="button" className="pfx-id__cam" aria-label={tt('Change profile picture', 'تغيير الصورة الشخصية')} onClick={() => setMenu(menu === 'avatar' ? null : 'avatar')}><Icon name="image" size={15} /></button>
                 {menu === 'avatar' && (
-                  <div className="pf-pop is-avatar">
+                  <div className="pfx-pop is-avatar">
                     <button type="button" onClick={() => { setMenu(null); flow.choose('profile'); }}><Icon name="upload" size={14} /> {tt('Update profile picture', 'تحديث الصورة الشخصية')}</button>
                     <button type="button" onClick={() => { setMenu(null); hub?.addStory(); }}><Icon name="plus" size={14} /> {tt('Add to my story', 'إضافة استوري')}</button>
                     {data.avatar_path && <button type="button" className="is-danger" onClick={() => { setMenu(null); flow.remove('profile'); }}><Icon name="trash" size={14} /> {tt('Remove photo', 'إزالة الصورة')}</button>}
@@ -259,18 +259,18 @@ function ProfileInner({ userId }) {
               </>
             )}
           </div>
-          <div className="pf-id__txt">
-            <h1 dir="auto">{data.full_name}</h1>
-            <p className="pf-id__meta">{[roleText(data.role, tt), org].filter(Boolean).join(' · ')}</p>
-            <div className="pf-id__chips">
+          <div className="pfx-id__txt">
+            <h1>{data.full_name}</h1>
+            <p className="pfx-id__meta">{[roleText(data.role, tt), org].filter(Boolean).join(' · ')}</p>
+            <div className="pfx-id__chips">
               {storyGroup && <button type="button" className={`pp-chip${storyGroup.has_unseen ? ' is-on' : ''}`} onClick={() => hub.open(storyGroup, false)}><Icon name="play" size={11} /> {tt('Story', 'استوري')}</button>}
               {relation && <span className="pp-chip is-on">{relation}</span>}
               {data.follows_me && <span className="pp-chip">{tt('Follows you', 'يتابعك')}</span>}
               {data.mutual_connections > 0 && <span className="pp-chip"><Icon name="users" size={12} /> {tt(`${data.mutual_connections} mutual`, `${data.mutual_connections} مشترك`)}</span>}
             </div>
-            {data.bio && <p className="pf-bio" dir="auto"><RichText text={data.bio} /></p>}
+            {data.bio && <p className="pfx-bio" dir="auto"><RichText text={data.bio} /></p>}
           </div>
-          <div className="pf-id__actions">
+          <div className="pfx-id__actions">
             {isMe ? (
               <>
                 <button type="button" className="pp-btn is-primary" onClick={() => flow.choose('profile')}><Icon name="image" size={14} /> {tt('Change photo', 'تغيير الصورة')}</button>
@@ -280,22 +280,22 @@ function ProfileInner({ userId }) {
           </div>
         </div>
 
-        <div className="pf-stats">
+        <div className="pfx-stats">
           {stat(data.posts_count, 'Posts', 'منشورات', 'posts')}
           {stat(data.followers_count, 'Followers', 'متابِعون')}
           {stat(data.following_count, 'Following', 'متابَعون')}
           {stat(data.connections_count, 'Friends', 'أصدقاء', 'friends')}
         </div>
-        <nav className="pf-tabs" role="tablist">
+        <nav className="pfx-tabs" role="tablist">
           {TABS.map(([k, en, ar, ic]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'is-on' : ''} onClick={() => setTab(k)}><Icon name={ic} size={14} /> {tt(en, ar)}</button>)}
         </nav>
       </header>
 
       {notice && <div className="pp-ok pp-toast" role="status" onClick={() => setNotice('')}>{notice}</div>}
 
-      <div className="pf-body">
+      <div className="pfx-body">
         {tab === 'posts' && (
-          <div className="pf-posts">
+          <div className="pfx-posts">
             {isMe && config && <Composer config={config} me={{ full_name: user?.full_name }} onSaved={saved} />}
             {perr && <Alert tt={tt} onRetry={() => load(1)}>{perr}</Alert>}
             <div className="pp-stack">
@@ -309,12 +309,12 @@ function ProfileInner({ userId }) {
         {tab === 'about' && <About data={data} tt={tt} locale={locale} onEditBio={() => setBioOpen(true)} />}
         {tab === 'friends' && <FriendsTab userId={userId} tt={tt} isMe={isMe} />}
         {tab === 'photos' && (
-          <section className="pf-card">
-            <header className="pf-card__head"><h2>{tt('Photos', 'الصور')}</h2></header>
-            {photos.length > 0 && <div className="pf-photos">{photos.map((it, i) => <PhotoTile key={`${it.p.id}-${it.m.id}`} item={it} onOpen={() => setLb(i)} />)}</div>}
+          <section className="pfx-card">
+            <header className="pfx-card__head"><h2>{tt('Photos', 'الصور')}</h2></header>
+            {photos.length > 0 && <div className="pfx-photos">{photos.map((it, i) => <PhotoTile key={`${it.p.id}-${it.m.id}`} item={it} onOpen={() => setLb(i)} />)}</div>}
             {loading && <div className="pp-skel" style={{ height: 120 }} />}
             {!loading && photos.length === 0 && <Empty icon="image" title={tt('No photos yet', 'لا توجد صور بعد')} />}
-            {more && !loading && <button type="button" className="pp-btn pf-more" onClick={() => load(page + 1)}>{tt('Show more', 'عرض المزيد')}</button>}
+            {more && !loading && <button type="button" className="pp-btn pfx-more" onClick={() => load(page + 1)}>{tt('Show more', 'عرض المزيد')}</button>}
           </section>
         )}
       </div>

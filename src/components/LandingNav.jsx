@@ -13,7 +13,7 @@ import AppDownloadLink from './AppDownloadLink';
  * (Landing, Explore, Privacy, Verify Certificate, error pages). Must be
  * rendered inside a `.lp2` wrapper — that wrapper carries the palette (see
  * styles/css/landing.css). `anchors` shows the in-page links used by the
- * landing page. Below 1120px the links collapse into a hamburger menu.
+ * landing page. Below 1280px the links collapse into a hamburger menu.
  */
 export default function LandingNav({ anchors = false }) {
   const { locale, toggleLocale } = useLanguage();
@@ -30,7 +30,7 @@ export default function LandingNav({ anchors = false }) {
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
-    const mq = window.matchMedia('(min-width: 1121px)');
+    const mq = window.matchMedia('(min-width: 1281px)');
     const onMq = () => { if (mq.matches) setOpen(false); };
     document.addEventListener('keydown', onKey);
     mq.addEventListener('change', onMq);
@@ -44,6 +44,7 @@ export default function LandingNav({ anchors = false }) {
           <a href="#talk">{t('Chat and meetings', 'الشات والاجتماعات')}</a>
           <a href="#pc">{t('My PC', 'My PC')}</a>
           <a href="#ai">{t('AI', 'الذكاء الاصطناعي')}</a>
+          <a href="#community">{t('Community', 'المجتمع')}</a>
           <a href="#exams">{t('Exams', 'الامتحانات')}</a>
           <a href="#projects">{t('Projects', 'المشاريع')}</a>
         </>

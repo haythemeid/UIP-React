@@ -28,10 +28,10 @@ export function PhotoViewer({ user, onClose, onProfile }) {
   }, [onClose]);
   const url = avatarSrc(user?.avatar_path);
   return createPortal(
-    <div className="pf-photo" role="dialog" aria-modal="true" aria-label={user?.full_name} onClick={onClose}>
-      <button type="button" className="pf-photo__x" onClick={onClose} aria-label={tt('Close', 'إغلاق')}><Icon name="x" size={22} /></button>
+    <div className="pfx-photo" role="dialog" aria-modal="true" aria-label={user?.full_name} onClick={onClose}>
+      <button type="button" className="pfx-photo__x" onClick={onClose} aria-label={tt('Close', 'إغلاق')}><Icon name="x" size={22} /></button>
       <figure onClick={(e) => e.stopPropagation()}>
-        {url ? <img src={url} alt={user?.full_name || ''} /> : <span className="pf-photo__none">{tt('No photo', 'لا توجد صورة')}</span>}
+        {url ? <img src={url} alt={user?.full_name || ''} /> : <span className="pfx-photo__none">{tt('No photo', 'لا توجد صورة')}</span>}
         <figcaption>
           <strong>{user?.full_name}</strong>
           {onProfile && <button type="button" className="pp-btn is-primary" onClick={onProfile}><Icon name="user" size={14} /> {tt('View profile', 'عرض البروفايل')}</button>}
@@ -53,34 +53,34 @@ function ChoiceSheet({ user, group, onClose, onStory, onPhoto, onProfile, onAdd 
   const mine = !!group.is_mine;
   const count = group.stories?.length || 0;
   return createPortal(
-    <div className="pf-sheet-scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="pf-sheet" role="dialog" aria-modal="true" aria-label={user.full_name}>
-        <header className="pf-sheet__head">
-          <span className={`pf-av has-story ${group.has_unseen ? 'is-new' : 'is-seen'}`} style={{ width: 52, height: 52 }}><PAvatar user={user} size={46} /></span>
+    <div className="pfx-sheet-scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="pfx-sheet" role="dialog" aria-modal="true" aria-label={user.full_name}>
+        <header className="pfx-sheet__head">
+          <span className={`pfx-av has-story ${group.has_unseen ? 'is-new' : 'is-seen'}`} style={{ width: 52, height: 52 }}><PAvatar user={user} size={46} /></span>
           <div><strong>{user.full_name}</strong><small>{tt(`${count} active ${count === 1 ? 'story' : 'stories'}`, `${count} استوري نشطة`)}</small></div>
         </header>
-        <button type="button" className="pf-sheet__row" onClick={onStory} autoFocus>
-          <span className="pf-sheet__ico is-story"><Icon name="play" size={18} /></span>
+        <button type="button" className="pfx-sheet__row" onClick={onStory} autoFocus>
+          <span className="pfx-sheet__ico is-story"><Icon name="play" size={18} /></span>
           <span><strong>{mine ? tt('View my story', 'عرض الاستوري بتاعتي') : tt('View story', 'عرض الاستوري')}</strong>
             <small>{mine ? tt('See who viewed it', 'شوف مين شافها') : group.has_unseen ? tt('New — you haven’t seen it yet', 'جديدة — لسه ما شفتهاش') : tt('You’ve already seen it', 'شفتها قبل كده')}</small></span>
-          {group.has_unseen && !mine && <i className="pf-sheet__dot" />}
+          {group.has_unseen && !mine && <i className="pfx-sheet__dot" />}
         </button>
-        <button type="button" className="pf-sheet__row" onClick={onPhoto} disabled={!user.avatar_path}>
-          <span className="pf-sheet__ico"><Icon name="image" size={18} /></span>
+        <button type="button" className="pfx-sheet__row" onClick={onPhoto} disabled={!user.avatar_path}>
+          <span className="pfx-sheet__ico"><Icon name="image" size={18} /></span>
           <span><strong>{mine ? tt('View my profile photo', 'عرض صورتي الشخصية') : tt('View profile photo', 'عرض الصورة الشخصية')}</strong>
             <small>{user.avatar_path ? tt('Open the photo full size', 'افتح الصورة بالحجم الكامل') : tt('No photo to show', 'لا توجد صورة')}</small></span>
         </button>
-        <button type="button" className="pf-sheet__row" onClick={onProfile}>
-          <span className="pf-sheet__ico"><Icon name="user" size={18} /></span>
+        <button type="button" className="pfx-sheet__row" onClick={onProfile}>
+          <span className="pfx-sheet__ico"><Icon name="user" size={18} /></span>
           <span><strong>{tt('Go to profile', 'الذهاب إلى البروفايل')}</strong><small>{tt('Posts, friends and photos', 'المنشورات والأصدقاء والصور')}</small></span>
         </button>
         {mine && (
-          <button type="button" className="pf-sheet__row" onClick={onAdd}>
-            <span className="pf-sheet__ico"><Icon name="plus" size={18} /></span>
+          <button type="button" className="pfx-sheet__row" onClick={onAdd}>
+            <span className="pfx-sheet__ico"><Icon name="plus" size={18} /></span>
             <span><strong>{tt('Add to my story', 'إضافة استوري جديدة')}</strong></span>
           </button>
         )}
-        <button type="button" className="pp-btn pf-sheet__cancel" onClick={onClose}>{tt('Cancel', 'إلغاء')}</button>
+        <button type="button" className="pp-btn pfx-sheet__cancel" onClick={onClose}>{tt('Cancel', 'إلغاء')}</button>
       </div>
     </div>,
     document.body,
@@ -115,7 +115,7 @@ export default function UserAvatar({ user, size = 40, className = '', title }) {
   const ring = group ? (group.has_unseen ? 'is-new' : 'is-seen') : '';
   return (
     <>
-      <button type="button" className={`pf-av${group ? ` has-story ${ring}` : ''} ${className}`} style={{ width: size + (group ? 8 : 0), height: size + (group ? 8 : 0) }}
+      <button type="button" className={`pfx-av${group ? ` has-story ${ring}` : ''} ${className}`} style={{ width: size + (group ? 8 : 0), height: size + (group ? 8 : 0) }}
         onClick={onClick} title={title || user.full_name} aria-label={user.full_name}>
         <PAvatar user={user} size={size} />
       </button>
