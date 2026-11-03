@@ -213,7 +213,7 @@ function SheetPages({ blob, media, chrome }) {
           <Suspense fallback={<div className="pp-doc__spin" />}>
             <XlsxPreview blob={blob} ext={ext === 'xlsx' ? 'xlsx' : ext} tt={props.tt} rtl={props.rtl} />
           </Suspense>
-        ) : <div className="pp-doc__spin" />
+        ) : <div className="pp-doc__spin" />}
       </div>
     </Chrome>
   );
