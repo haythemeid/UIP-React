@@ -5,7 +5,7 @@ import Icon from '../components/Icon';
 import SiteFooter from '../components/SiteFooter';
 import LandingNav from '../components/LandingNav';
 import LandingBackdrop from '../components/LandingBackdrop';
-import useScrollReveal from '../hooks/useScrollReveal';
+import useScroll3D from '../hooks/useScroll3D';
 import { lockScroll } from '../lib/scrollLock';
 
 const CONTACT_EMAIL = 'haythemmohamed478@gmail.com';
@@ -156,7 +156,7 @@ export default function PrivacyPolicy() {
     }
   }
 
-  useScrollReveal('.lp2--fx .lp2-pv__sec, .lp2--fx .lp2-pv__note');
+  useScroll3D('.lp2');
 
   return (
     <div className="lp2 lp2-page lp2--fx">

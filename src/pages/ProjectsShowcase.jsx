@@ -7,7 +7,7 @@ import ProjectCard from '../components/ProjectCard';
 import SiteFooter from '../components/SiteFooter';
 import LandingNav from '../components/LandingNav';
 import LandingBackdrop from '../components/LandingBackdrop';
-import useScrollReveal from '../hooks/useScrollReveal';
+import useScroll3D from '../hooks/useScroll3D';
 
 const SORTS = [
   ['newest', 'Newest', 'الأحدث'],
@@ -101,7 +101,7 @@ export default function ProjectsShowcase() {
   const hiddenCount = allCategories.length - visibleCats.length;
   const items = data.items || [];
 
-  useScrollReveal('.lp2--fx .lp2-ex-toolbar, .lp2--fx .lp2-ex-grid .pp-card, .lp2--fx .lp2-ex-empty, .lp2--fx .lp2-ex-pager', [items]);
+  useScroll3D('.lp2');
 
   return (
     <div className="lp2 lp2-page lp2--fx">
