@@ -329,12 +329,6 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
   const [title, setTitle] = useState(post?.title || '');
   const [body, setBody] = useState(post?.body || '');
   const bodyRef = useRef(null);
-  useLayoutEffect(() => {
-    const el = bodyRef.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 360)}px`;
-  }, [body, open]);
   const addEmoji = (e) => { const v = insertAtCaret(bodyRef.current, body, e, lim.max_body || 6000); if (v != null) setBody(v); };
   const [link, setLink] = useState(post?.link_url || '');
   const [vis, setVis] = useState(post?.visibility || (config?.visibilities?.includes('public') ? 'public' : 'followers'));
@@ -342,6 +336,13 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
   const [opts, setOpts] = useState({ allow_download: post?.allow_download ?? true, allow_run: post?.allow_run ?? false, allow_repost: post?.allow_repost ?? true, hide_counts: post?.hide_counts ?? false, is_sensitive: post?.is_sensitive ?? false });
   const [items, setItems] = useState(() => (post?.media || []).map((m) => ({ key: `m${m.id}`, status: 'done', media: m, name: m.original_name, size: m.size_bytes, output: m.meta?.output?.text || '', outputTouched: false })));
   const [open, setOpen] = useState(editing || false);
+  // (declared after `open`: reading it in the deps array before its declaration threw a ReferenceError and took the whole page down with the 500 screen)
+  useLayoutEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 360)}px`;
+  }, [body, open]);
   const [more, setMore] = useState(false);
   const [showTitle, setShowTitle] = useState(!!post?.title);
   const [showLink, setShowLink] = useState(!!post?.link_url);
