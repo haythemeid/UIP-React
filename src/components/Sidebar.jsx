@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, matchPath, useLocation } from 'react-router-dom';
 import BrandWordmark from './BrandWordmark';
 import Icon from './Icon';
 import { getNavConfig, portalPrefix, SECTION_TITLES } from '../config/navConfig';
@@ -8,6 +8,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useMyPcAccess } from '../hooks/useMyPcAccess';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebarGroups } from '../hooks/useSidebarGroups';
 import { api } from '../api/client';
 import { AVATAR_EVENT, avatarSrc } from './insight/AvatarUploader';
 import { useLive, PROFILE_WRITE } from '../hooks/useLive';
@@ -114,6 +115,15 @@ export default function Sidebar({ role, user, isOpen, collapsed = false, unread 
   const guideHasNew = useGuideHasNew();
   const shownName = (card.names && personName(card.names, locale)) || card.name || displayName(user, locale);
 
+  // Collapsible groups — state is remembered per person + portal (see useSidebarGroups).
+  const { pathname } = useLocation();
+  const sectionKeys = Object.keys(sections);
+  const groups = useSidebarGroups(`${user?.id || 'anon'}:${role || 'student'}`, sectionKeys);
+  const ar = locale === 'ar';
+  const itemBadge = (item) => (
+    (item.key === 'messages' && unreadMessages > 0) || (item.key === 'notifications' && unread > 0) || (item.key === 'guide' && guideHasNew)
+  );
+
   return (
     <aside data-portal={role} className={`sidebar glass-panel glass-panel--flat${isOpen ? ' is-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
       <div className="sidebar__brand">
@@ -135,12 +145,42 @@ export default function Sidebar({ role, user, isOpen, collapsed = false, unread 
         </button>
       </div>
 
+      {sectionKeys.length > 1 && (
+        <div className="sidebar__groups-bar" role="group" aria-label={ar ? 'التحكم في المجموعات' : 'Group controls'}>
+          <button type="button" onClick={groups.expandAll} disabled={groups.allOpen} title={ar ? 'فتح كل المجموعات' : 'Expand all groups'}>
+            <Icon name="chevron-down" size={13} /> <span>{ar ? 'فتح الكل' : 'Expand all'}</span>
+          </button>
+          <button type="button" onClick={groups.collapseAll} disabled={groups.allClosed} title={ar ? 'طي كل المجموعات' : 'Collapse all groups'}>
+            <Icon name="chevron-up" size={13} /> <span>{ar ? 'طي الكل' : 'Collapse all'}</span>
+          </button>
+        </div>
+      )}
+
       <nav className="sidebar__nav">
-        {Object.entries(sections).map(([sectionKey, items]) => (
-          <div key={sectionKey}>
-            <div className="sidebar__section-title">
-              {SECTION_TITLES[sectionKey]?.[locale] || SECTION_TITLES[sectionKey]?.en || sectionKey}
-            </div>
+        {Object.entries(sections).map(([sectionKey, items]) => {
+          // The icon rail has no titles, so every group is always shown there.
+          const open = collapsed || groups.isOpen(sectionKey);
+          const title = SECTION_TITLES[sectionKey]?.[locale] || SECTION_TITLES[sectionKey]?.en || sectionKey;
+          const hasActive = items.some((i) => i.built && i.route && !!matchPath({ path: i.route, end: false }, pathname));
+          const hasAlert = items.some(itemBadge);
+          const bodyId = `sidebar-group-${sectionKey}`;
+          return (
+          <div key={sectionKey} className={`sidebar__group${open ? ' is-open' : ' is-closed'}`}>
+            <button
+              type="button"
+              className="sidebar__section-title sidebar__section-toggle"
+              aria-expanded={open}
+              aria-controls={bodyId}
+              onClick={() => groups.toggle(sectionKey)}
+              title={open ? (ar ? 'طي المجموعة' : 'Collapse group') : (ar ? 'فتح المجموعة' : 'Expand group')}
+            >
+              <span className="sidebar__section-label">{title}</span>
+              {!open && (hasActive || hasAlert) && <span className={`sidebar__section-dot${hasAlert ? ' is-alert' : ''}`} aria-hidden="true" />}
+              {!open && <span className="sidebar__section-count" aria-hidden="true">{items.length}</span>}
+              <Icon name="chevron-down" size={14} className="sidebar__section-chevron" />
+            </button>
+            <div className="sidebar__group-body" id={bodyId}>
+            <div className="sidebar__group-inner">
             {items.map((item) => (
               <Fragment key={item.key}>
               <NavLink
@@ -190,8 +230,11 @@ export default function Sidebar({ role, user, isOpen, collapsed = false, unread 
               )}
               </Fragment>
             ))}
+            </div>
+            </div>
           </div>
-        ))}
+          );
+        })}
       </nav>
 
       {promo && (

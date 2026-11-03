@@ -159,6 +159,7 @@
 @import './css/grading-scale.css';
 @import './css/brand-logo.css';
 @import './css/sidebar-brand.css';
+@import './css/sidebar-groups.css';
 @import './css/landing-faq.css';
 
 /* Entrance motion for the landing pages + the app shell (also a gentle fade for reduced-motion visitors) — keep last */
