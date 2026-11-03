@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import useSectionReveal from '../hooks/useSectionReveal';
+import usePaperUnfold from '../hooks/usePaperUnfold';
 import FaqSection from '../components/landing/FaqSection';
-import BookReveal from '../components/landing/BookReveal';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -34,7 +33,7 @@ export default function Landing() {
   const [featured, setFeatured] = useState([]);
   const [liveStats, setLiveStats] = useState(null);
   const [role, setRole] = useState('students');
-  useSectionReveal('.lp4-section');
+  usePaperUnfold('.lp4-section');
 
   useEffect(() => {
     let alive = true;
@@ -211,8 +210,6 @@ export default function Landing() {
       </header>
 
       <main>
-        <BookReveal t={t} />
-
         {/* ============================ FEATURES (bento) ============================ */}
         <section className="lp4-section lp4-shell" id="talk">
           <div className="lp4-head">
