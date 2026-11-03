@@ -5,7 +5,7 @@ import Icon from '../../Icon';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useBackLayer } from '../../../lib/backStack';
 import Face from './Face';
-import { API, bgCss, ago, endsIn, slideMs, mediaUrl, when } from './storyUtils';
+import { API, bgCss, ago, endsIn, slideMs, storyMediaUrl, when } from './storyUtils';
 
 // bare U+2764 renders as a black text glyph; append the emoji variation selector so it shows as the coloured heart
 const emo = (r) => (r ? String(r).replace(/\u2764(?!\uFE0F)/g, '\u2764\uFE0F') : r);
@@ -308,7 +308,7 @@ export default function StoryViewer({ queue, startGi = 0, reactions = [], onClos
   };
   const len = (story.body || '').length;
   const textSize = len < 40 ? 'xl' : len < 120 ? 'l' : len < 300 ? 'm' : 's';
-  const src = mediaUrl(story.media_path);
+  const src = storyMediaUrl(story);
 
   return createPortal(
     <div className="sv" role="dialog" aria-modal="true" aria-label={t('Story', 'استوري')} dir={ar ? 'rtl' : 'ltr'}>
@@ -335,7 +335,7 @@ export default function StoryViewer({ queue, startGi = 0, reactions = [], onClos
               onLoad={() => setReady(true)} onError={() => { setFailed(true); setReady(true); }} />
           )}
           {story.type === 'video' && !failed && (
-            <video key={story.id} ref={videoRef} className="sv__media" src={src} poster={mediaUrl(story.thumbnail_path) || undefined}
+            <video key={story.id} ref={videoRef} className="sv__media" src={src} poster={storyMediaUrl(story, 'thumbnail') || undefined}
               playsInline preload="auto" muted={!soundOn}
               onLoadedData={() => setReady(true)} onCanPlay={() => setReady(true)}
               onEnded={() => nextRef.current?.()} onError={() => { setFailed(true); setReady(true); }} />

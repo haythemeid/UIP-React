@@ -1,5 +1,5 @@
 import { parseServerDate } from '../../../utils/serverDate';
-import { avatarUrl } from '../format';
+import { attachmentUrl, avatarUrl } from '../format';
 
 export const API = '/api/v1/messaging/stories';
 
@@ -29,6 +29,18 @@ export const EXPIRY = [6, 12, 24, 48];
 
 /** Stored relative path ("uploads/messages/stories/x.jpg") -> URL. Reuses the chat's uploads-base handling. */
 export const mediaUrl = (p) => avatarUrl(p);
+
+/**
+ * Story photo/video (kind 'file') or video poster (kind 'thumbnail').
+ * Story files live in the private "messages" upload category, so /uploads/... answers 404 for them: the API sends a
+ * short-lived signed link (media_url / thumbnail_url). The plain path is only a fallback for older API responses.
+ */
+export const storyMediaUrl = (story, kind = 'file') => {
+  if (!story) return null;
+  const signed = kind === 'thumbnail' ? story.thumbnail_url : story.media_url;
+  if (signed) return attachmentUrl(signed);
+  return mediaUrl(kind === 'thumbnail' ? story.thumbnail_path : story.media_path);
+};
 
 const ms = (iso) => {
   const d = parseServerDate(iso);

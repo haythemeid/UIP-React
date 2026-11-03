@@ -45,12 +45,13 @@ import '../../styles/css/chat-picker.css';
 
 /** Small card above a reply that was sent from someone's story (metadata.story_reply from the stories API). */
 function StoryReplyCard({ info, ar }) {
-  const thumb = info.thumb ? avatarUrl(info.thumb) : null;
+  const [thumbFailed, setThumbFailed] = useState(false);
+  const thumb = info.thumb && !thumbFailed ? avatarUrl(info.thumb) : null;
   const kind = info.type === 'video' ? (ar ? 'فيديو' : 'Video') : info.type === 'image' ? (ar ? 'صورة' : 'Photo') : (ar ? 'نص' : 'Text');
   return (
     <div className="msg-story-card">
       <span className="msg-story-card__thumb" style={info.type === 'text' && info.bg ? { background: bgCss(info.bg) } : undefined}>
-        {thumb ? <img src={thumb} alt="" loading="lazy" /> : <span aria-hidden="true">{info.type === 'text' ? 'Aa' : '▶'}</span>}
+        {thumb ? <img src={thumb} alt="" loading="lazy" onError={() => setThumbFailed(true)} /> : <span aria-hidden="true">{info.type === 'text' ? 'Aa' : '▶'}</span>}
       </span>
       <span className="msg-story-card__tx">
         <strong>{ar ? 'ردّ على استوري' : 'Replied to a story'} · {kind}</strong>
