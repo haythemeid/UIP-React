@@ -9,7 +9,7 @@ import VideoPlayer from '../components/VideoPlayer';
 import SiteFooter from '../components/SiteFooter';
 import LandingNav from '../components/LandingNav';
 import LandingBackdrop from '../components/LandingBackdrop';
-import useScroll3D from '../hooks/useScroll3D';
+import usePaperUnfold from '../hooks/usePaperUnfold';
 import { parseServerDate } from '../utils/serverDate';
 
 const LINK_ICONS = {
@@ -139,7 +139,7 @@ export default function ProjectDetail() {
   }, [data, isAr, status, user]);
 
   // Scroll-reveal for the content cards (re-runs once the project has loaded).
-  useScroll3D('.lp2');
+  usePaperUnfold('.lp2-pd__sec');
 
   const shell = (children) => (
     <div className="lp2 lp2-page lp2--fx">

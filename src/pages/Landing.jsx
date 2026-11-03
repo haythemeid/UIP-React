@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import useScroll3D from '../hooks/useScroll3D';
+import usePaperUnfold from '../hooks/usePaperUnfold';
 import FaqSection from '../components/landing/FaqSection';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -33,7 +33,7 @@ export default function Landing() {
   const [featured, setFeatured] = useState([]);
   const [liveStats, setLiveStats] = useState(null);
   const [role, setRole] = useState('students');
-  useScroll3D('.lp4');
+  usePaperUnfold('.lp4-section, .lp4-final-wrap');
 
   useEffect(() => {
     let alive = true;

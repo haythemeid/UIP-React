@@ -6,6 +6,7 @@ import Icon from '../components/Icon';
 import SiteFooter from '../components/SiteFooter';
 import PublicTopbar from '../components/PublicTopbar';
 import AmbientBackdrop from '../components/AmbientBackdrop';
+import usePaperUnfold from '../hooks/usePaperUnfold';
 
 // Role badge shown under the name (owner.role comes from the API's primary role).
 const ROLE_BADGE = {
@@ -97,6 +98,7 @@ export default function PublicPortfolio() {
   const { locale } = useLanguage();
   const isAr = locale === 'ar';
   const t = (en, ar) => (isAr ? ar : en);
+  usePaperUnfold('.prf-section');
 
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);

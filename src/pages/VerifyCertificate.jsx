@@ -6,6 +6,7 @@ import Icon from '../components/Icon';
 import SiteFooter from '../components/SiteFooter';
 import LandingNav from '../components/LandingNav';
 import LandingBackdrop from '../components/LandingBackdrop';
+import usePaperUnfold from '../hooks/usePaperUnfold';
 
 /**
  * Port of app/Views/public/verify-certificate.php — same form + found/
@@ -18,6 +19,7 @@ export default function VerifyCertificate() {
   const { locale } = useLanguage();
   const isAr = locale === 'ar';
   const t = (en, ar) => (isAr ? ar : en);
+  usePaperUnfold('.lp5-vc-info');
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [draft, setDraft] = useState(searchParams.get('number') || '');

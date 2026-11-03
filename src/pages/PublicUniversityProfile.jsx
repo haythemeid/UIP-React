@@ -7,6 +7,7 @@ import Icon from '../components/Icon';
 import SiteFooter from '../components/SiteFooter';
 import PublicTopbar from '../components/PublicTopbar';
 import AmbientBackdrop from '../components/AmbientBackdrop';
+import usePaperUnfold from '../hooks/usePaperUnfold';
 
 /**
  * Public university page — /u/{uuid}, no login required.
@@ -21,6 +22,7 @@ export default function PublicUniversityProfile() {
   const { locale } = useLanguage();
   const isAr = locale === 'ar';
   const t = (en, ar) => (isAr ? ar : en);
+  usePaperUnfold('.prf-section');
 
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);

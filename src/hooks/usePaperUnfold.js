@@ -12,8 +12,9 @@ import { isNative } from '../native.js';
  * Skipped when animations are off (Admin switch / Android app) or the visitor prefers reduced motion; nothing is ever hidden then.
  * Cleanup removes everything it added, so React StrictMode's double mount in dev works.
  */
-const COLS = 8;
-const ROWS = 6;
+const COLS_FULL = 8;
+const ROWS_FULL = 6;
+const LITE = typeof window !== 'undefined' && window.innerWidth < 700; // phones: fewer facets = fewer paints
 const START = 0.97; // viewport fraction where a section's top edge starts the unfold
 const SPAN = 0.85;  // how much scrolling (in viewport heights) the unfold takes
 const clamp = (v) => Math.min(1, Math.max(0, v));
@@ -26,6 +27,8 @@ function rng(seed) {
 
 function sheetSvg(seed) {
   const r = rng(seed * 7919 + 13);
+  const COLS = LITE ? 5 : COLS_FULL;
+  const ROWS = LITE ? 4 : ROWS_FULL;
   const pts = [];
   for (let j = 0; j <= ROWS; j += 1) {
     const row = [];
@@ -73,10 +76,20 @@ export default function usePaperUnfold(selector = '.lp4-section') {
       let raf = 0;
       const pOf = (el) => {
         const vh = window.innerHeight || 800;
-        return ease(clamp((vh * START - el.getBoundingClientRect().top) / (vh * SPAN)));
+        const top = el.getBoundingClientRect().top;
+        // Sections near the bottom of the page can never climb as high as the others: shrink their span so they still finish
+        // exactly when the page ends (otherwise the last section / footer would stay half-crumpled forever).
+        const room = Math.max(0, (document.documentElement.scrollHeight - vh) - (window.scrollY || 0));
+        const lowest = top - room;
+        const span = clamp((vh * START - lowest) / vh, 0.25, SPAN) * vh;
+        if (room < 3 && top < vh * 0.98) return 1;
+        return ease(clamp((vh * START - top) / span));
       };
       const tick = () => {
         raf = 0;
+        for (let k = items.length - 1; k >= 0; k -= 1) { // sections React removed (filters, pagination...) leave the list
+          if (!items[k].el.isConnected) { items[k].sheet.remove(); items.splice(k, 1); }
+        }
         items.forEach((it) => {
           const p = pOf(it.el);
           if (p === it.p) return;
@@ -91,6 +104,7 @@ export default function usePaperUnfold(selector = '.lp4-section') {
       st.current = {
         items,
         kick,
+        pOf,
         destroy: () => {
           window.removeEventListener('scroll', kick);
           window.removeEventListener('resize', kick);
@@ -106,9 +120,13 @@ export default function usePaperUnfold(selector = '.lp4-section') {
       };
     }
     const { items, kick } = st.current;
+    const vh = window.innerHeight || 800;
     document.querySelectorAll(selector).forEach((el, i) => {
       if (el.dataset.pu) return;
       el.dataset.pu = '1';
+      const top = el.getBoundingClientRect().top;
+      // The first screen is never covered (the page-open paper already plays there); anything above the fold stays flat.
+      if (top < vh * 0.55) { el.classList.add('pu-sec', 'pu-done'); return; }
       el.classList.add('pu-sec');
       const sheet = document.createElement('div');
       sheet.className = 'pu';
