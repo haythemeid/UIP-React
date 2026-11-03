@@ -11,7 +11,7 @@ import { useStoryHub } from './StoryHub';
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_BYTES = 8 * 1024 * 1024;
 
-/** After the crop: preview, optional caption and "also share as a post" (Facebook's "X updated his profile picture"). */
+/** After the crop: preview, optional caption and "also share as a post" ("X updated his profile picture"). */
 function ShareDialog({ kind, file, onClose, onDone }) {
   const { tt } = useTt();
   const [cfg, setCfg] = useState(null);
@@ -64,7 +64,7 @@ function ShareDialog({ kind, file, onClose, onDone }) {
       <label className="pfx-share__check">
         <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} disabled={busy || !cfg || cfg.enabled === false} />
         <span><strong>{tt('Share this update as a post', 'انشر هذا التغيير كمنشور')}</strong>
-          <small>{tt('People can react and comment on it, like Facebook.', 'يقدر الناس يتفاعلوا ويعلّقوا عليه زي فيسبوك.')}</small></span>
+          <small>{tt('People can react and comment on it.', 'يقدر الناس يتفاعلوا ويعلّقوا عليه.')}</small></span>
       </label>
       {share && (
         <>
@@ -84,7 +84,7 @@ function ShareDialog({ kind, file, onClose, onDone }) {
 }
 
 /**
- * Change / remove my profile photo and cover — Facebook flow: pick → crop → (caption + share as post) → saved everywhere.
+ * Change / remove my profile photo and cover — pick → crop → (caption + share as post) → saved everywhere.
  *   const flow = usePhotoFlow({ onChanged });  flow.choose('profile' | 'cover');  flow.remove('profile' | 'cover');  render {flow.node}
  * onChanged({ kind, path, post, removed, warn }) lets the page update itself (and prepend the new post).
  */

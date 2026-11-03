@@ -21,7 +21,7 @@ const SWITCHES = [
   { group: 'email', key: 'plus_addressing_check', icon: 'plus-circle', title: 'Block "+tag" aliases', hint: 'Refuse name+anything@domain addresses.' },
   { group: 'email', key: 'suspicious_gmail_check', icon: 'alert-triangle', title: 'Block random-looking Gmail', hint: 'Refuse Gmail addresses padded with dots / digit groups.' },
   { group: 'email', key: 'email_dns_check', icon: 'globe', title: 'Require a mail-capable domain', hint: 'The domain must have an MX or A record (checked at sign-up only).' },
-  { group: 'access', key: 'persistent_login', icon: 'lock', title: 'Stay signed in (persistent sign-in)', hint: 'Like Facebook: people are never signed out because of inactivity or because they closed the browser / app. They stay signed in until they sign out themselves, you remove the device, or the device limit below pushes it out. Turn off to bring back the inactivity timeout and a 14-day login.', risky: true },
+  { group: 'access', key: 'persistent_login', icon: 'lock', title: 'Stay signed in (persistent sign-in)', hint: 'People are never signed out because of inactivity or because they closed the browser / app. They stay signed in until they sign out themselves, you remove the device, or the device limit below pushes it out. Turn off to bring back the inactivity timeout and a 14-day login.', risky: true },
   { group: 'platform', key: 'registration_enabled', icon: 'users', title: 'Public registration', hint: 'When off, nobody can create a new account (form or Google). Existing users are unaffected.', risky: true },
   { group: 'platform', key: 'animations_enabled', icon: 'sparkles', title: 'Platform animations', hint: 'Soft background shapes, pill / card / page-enter motion across the whole platform. Turn off if the platform feels slow: every page becomes static for everyone within a few minutes (right away for you).' },
   { group: 'platform', key: 'messaging_restricted', icon: 'mail', title: 'Restrict student messaging', hint: 'Off: anyone can message anyone. On: a student can only start chats with their own project group, university, faculty, staff and assigned supervisor (or with an approved permission request).' },
@@ -773,7 +773,7 @@ export default function AdminPlatformPolicy() {
       </div>
 
       <section className="adm-panel" style={{ marginTop: 'var(--space-4)' }}>
-        <div className="adm-panel__head"><div><h2>{t('Persistent sign-in')}</h2><p>{t('Turn the Facebook-style "never signed out" behaviour on or off for everyone — live, no deploy.')}</p></div></div>
+        <div className="adm-panel__head"><div><h2>{t('Persistent sign-in')}</h2><p>{t('Turn the "never signed out" behaviour on or off for everyone — live, no deploy.')}</p></div></div>
         {SWITCHES.filter((s) => s.group === 'access').map(row)}
       </section>
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
@@ -7,95 +7,124 @@ import { roleHome } from '../config/roleHome';
 import Icon from './Icon';
 import useAppDownload from '../hooks/useAppDownload';
 import AppDownloadLink from './AppDownloadLink';
+import '../styles/css/uip-nav.css';
 
 /**
- * Sticky top bar for the public pages restyled in the Admin design language
- * (Landing, Explore, Privacy, Verify Certificate, error pages). Must be
- * rendered inside a `.lp2` wrapper — that wrapper carries the palette (see
- * styles/css/landing.css). `anchors` shows the in-page links used by the
- * landing page. Below 1280px the links collapse into a hamburger menu.
+ * Public top bar (Landing, Explore, Privacy, Verify Certificate, error pages). Rendered inside a `.lp2` wrapper (palette tokens).
+ * Three zones that can never collide: brand | links | actions. Links are kept to four: a "Platform" menu that lists every part of
+ * the platform with a one-line description, Explore projects, Verify a certificate. Below 1024px everything moves into one sheet.
+ * `anchors` = we are on the landing page, so the platform items scroll to their section; elsewhere they go to "/#section".
  */
 export default function LandingNav({ anchors = false }) {
   const { locale, toggleLocale } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { pathname } = useLocation();
   const { status, user } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [sheet, setSheet] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const menuRef = useRef(null);
   const app = useAppDownload();
   const isAr = locale === 'ar';
   const t = (en, ar) => (isAr ? ar : en);
 
-  // Close the mobile menu on navigation, Escape, or when the viewport grows.
-  useEffect(() => { setOpen(false); }, [pathname]);
+  const parts = [
+    ['talk', 'chat', t('Chat and calls', 'الشات والمكالمات'), t('Direct and group chat, voice and video', 'محادثات فردية وجماعية وصوت وفيديو')],
+    ['meetings', 'meeting-type', t('Video meetings', 'اجتماعات الفيديو'), t('Links, waiting room and attendance reports', 'روابط وغرفة انتظار وتقارير حضور')],
+    ['pc', 'hard-drive', t('My PC', 'My PC'), t('Files, code editor and Office tools in the browser', 'ملفات ومحرر أكواد وأدوات Office في المتصفح')],
+    ['ai', 'ai-spark', t('AI tutor', 'المعلم الذكي'), t('Explains errors and reviews your code', 'يشرح الأخطاء ويراجع كودك')],
+    ['community', 'users', t('Community', 'المجتمع'), t('Posts, stories, profiles and your network', 'منشورات وستوريز وبروفايلات وشبكتك')],
+    ['exams', 'layers', t('Exams and courses', 'الامتحانات والمواد'), t('Question banks, secure mode and grading', 'بنوك أسئلة ووضع آمن وتصحيح')],
+    ['projects', 'folder', t('Projects', 'المشاريع'), t('Publish your work and get discovered', 'انشر شغلك واتكتشف')],
+  ];
+  const href = (id) => (anchors ? `#${id}` : `/#${id}`);
+
+  useEffect(() => { setSheet(false); setMenu(false); }, [pathname]);
   useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
-    const mq = window.matchMedia('(min-width: 1281px)');
-    const onMq = () => { if (mq.matches) setOpen(false); };
+    if (!menu) return undefined;
+    const onDoc = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenu(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setMenu(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
+  }, [menu]);
+  useEffect(() => {
+    if (!sheet) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setSheet(false); };
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const onMq = () => { if (mq.matches) setSheet(false); };
     document.addEventListener('keydown', onKey);
     mq.addEventListener('change', onMq);
     return () => { document.removeEventListener('keydown', onKey); mq.removeEventListener('change', onMq); };
-  }, [open]);
+  }, [sheet]);
 
-  const links = (
-    <>
-      {anchors ? (
-        <>
-          <a href="#talk">{t('Chat and meetings', 'الشات والاجتماعات')}</a>
-          <a href="#pc">{t('My PC', 'My PC')}</a>
-          <a href="#ai">{t('AI', 'الذكاء الاصطناعي')}</a>
-          <a href="#community">{t('Community', 'المجتمع')}</a>
-          <a href="#exams">{t('Exams', 'الامتحانات')}</a>
-          <a href="#projects">{t('Projects', 'المشاريع')}</a>
-        </>
-      ) : (
-        <Link to="/" aria-current={pathname === '/' ? 'page' : undefined}>{t('Home', 'الرئيسية')}</Link>
-      )}
-      <Link to="/projects" aria-current={pathname.startsWith('/projects') ? 'page' : undefined}>{t('Explore Projects', 'استكشف المشاريع')}</Link>
-      <Link to="/verify-certificate" aria-current={pathname.startsWith('/verify-certificate') ? 'page' : undefined}>{t('Verify a Certificate', 'التحقق من شهادة')}</Link>
-      {app && <AppDownloadLink app={app} withIcon={false} logo iconSize={14} className="app-dl--nav" labels={{ download: t('Get the app', 'حمّل التطبيق') }} />}
-    </>
-  );
+  const current = (p) => (pathname.startsWith(p) ? 'page' : undefined);
+  const authed = status === 'authenticated';
 
   return (
-    <nav className="lp2-nav">
-      <div className="lp2-shell lp2-nav__inner">
-        <Link to="/" className="lp2-brand">
-          <span className="lp2-brand__mark"><img src="/images/logo/uip-mark.png" srcSet="/images/logo/uip-mark@2x.png 2x" alt="" /></span>
-          <span className="lp2-brand__text">UIP</span>
+    <nav className="unav" aria-label={t('Main', 'الرئيسية')}>
+      <div className="unav__bar">
+        <Link to="/" className="unav__brand" aria-label="UIP">
+          <img src="/images/logo/uip-mark.png" srcSet="/images/logo/uip-mark@2x.png 2x" alt="" width="34" height="34" />
+          <span>UIP</span>
         </Link>
-        <div className="lp2-nav__links">{links}</div>
-        <div className="lp2-nav__actions">
-          <button type="button" className="lp2-icon-btn" onClick={toggleLocale} aria-label={t('العربية', 'English')} title={t('العربية', 'English')}>
-            <Icon name="globe" size={16} />
-          </button>
-          <button type="button" className="lp2-icon-btn" onClick={toggleTheme} aria-label={t('Toggle theme', 'تبديل المظهر')} title={t('Toggle theme', 'تبديل المظهر')}>
-            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={16} />
-          </button>
-          {status === 'authenticated' ? (
-            <Link to={roleHome(user?.role)} className="btn btn-primary btn-sm lp2-nav__cta">{t('Dashboard', 'لوحة التحكم')}</Link>
+
+        <div className="unav__links">
+          <div className="unav__menu" ref={menuRef}>
+            <button type="button" className={`unav__link unav__trigger${menu ? ' is-open' : ''}`} aria-expanded={menu} aria-haspopup="true" onClick={() => setMenu((o) => !o)}>
+              {t('Platform', 'المنصة')} <Icon name="chevron-down" size={14} />
+            </button>
+            {menu && (
+              <div className="unav__panel" role="menu">
+                {parts.map(([id, ic, title, desc]) => (
+                  <a key={id} href={href(id)} role="menuitem" className="unav__item" onClick={() => setMenu(false)}>
+                    <span className="unav__ico"><Icon name={ic} size={18} /></span>
+                    <span><strong>{title}</strong><small>{desc}</small></span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+          <Link to="/projects" className="unav__link" aria-current={current('/projects')}>{t('Explore projects', 'استكشف المشاريع')}</Link>
+          <Link to="/verify-certificate" className="unav__link" aria-current={current('/verify-certificate')}>{t('Verify a certificate', 'التحقق من شهادة')}</Link>
+        </div>
+
+        <div className="unav__actions">
+          {app && <span className="unav__app"><AppDownloadLink app={app} withIcon={false} logo iconSize={14} className="app-dl--nav" labels={{ download: t('Get the app', 'حمّل التطبيق') }} /></span>}
+          <button type="button" className="unav__icon" onClick={toggleLocale} aria-label={t('العربية', 'English')} title={t('العربية', 'English')}><Icon name="globe" size={17} /></button>
+          <button type="button" className="unav__icon" onClick={toggleTheme} aria-label={t('Toggle theme', 'تبديل المظهر')} title={t('Toggle theme', 'تبديل المظهر')}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={17} /></button>
+          {authed ? (
+            <Link to={roleHome(user?.role)} className="btn btn-primary btn-sm unav__cta">{t('Dashboard', 'لوحة التحكم')}</Link>
           ) : (
             <>
-              <Link to="/auth/login" className="lp2-nav__login">{t('Log in', 'تسجيل الدخول')}</Link>
-              <Link to="/auth/register" className="btn btn-primary btn-sm lp2-nav__cta">{t('Get Started Free', 'ابدأ مجانًا')}</Link>
+              <Link to="/auth/login" className="unav__login">{t('Log in', 'تسجيل الدخول')}</Link>
+              <Link to="/auth/register" className="btn btn-primary btn-sm unav__cta">{t('Get started', 'ابدأ مجانًا')}</Link>
             </>
           )}
-          <button
-            type="button" className="lp2-icon-btn lp2-nav__burger"
-            aria-expanded={open} aria-controls="lp2-mobile-menu"
-            aria-label={t('Menu', 'القائمة')} onClick={() => setOpen((o) => !o)}
-          >
-            <Icon name={open ? 'x' : 'menu'} size={18} />
+          <button type="button" className="unav__icon unav__burger" aria-expanded={sheet} aria-controls="unav-sheet" aria-label={t('Menu', 'القائمة')} onClick={() => setSheet((o) => !o)}>
+            <Icon name={sheet ? 'x' : 'menu'} size={19} />
           </button>
         </div>
       </div>
 
-      {open && (
-        <div className="lp2-nav__mobile" id="lp2-mobile-menu">
-          <div className="lp2-shell">
-            {links}
-            {status !== 'authenticated' && <Link to="/auth/login">{t('Log in', 'تسجيل الدخول')}</Link>}
+      {sheet && (
+        <div className="unav__sheet" id="unav-sheet">
+          <p className="unav__sheet-h">{t('The platform', 'المنصة')}</p>
+          <div className="unav__sheet-grid">
+            {parts.map(([id, ic, title]) => (
+              <a key={id} href={href(id)} onClick={() => setSheet(false)}><span className="unav__ico"><Icon name={ic} size={17} /></span>{title}</a>
+            ))}
           </div>
+          <div className="unav__sheet-links">
+            <Link to="/projects">{t('Explore projects', 'استكشف المشاريع')}</Link>
+            <Link to="/verify-certificate">{t('Verify a certificate', 'التحقق من شهادة')}</Link>
+            {app && <AppDownloadLink app={app} withIcon={false} logo iconSize={14} className="app-dl--nav" labels={{ download: t('Get the app', 'حمّل التطبيق') }} />}
+          </div>
+          {!authed && (
+            <div className="unav__sheet-cta">
+              <Link to="/auth/login" className="btn btn-outline">{t('Log in', 'تسجيل الدخول')}</Link>
+              <Link to="/auth/register" className="btn btn-primary">{t('Get started', 'ابدأ مجانًا')}</Link>
+            </div>
+          )}
         </div>
       )}
     </nav>

@@ -201,8 +201,8 @@ export default function PrivacyPolicy() {
           <section id="s1" className="lp2-pv__sec">
             <h2><span className="lp2-pv__num">1</span>{t('Introduction', 'مقدمة')}</h2>
             <p>{t(
-              'UIP (Ultimate Intelligent Platform) is a digital ecosystem that connects universities, faculties, departments, students, and graduation projects in one place — for submitting, reviewing, discovering, and showcasing academic and innovation work.',
-              'UIP (Ultimate Intelligent Platform) هي منظومة رقمية تربط الجامعات والكليات والأقسام والطلاب ومشاريع التخرج والشركات في مكان واحد — لتقديم ومراجعة واكتشاف وعرض الأعمال الأكاديمية والابتكارية.'
+              'UIP (Ultimate Intelligent Platform) is a campus platform that brings students, instructors, faculties and universities together in one place — messaging and video meetings, courses and exams, personal files and tools, a social community with profiles, posts and stories, and publishing of academic projects.',
+              'UIP (Ultimate Intelligent Platform) منصة جامعية تجمع الطلاب والدكاترة والكليات والجامعات في مكان واحد — مراسلة واجتماعات فيديو، ومواد وامتحانات، وملفات وأدوات شخصية، ومجتمع اجتماعي ببروفايلات ومنشورات وستوريز، ونشر المشاريع الأكاديمية.'
             )}</p>
             <p>{t(
               'This Privacy Policy explains what information UIP collects through its portals, why it is collected, how it is used and shared, and the choices available to you as a user of the platform.',
@@ -218,6 +218,8 @@ export default function PrivacyPolicy() {
               <li><strong>{t('Student information', 'معلومات الطالب')}</strong> — {t('enrollment/department details, submitted graduation projects, certificates.', 'بيانات القيد/القسم، مشاريع التخرج المُقدَّمة، الشهادات.')}</li>
               <li><strong>{t('University, faculty & department information', 'معلومات الجامعة والكلية والقسم')}</strong> — {t("institutional structure and staff assignments entered by an institution's own administrators.", 'الهيكل المؤسسي وتعيينات الموظفين التي يُدخلها مسؤولو المؤسسة أنفسهم.')}</li>
               <li><strong>{t('Project & research information', 'معلومات المشاريع والأبحاث')}</strong> — {t('titles, descriptions, categories, links (e.g. GitHub, live demo), and AI-generated readiness/analysis scores.', 'العناوين والأوصاف والتصنيفات والروابط (مثل GitHub والعرض التجريبي)، ونتائج التحليل بالذكاء الاصطناعي.')}</li>
+              <li><strong>{t('Messages, posts & profile', 'الرسائل والمنشورات والبروفايل')}</strong> — {t('chat messages and calls metadata, posts, stories, your profile photo, cover and bio, and your connections and followers.', 'الرسائل وبيانات المكالمات، والمنشورات والستوريز، وصورتك الشخصية والغلاف والنبذة، واتصالاتك ومتابعيك.')}</li>
+              <li><strong>{t('Courses & exams', 'المواد والامتحانات')}</strong> — {t('course enrolment, attendance, assignments, exam attempts and grades.', 'التسجيل في المواد والحضور والتكاليف ومحاولات الامتحانات والدرجات.')}</li>
               <li><strong>{t('Uploaded files', 'الملفات المرفوعة')}</strong> — {t('documents, images, and other media attached to a project or profile.', 'المستندات والصور والوسائط الأخرى المرفقة بمشروع أو ملف شخصي.')}</li>
               <li><strong>{t('Contact information', 'معلومات التواصل')}</strong> — {t('email addresses used for account communication or support requests.', 'عناوين البريد الإلكتروني المستخدمة للتواصل بخصوص الحساب أو طلبات الدعم.')}</li>
               <li><strong>{t('Usage & technical information', 'معلومات الاستخدام والتقنية')}</strong> — {t('actions taken within the platform (e.g. audit-logged admin actions), device type, and similar technical details needed to operate the service.', 'الإجراءات المتخذة داخل المنصة (مثل إجراءات المسؤولين المسجَّلة في سجل التدقيق)، ونوع الجهاز، وتفاصيل تقنية مشابهة لازمة لتشغيل الخدمة.')}</li>
@@ -230,6 +232,7 @@ export default function PrivacyPolicy() {
               <li>{t('Creating and managing your account and role-based access.', 'إنشاء وإدارة حسابك وصلاحيات الوصول الخاصة بدورك.')}</li>
               <li>{t("University, faculty, and department administration by an institution's own authorized staff.", 'إدارة الجامعة والكلية والقسم من قبل الموظفين المخوَّلين بالمؤسسة نفسها.')}</li>
               <li>{t('Submitting, reviewing, and approving graduation and research projects.', 'تقديم ومراجعة واعتماد مشاريع التخرج والأبحاث.')}</li>
+              <li>{t('Running messaging, meetings, courses, exams, files and the social community features.', 'تشغيل المراسلة والاجتماعات والمواد والامتحانات والملفات والمجتمع الاجتماعي.')}</li>
               <li>{t('Project discovery and academic/industry collaboration.', 'اكتشاف المشاريع والتعاون الأكاديمي والصناعي.')}</li>
               <li>{t('Communicating with you — notifications, messaging between platform users, and support responses.', 'التواصل معك — الإشعارات، والمراسلة بين مستخدمي المنصة، والرد على طلبات الدعم.')}</li>
               <li>{t('Maintaining platform security, including authentication, access control, and audit logging of administrative actions.', 'الحفاظ على أمان المنصة، بما يشمل التحقق من الهوية والتحكم في الوصول وتسجيل إجراءات المسؤولين.')}</li>
@@ -246,6 +249,10 @@ export default function PrivacyPolicy() {
                 'بمجرد مرور مشروع أو ملف شخصي عبر عملية الاعتماد/النشر بالمنصة، قد تصبح أجزاء منه — مثل عنوان المشروع ووصفه وصورة الغلاف ورابط الملف العام — مرئية لأي شخص لديه الرابط، أو لمستخدمي المنصة الآخرين، وفقًا لإعدادات الظهور المستخدَمة.'
               )}</p>
             </div>
+            <p>{t(
+              'You control your social visibility: choose who sees each post and story, lock your profile so only friends and followers see your content, hide your friends and followers lists, and decide who can open or download your profile photo.',
+              'إنت اللي بتتحكم في ظهورك الاجتماعي: اختار مين يشوف كل منشور وستوري، وأقفل بروفايلك ليشوف محتواك أصدقاؤك ومتابعوك فقط، وأخفِ قوائم الأصدقاء والمتابعين، وحدّد من يستطيع فتح صورتك الشخصية أو تنزيلها.'
+            )}</p>
             <p>{t(
               'Please avoid submitting sensitive, confidential, or personally identifying information (beyond what a project genuinely requires) into any project field, file, or portfolio area that may be published.',
               'يُرجى تجنّب إدخال معلومات حساسة أو سرية أو تعريفية شخصية (بما يتجاوز ما يتطلبه المشروع فعليًا) في أي حقل أو ملف أو منطقة من الملف الشخصي قد يتم نشرها.'

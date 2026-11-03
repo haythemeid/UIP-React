@@ -2,7 +2,7 @@
 
 /* ---------- dialogs ---------- */
 .pp-dlg-scrim{position:fixed;inset:0;z-index:1400;display:grid;place-items:center;padding:16px;background:rgba(10,15,30,.5);backdrop-filter:blur(3px);animation:pp-d-fade .18s both}
-.pp-dlg{--pp-bg:var(--bg-surface,#fff);--pp-bd:var(--border-subtle,#e5e7eb);--pp-tx:var(--text-primary,#111827);--pp-mut:var(--text-secondary,#6b7280);--pp-pri:var(--color-primary,#3b5bdb);--pp-on:var(--color-on-primary,#fff);--pp-r:12px;--pp-soft:color-mix(in srgb,var(--pp-pri) 9%,transparent);--pp-canvas:color-mix(in srgb,var(--pp-tx) 5%,var(--pp-bg));
+.pp-dlg{--pp-grad:linear-gradient(135deg,var(--pp-pri),color-mix(in srgb,var(--pp-pri) 55%,#8b5cf6));--pp-bg:var(--bg-surface,#fff);--pp-bd:var(--border-subtle,#e5e7eb);--pp-tx:var(--text-primary,#111827);--pp-mut:var(--text-secondary,#6b7280);--pp-pri:var(--color-primary,#3b5bdb);--pp-on:var(--color-on-primary,#fff);--pp-r:12px;--pp-soft:color-mix(in srgb,var(--pp-pri) 9%,transparent);--pp-canvas:color-mix(in srgb,var(--pp-tx) 5%,var(--pp-bg));
   width:min(440px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:var(--pp-bg);color:var(--pp-tx);border:1px solid var(--pp-bd);border-radius:18px;box-shadow:0 30px 80px -12px rgba(16,24,40,.45);outline:none;animation:pp-d-pop .22s cubic-bezier(.22,1.1,.4,1) both}
 .pp-dlg.is-wide{width:min(560px,100%)}
 .pp-dlg__head{display:flex;align-items:center;gap:10px;padding:16px 16px 8px 20px;padding-inline:20px 12px}

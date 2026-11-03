@@ -43,8 +43,8 @@ export default function SiteFooter() {
   }, []);
 
   const ecosystem = [
-    t('Universities', 'الجامعات'), t('Faculties', 'الكليات'), t('Departments', 'الأقسام'),
-    t('Students', 'الطلاب'), t('Graduation Projects', 'مشاريع التخرج'), t('Innovation', 'الابتكار'),
+    t('Chat and calls', 'الشات والمكالمات'), t('Video meetings', 'اجتماعات الفيديو'), t('Courses and exams', 'المواد والامتحانات'),
+    t('My PC', 'My PC'), t('Community', 'المجتمع'), t('Projects', 'المشاريع'),
   ];
 
   const supportEmail = siteInfo.support_email || '';
@@ -61,11 +61,11 @@ export default function SiteFooter() {
             </Link>
             <p className="uip-footer__tagline">
               {t(
-                'UIP is a unified digital ecosystem for discovering, managing, showcasing, and connecting university innovation, academic projects, and students.',
-                'UIP منظومة رقمية موحّدة لاكتشاف وإدارة وعرض وربط الابتكار الجامعي والمشاريع الأكاديمية والطلاب.'
+                'UIP is one campus platform for students, instructors and universities: chat and video meetings, courses and exams, your files and code, a social community, and projects to publish, with an AI tutor beside you.',
+                'UIP منصة جامعية واحدة للطلاب والدكاترة والجامعات: شات واجتماعات فيديو، ومواد وامتحانات، وملفاتك وأكوادك، ومجتمع اجتماعي، ومشاريع تنشرها، ومعاك معلم ذكي جنبك.'
               )}
             </p>
-            <ul className="uip-footer__ecosystem" aria-label={t('Who UIP connects', 'من تربطهم UIP')}>
+            <ul className="uip-footer__ecosystem" aria-label={t('What UIP offers', 'ماذا تقدم UIP')}>
               {ecosystem.map((tag) => <li key={tag}>{tag}</li>)}
             </ul>
 

@@ -49,6 +49,64 @@ function BioDialog({ initial, max, onClose, onSaved }) {
   );
 }
 
+function PrivacyDialog({ onClose, onSaved }) {
+  const { tt } = useTt();
+  const [cfg, setCfg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  useEffect(() => { networkApi.settings().then(setCfg).catch((e) => setErr(errorMessage(e))); }, []);
+  const set = (k, v) => setCfg((c) => ({ ...c, [k]: v }));
+  const save = async () => {
+    setBusy(true); setErr('');
+    try { const r = await networkApi.saveSettings({ profile_locked: cfg.profile_locked, lists_visibility: cfg.lists_visibility, photo_download: cfg.photo_download }); onSaved(r); } catch (e) { setErr(errorMessage(e)); setBusy(false); }
+  };
+  return (
+    <Dialog title={tt('Profile privacy', 'خصوصية البروفايل')} icon="lock" busy={busy} onClose={onClose}
+      footer={<><button type="button" className="pp-btn" disabled={busy} onClick={onClose}>{tt('Cancel', 'إلغاء')}</button><button type="button" className="pp-btn is-primary" disabled={busy || !cfg} onClick={save}>{busy ? tt('Saving…', 'جارٍ الحفظ…') : tt('Save', 'حفظ')}</button></>}>
+      {!cfg && !err && <div className="pp-skel" style={{ height: 120 }} />}
+      {cfg && (
+        <div className="pfx-priv">
+          <div className="pfx-priv__row">
+            <label className="is-switch">
+              <input type="checkbox" checked={!!cfg.profile_locked} onChange={(e) => set('profile_locked', e.target.checked)} disabled={busy} />
+              <span><strong>{tt('Lock my profile', 'قفل البروفايل')}</strong>
+                <small>{tt('Only your friends and followers can see your posts, photos, bio and lists. New follow requests will need your approval.', 'أصدقاؤك ومتابعوك فقط يقدروا يشوفوا منشوراتك وصورك والنبذة والقوائم. وأي طلب متابعة جديد يحتاج موافقتك.')}</small></span>
+            </label>
+          </div>
+          <div className="pfx-priv__row">
+            <label htmlFor="pv-lists"><strong>{tt('Who can see my friends and followers', 'مين يشوف أصدقائي ومتابعيني')}</strong></label>
+            <select id="pv-lists" className="pp-input" value={cfg.lists_visibility} onChange={(e) => set('lists_visibility', e.target.value)} disabled={busy}>
+              <option value="everyone">{tt('Everyone', 'الجميع')}</option>
+              <option value="contacts">{tt('Friends and followers', 'الأصدقاء والمتابعون')}</option>
+              <option value="me">{tt('Only me', 'أنا فقط')}</option>
+            </select>
+          </div>
+          <div className="pfx-priv__row">
+            <label htmlFor="pv-dl"><strong>{tt('Who can download my profile photo', 'مين يقدر ينزّل صورتي الشخصية')}</strong></label>
+            <select id="pv-dl" className="pp-input" value={cfg.photo_download} onChange={(e) => set('photo_download', e.target.value)} disabled={busy}>
+              <option value="nobody">{tt('Nobody', 'لا أحد')}</option>
+              <option value="contacts">{tt('Friends and followers', 'الأصدقاء والمتابعون')}</option>
+              <option value="everyone">{tt('Everyone who can see it', 'كل من يستطيع رؤيتها')}</option>
+            </select>
+            <small>{tt('Opening the photo is controlled by "Who can see my profile photo" in chat privacy.', 'عرض الصورة نفسها بيتحكم فيه إعداد "مين يشوف صورتي الشخصية" في خصوصية الشات.')}</small>
+          </div>
+        </div>
+      )}
+      {err && <p className="pp-err" role="alert">{err}</p>}
+    </Dialog>
+  );
+}
+
+function LockedCard({ data, tt }) {
+  return (
+    <section className="pfx-card pfx-lock">
+      <span className="pfx-lock__ico"><Icon name="lock" size={28} /></span>
+      <h2>{tt('This profile is locked', 'هذا البروفايل مقفول')}</h2>
+      <p>{tt(`Only ${data.full_name}'s friends and followers can see their posts, photos and details.`, `أصدقاء ومتابعو ${data.full_name} فقط يقدروا يشوفوا منشوراته وصوره وبياناته.`)}</p>
+    </section>
+  );
+}
+
 function PhotoTile({ item, onOpen }) {
   const { m, p } = item;
   const thumb = useMediaUrl(m, m.has_thumbnail ? 'thumbnail' : 'file');
@@ -68,12 +126,14 @@ function FriendsTab({ userId, tt, isMe }) {
   const [more, setMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
+  const [restricted, setRestricted] = useState(false);
   const reqId = useRef(0);
   const load = useCallback(async (p = 1) => {
     const rid = ++reqId.current;
     setLoading(true); setErr('');
     try {
       const r = await networkApi.friendsOf(userId, q, p);
+      if (rid === reqId.current) setRestricted(!!r.meta?.restricted);
       if (rid !== reqId.current) return;
       setItems((prev) => (p === 1 ? r.items : [...prev, ...r.items.filter((n) => !prev.some((o) => o.id === n.id))]));
       setMore(!!r.meta.has_more); setPage(p);
@@ -107,7 +167,8 @@ function FriendsTab({ userId, tt, isMe }) {
         ))}
       </ul>
       {loading && <div className="pp-skel" style={{ height: 90 }} />}
-      {!loading && !err && items.length === 0 && <Empty icon="users" title={tt('No friends to show', 'لا يوجد أصدقاء لعرضهم')} text={q ? tt('Try another name.', 'جرّب اسمًا آخر.') : undefined} />}
+      {restricted && <Empty icon="lock" title={tt('The friends list is private', 'قائمة الأصدقاء خاصة')} />}
+      {!restricted && !loading && !err && items.length === 0 && <Empty icon="users" title={tt('No friends to show', 'لا يوجد أصدقاء لعرضهم')} text={q ? tt('Try another name.', 'جرّب اسمًا آخر.') : undefined} />}
       {more && !loading && <button type="button" className="pp-btn pfx-more" onClick={() => load(page + 1)}>{tt('Show more', 'عرض المزيد')}</button>}
     </section>
   );
@@ -149,6 +210,7 @@ function ProfileInner({ userId }) {
   const [config, setConfig] = useState(null);
   const [menu, setMenu] = useState(null); // 'avatar' | 'cover'
   const [bioOpen, setBioOpen] = useState(false);
+  const [privOpen, setPrivOpen] = useState(false);
   const [lb, setLb] = useState(null);
 
   const [items, setItems] = useState([]);
@@ -264,6 +326,7 @@ function ProfileInner({ userId }) {
             <p className="pfx-id__meta">{[roleText(data.role, tt), org].filter(Boolean).join(' · ')}</p>
             <div className="pfx-id__chips">
               {storyGroup && <button type="button" className={`pp-chip${storyGroup.has_unseen ? ' is-on' : ''}`} onClick={() => hub.open(storyGroup, false)}><Icon name="play" size={11} /> {tt('Story', 'استوري')}</button>}
+              {data.locked && <span className="pp-chip"><Icon name="lock" size={11} /> {tt('Locked', 'مقفول')}</span>}
               {relation && <span className="pp-chip is-on">{relation}</span>}
               {data.follows_me && <span className="pp-chip">{tt('Follows you', 'يتابعك')}</span>}
               {data.mutual_connections > 0 && <span className="pp-chip"><Icon name="users" size={12} /> {tt(`${data.mutual_connections} mutual`, `${data.mutual_connections} مشترك`)}</span>}
@@ -275,6 +338,7 @@ function ProfileInner({ userId }) {
               <>
                 <button type="button" className="pp-btn is-primary" onClick={() => flow.choose('profile')}><Icon name="image" size={14} /> {tt('Change photo', 'تغيير الصورة')}</button>
                 <button type="button" className="pp-btn" onClick={() => setBioOpen(true)}><Icon name="edit" size={14} /> {data.bio ? tt('Edit bio', 'تعديل البايو') : tt('Add bio', 'إضافة بايو')}</button>
+                <button type="button" className="pp-btn" onClick={() => setPrivOpen(true)}><Icon name="lock" size={14} /> {tt('Privacy', 'الخصوصية')}</button>
               </>
             ) : <PersonActions p={data} onPatch={patchRel} onRemove={() => {}} />}
           </div>
@@ -294,6 +358,7 @@ function ProfileInner({ userId }) {
       {notice && <div className="pp-ok pp-toast" role="status" onClick={() => setNotice('')}>{notice}</div>}
 
       <div className="pfx-body">
+        {data.restricted && !isMe ? <LockedCard data={data} tt={tt} /> : (<>
         {tab === 'posts' && (
           <div className="pfx-posts">
             {isMe && config && <Composer config={config} me={{ full_name: user?.full_name }} onSaved={saved} />}
@@ -317,9 +382,11 @@ function ProfileInner({ userId }) {
             {more && !loading && <button type="button" className="pp-btn pfx-more" onClick={() => load(page + 1)}>{tt('Show more', 'عرض المزيد')}</button>}
           </section>
         )}
+        </>)}
       </div>
 
       {lb != null && <Lightbox items={photos.map((x) => x.m)} start={lb} onClose={() => setLb(null)} />}
+      {privOpen && <PrivacyDialog onClose={() => setPrivOpen(false)} onSaved={(r) => { setPrivOpen(false); setData((d) => d && { ...d, locked: !!r.profile_locked, photo_can_download: true }); setNotice(tt('Privacy settings saved.', 'تم حفظ إعدادات الخصوصية.')); }} />}
       {bioOpen && <BioDialog initial={data.bio || ''} max={settings?.bio_max || 190} onClose={() => setBioOpen(false)} onSaved={(b) => { setBioOpen(false); setData((d) => ({ ...d, bio: b || null })); }} />}
       {flow.node}
     </div>

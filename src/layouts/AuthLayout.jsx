@@ -12,9 +12,9 @@ import i18nPage from '../i18n/layouts/auth-layout';
 const translations = { ...i18nCommon, ...i18nPage };
 
 const FEATURES = [
-  { icon: 'sparkles', tone: 'blue', title: 'AI-powered project evaluation', text: 'Readiness scores and smart insights for every project submitted.' },
-  { icon: 'building', tone: 'violet', title: 'Verified university network', text: 'Direct access to accredited universities nationwide.' },
-  { icon: 'shield', tone: 'green', title: 'Enterprise-grade security', text: 'Two-factor auth, audit logs, and file encryption protect every account.' },
+  { icon: 'chat', tone: 'blue', title: 'Chat, meetings and community', text: 'Messages, calls, video meetings, posts and stories with your classmates and instructors.' },
+  { icon: 'sparkles', tone: 'violet', title: 'Study, exams and AI help', text: 'Courses, exams, your files and an AI tutor beside you, plus projects to publish.' },
+  { icon: 'shield', tone: 'green', title: 'Private and secure', text: 'You control who sees your profile. Two-step sign-in and activity logs protect every account.' },
 ];
 
 /**
@@ -73,13 +73,13 @@ export default function AuthLayout({ title, subtitle, error, success, wide = fal
       <div className={`auth-main ${wide ? 'auth-main--wide' : ''}`}>
         <section className="auth-hero">
           <span className="auth-pill">
-            {t('Learn')}<i /> {t('Innovate')}<i /> {t('Grow')}
+            {t('Learn')}<i /> {t('Connect')}<i /> {t('Grow')}
           </span>
           <h2 className="auth-hero__title">
-            {t('Where graduation projects meet')} <span className="auth-grad-text">{t('real opportunity')}</span>
+            {t('Your whole university,')} <span className="auth-grad-text">{t('in one place')}</span>
           </h2>
           <p className="auth-hero__sub">
-            {t('A national platform connecting students and universities around university innovation — with AI-assisted evaluation and discovery.')}
+            {t('One account for chat, video meetings, courses, exams, your files, a social community and project publishing — for students, instructors and universities.')}
           </p>
         </section>
 

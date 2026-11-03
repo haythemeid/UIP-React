@@ -90,7 +90,7 @@ export default function Landing() {
   const community = [
     ['image', t('Stories that disappear', 'ستوريز بتختفي'), t('Share a photo, video or text. You choose who sees it, and you see who watched.', 'شارك صورة أو فيديو أو نص. إنت اللي بتختار مين يشوفها وبتعرف مين شافها.')],
     ['file', t('Posts with real files', 'منشورات بملفات حقيقية'), t('PDFs swipe like slides, code runs right in the post, plus video, voice and any file.', 'الـ PDF بتتقلّب زي الشرائح، والكود بيشتغل جوه المنشور، وفيديو وصوت وأي ملف.')],
-    ['user', t('A real profile', 'بروفايل حقيقي'), t('Cover, photo, bio, friends and photos. Change your picture and share it as a post.', 'غلاف وصورة وبايو وأصدقاء وصور. غيّر صورتك وانشرها كمنشور.')],
+    ['user', t('A real profile', 'بروفايل حقيقي'), t('Cover, photo, bio, friends and photos. Lock your profile so only friends and followers see it, and decide who can open or download your photo.', 'غلاف وصورة وبايو وأصدقاء وصور. اقفل بروفايلك ليشوفه أصدقاؤك ومتابعوك بس، وحدّد مين يفتح صورتك أو ينزّلها.')],
     ['users', t('Your network', 'شبكتك'), t('Connect with classmates and instructors, follow people, and see what your university shares.', 'اتصل بزمايلك ودكاترتك وتابع الناس وشوف اللي جامعتك بتنشره.')],
   ];
 
@@ -98,7 +98,7 @@ export default function Landing() {
     ['lock', t('Secure exam mode', 'وضع امتحان آمن'), t('Tab switches are logged and the instructor reviews every AI grading suggestion.', 'تبديل التابات بيتسجل والدكتور بيراجع كل اقتراح تصحيح من الذكاء الاصطناعي.')],
     ['shield', t('Two-step sign-in', 'دخول بخطوتين'), t('Protect your account with a second factor, with recovery if you lose access.', 'احمِ حسابك بعامل تحقق تاني، مع استعادة الحساب لو فقدت الوصول.')],
     ['monitor', t('Sessions and devices', 'الجلسات والأجهزة'), t('See where you are signed in and sign out devices you do not recognise.', 'شوف إنت داخل منين وسجّل خروج من أي جهاز مش معروف.')],
-    ['eye-off', t('Privacy you control', 'خصوصية في إيدك'), t('Decide who sees your photo, bio, last seen and stories, and who can message or call you.', 'اختار مين يشوف صورتك والبايو وآخر ظهور والستوريز، ومين يراسلك أو يتصل بيك.')],
+    ['eye-off', t('Privacy you control', 'خصوصية في إيدك'), t('Lock your profile, protect your photo from saving, hide your friends list, and decide who sees your bio, last seen and stories or can message you.', 'اقفل بروفايلك، واحمِ صورتك من الحفظ، وأخفِ قائمة أصدقائك، واختار مين يشوف البايو وآخر ظهور والستوريز ومين يراسلك.')],
     ['award', t('Verifiable certificates', 'شهادات تتحقق منها'), t('Anyone can check a graduation certificate by its number, with no sign-in.', 'أي جهة تقدر تتحقق من شهادة التخرج برقمها من غير تسجيل دخول.')],
     ['history', t('Audit trail', 'سجل مراجعة'), t('Important actions are logged so universities can follow up reports and incidents.', 'الإجراءات المهمة بتتسجل عشان الجامعات تتابع البلاغات والحوادث.')],
   ];
@@ -113,7 +113,7 @@ export default function Landing() {
     [t('Is UIP free?', 'هل UIP مجانية؟'), t('It is free for students. You do not need a credit card to create an account.', 'مجانية للطلاب. مش محتاج كريدت كارد عشان تعمل حساب.')],
     [t('Who can use it?', 'مين يقدر يستخدمها؟'), t('Students, instructors and supervisors, universities and faculties, and data and security teams. Each role gets its own tools under one account.', 'الطلاب والدكاترة والمشرفين والجامعات والكليات وفرق البيانات والأمن. كل دور بياخد أدواته تحت حساب واحد.')],
     [t('Can I use it on my phone?', 'أقدر أستخدمها على الموبايل؟'), t('Yes. It works in any browser and there is an Android app for calls, chat and notifications.', 'أيوه. بتشتغل في أي متصفح، وفي تطبيق أندرويد للمكالمات والشات والإشعارات.')],
-    [t('Who sees my posts, photo and stories?', 'مين يشوف منشوراتي وصورتي والستوريز؟'), t('You choose. Each post and story has its own audience, and your photo, bio and last seen have privacy settings.', 'إنت اللي بتختار. كل منشور وستوري ليهم جمهورهم، وصورتك والبايو وآخر ظهور ليهم إعدادات خصوصية.')],
+    [t('Who sees my posts, photo and stories?', 'مين يشوف منشوراتي وصورتي والستوريز؟'), t('You choose. Each post and story has its own audience, you can lock your profile so only friends and followers see it, and your photo can be opened or downloaded only if you allow it.', 'إنت اللي بتختار. كل منشور وستوري ليهم جمهورهم، وتقدر تقفل بروفايلك ليشوفه أصدقاؤك ومتابعوك بس، وصورتك مش بتتفتح أو تتنزّل غير لو سمحت.')],
     [t('How do exams stay fair?', 'الامتحانات بتتأمّن إزاي؟'), t('Secure mode logs tab switches, and AI grading only suggests marks. The instructor approves them.', 'الوضع الآمن بيسجل تبديل التابات، والذكاء الاصطناعي بيقترح الدرجات بس والدكتور هو اللي يعتمدها.')],
     [t('How can an employer verify my certificate?', 'إزاي جهة العمل تتحقق من شهادتي؟'), t('Open the Verify a Certificate page, enter the number printed on it and see whether it is valid.', 'تفتح صفحة التحقق من شهادة وتدخل الرقم المطبوع عليها وتشوف هل هي صحيحة.')],
   ];
@@ -146,8 +146,8 @@ export default function Landing() {
             </h1>
             <p className="lp4-lead">
               {t(
-                'Chat, video meetings, exams, graduation projects and a cloud PC, with an AI tutor beside you. Stop switching between ten different tools.',
-                'شات واجتماعات فيديو وامتحانات ومشاريع تخرج وجهاز سحابي، ومعاك معلم ذكي جنبك. كفاية تنقّل بين عشر أدوات مختلفة.',
+                'Chat, video meetings, courses, exams, a social community, projects and a cloud PC, with an AI tutor beside you. Stop switching between ten different tools.',
+                'شات واجتماعات فيديو ومواد وامتحانات ومجتمع اجتماعي ومشاريع وجهاز سحابي، ومعاك معلم ذكي جنبك. كفاية تنقّل بين عشر أدوات مختلفة.',
               )}
             </p>
             <div className="lp4-cta">
@@ -328,7 +328,7 @@ export default function Landing() {
         <section className="lp4-section lp4-shell" id="projects">
           <div className="lp4-head">
             <span className="lp4-eyebrow">{t('Projects', 'المشاريع')}</span>
-            <h2>{t('Publish your graduation project and get found', 'انشر مشروع تخرجك واتكتشف')}</h2>
+            <h2>{t('Publish your projects and get found', 'انشر مشاريعك واتكتشف')}</h2>
           </div>
           <ol className="lp4-steps">
             {steps.map(([ic, title, desc], i) => (

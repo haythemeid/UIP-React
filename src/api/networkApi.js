@@ -8,6 +8,7 @@ const list = (r) => ({ items: r.data || [], meta: r.meta || {} });
 /** "My network" API (/api/v1/network/*). Action calls resolve the person's fresh relation ({ connection, connection_id, is_following, ... }). */
 export const networkApi = {
   summary: () => api.get(`${N}/summary`).then(d),
+  settings: () => api.get(`${N}/settings`).then(d),
   saveSettings: (body) => api.patch(`${N}/settings`, body).then(d),
 
   connections: (q, page = 1) => api.get(`${N}/connections`, { q: q || undefined, page }).then(list),
