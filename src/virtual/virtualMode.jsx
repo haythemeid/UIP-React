@@ -22,6 +22,11 @@ import { belongsInDesktop } from './catalog';
  * Phones keep the normal portal (it already has a purpose-built phone UI): the redirect below is skipped there.
  */
 export const VIRTUAL_ROLES = ['student'];
+/**
+ * MASTER SWITCH. false = the student portal opens as a normal portal (sidebar + pages) outside My PC, like every other portal,
+ * and My PC stays its own desktop at /student/my-pc. Set to true to pin the whole platform inside the desktop again.
+ */
+export const VIRTUAL_MODE_ENABLED = false;
 const ENDPOINT = '/api/v1/desktop/virtual-mode';
 const unwrap = (r) => (r && r.data !== undefined ? r.data : r);
 const cacheKey = (uid) => `uip_virtual_mode_v1_${uid ?? 'anon'}`;
@@ -46,7 +51,7 @@ export function VirtualModeProvider({ children }) {
   const { user } = useAuth();
   const { search } = useLocation();
   const uid = user?.id;
-  const supported = !!user && VIRTUAL_ROLES.includes(user.role);
+  const supported = VIRTUAL_MODE_ENABLED && !!user && VIRTUAL_ROLES.includes(user.role);
   const [st, setSt] = useState({ uid: null, available: false, enabled: false });
   const busy = false;
   const alive = useRef(true);

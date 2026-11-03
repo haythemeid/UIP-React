@@ -182,11 +182,14 @@ export function useSandbox(projectId, tokenPath) {
   // connection lost (Wi-Fi dropped, laptop slept, tab refreshed): keep re-attaching while the gateway still holds the sandbox (~10 min)
   useEffect(() => {
     if (phase !== 'disconnected') return undefined;
-    let n = 0;
+    let stopped = false; let timer = 0; let n = 0;
+    // exponential back-off (6s, 12s, 24s … max 60s): a fixed 6s loop per window used up the token throttle (HTTP 429) when the gateway was down
+    const schedule = () => { if (stopped || n >= 25) return; timer = setTimeout(() => { tryNow(); schedule(); }, Math.min(60_000, 6000 * 2 ** n)); n += 1; };
     const tryNow = () => { if (tries.current > 100) return; if (navigator.onLine !== false) { tries.current += 1; const l = lastRef.current; if (l) connect({ ...l, cols: sizeRef.current.cols, rows: sizeRef.current.rows, resume: true }); } };
-    const h = setInterval(() => { n += 1; if (n > 90) clearInterval(h); else tryNow(); }, 6000);
-    window.addEventListener('online', tryNow);
-    return () => { clearInterval(h); window.removeEventListener('online', tryNow); };
+    schedule();
+    const onOnline = () => { n = 0; tryNow(); };
+    window.addEventListener('online', onOnline);
+    return () => { stopped = true; clearTimeout(timer); window.removeEventListener('online', onOnline); };
   }, [phase, connect]);
 
   // leaving the page ends the sandbox (it would only sit there until the idle timeout otherwise)
