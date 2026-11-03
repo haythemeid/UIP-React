@@ -36,6 +36,10 @@ export function useSandbox(projectId, tokenPath) {
   const [hint, setHint] = useState('');
   const [error, setError] = useState('');
   const [expiresAt, setExpiresAt] = useState(0);
+  const [ports, setPorts] = useState([]); // VS Code: other dev-server ports of the session, each with its own preview address
+  const pullRef = useRef(null);          // the one "Save to My PC" ZIP that is on its way: { id, size, resolve, reject, timer }
+  const hashRefs = useRef(new Map());    // id -> resolve of a pending tree-hash question
+  const reqId = useRef(0);
 
   // Output frames are merged and written to the terminal at most every ~16 ms: one xterm write + one buffer trim per batch
   // instead of per WebSocket message (a busy shell sends hundreds per second, and each used to re-copy the 200 KB history).
@@ -69,14 +73,14 @@ export function useSandbox(projectId, tokenPath) {
     if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg));
   }, []);
 
-  const connect = useCallback(async ({ kind, entry = '', zip, cols = 100, rows = 28, resume = false, choice = '' }) => {
+  const connect = useCallback(async ({ kind, entry = '', zip, cols = 100, rows = 28, resume = false, choice = '', screen }) => {
     closeSocket();
     runRef.current += 1;
     const run = runRef.current;
     setError(''); setHint('');
-    if (!resume) { outRef.current = ''; pendRef.current = ''; sinkRef.current?.reset?.(); setPreviewUrl(null); }
+    if (!resume) { outRef.current = ''; pendRef.current = ''; sinkRef.current?.reset?.(); setPreviewUrl(null); setPorts([]); }
     setPhase('connecting'); setStatusText('');
-    lastRef.current = { kind, entry, choice };
+    lastRef.current = { kind, entry, choice, screen };
     sizeRef.current = { cols, rows };
     try {
       const res = await api.post(tokenPath || `/api/v1/projects/${projectId}/sandbox-token`);
@@ -85,8 +89,9 @@ export function useSandbox(projectId, tokenPath) {
       // The token goes in the first WebSocket message, never in the URL (URLs end up in proxy / access logs, history, Referer).
       const wsUrl = `${String(url).replace(/^http/i, 'ws').replace(/\/+$/, '')}/ws`;
       const ws = new WebSocket(wsUrl);
+      ws.binaryType = 'arraybuffer';
       wsRef.current = ws;
-      ws.onopen = () => { ws.send(JSON.stringify({ t: 'auth', token })); ws.send(JSON.stringify({ t: 'init', kind, entry, cols, rows, resume })); };
+      ws.onopen = () => { ws.send(JSON.stringify({ t: 'auth', token })); ws.send(JSON.stringify({ t: 'init', kind, entry, cols, rows, resume, screen })); };
       ws.onerror = () => { if (run === runRef.current) { if (resume) setPhase('disconnected'); else { setError('Could not reach the sandbox server.'); setPhase('error'); } } };
       ws.onclose = () => {
         if (run !== runRef.current || wsRef.current !== ws) return;
@@ -94,7 +99,12 @@ export function useSandbox(projectId, tokenPath) {
         setPhase((p) => (p === 'running' || p === 'starting' ? 'disconnected' : p === 'connecting' ? (resume ? 'disconnected' : 'error') : p));
       };
       ws.onmessage = (ev) => {
-        if (run !== runRef.current || typeof ev.data !== 'string') return;
+        if (run !== runRef.current) return;
+        if (typeof ev.data !== 'string') { // the only binary frame the gateway sends: the ZIP asked for by pull()
+          const p = pullRef.current;
+          if (p && p.size != null) { pullRef.current = null; clearTimeout(p.timer); p.resolve(new Uint8Array(ev.data)); }
+          return;
+        }
         let m; try { m = JSON.parse(ev.data); } catch { return; }
         switch (m.t) {
           case 'send-files': setPhase('starting'); ws.send(zip); break;
@@ -102,11 +112,15 @@ export function useSandbox(projectId, tokenPath) {
           case 'session': tries.current = 0; setPhase('running'); setStatusText(''); setExpiresAt(Date.now() + (m.expiresInMs || 0)); if (idRef.current) writeMark(idRef.current, { kind, entry, choice, until: Date.now() + (m.expiresInMs || 0) }); break;
           case 'out': emit(m.d); break;
           case 'preview': setPreviewUrl(m.url || null); break;
+          case 'ports': setPorts(Array.isArray(m.ports) ? m.ports : []); break;
+          case 'pull-data': if (pullRef.current?.id === m.id) pullRef.current.size = m.size; break;
+          case 'pull-error': if (pullRef.current?.id === m.id) { const p = pullRef.current; pullRef.current = null; clearTimeout(p.timer); p.reject(new Error(m.text || 'Could not read the project.')); } break;
+          case 'hash': { const f = hashRefs.current.get(m.id); if (f) { hashRefs.current.delete(m.id); f(String(m.h || '')); } break; }
           case 'hint': setHint(m.text || ''); break;
           case 'exit': setPhase('exited'); break;
           case 'nosession': setPhase('idle'); setStatusText('No running sandbox to resume.'); clearMark(idRef.current); break;
           case 'error': setError(m.text || 'Sandbox error'); setPhase('error'); break;
-          case 'closed': clearMark(idRef.current); setPhase('closed'); setStatusText(m.reason || ''); setPreviewUrl(null); wsRef.current = null; break;
+          case 'closed': clearMark(idRef.current); setPhase('closed'); setStatusText(m.reason || ''); setPreviewUrl(null); setPorts([]); wsRef.current = null; break;
           default: break;
         }
       };
@@ -129,12 +143,31 @@ export function useSandbox(projectId, tokenPath) {
   const restart = useCallback((cols, rows) => { outRef.current = ''; pendRef.current = ''; sinkRef.current?.reset?.(); send({ t: 'restart', cols, rows }); setPhase('running'); }, [send]);
   const stop = useCallback(() => { send({ t: 'stop' }); setPreviewUrl(null); }, [send]);
   const input = useCallback((d) => send({ t: 'input', d }), [send]);
+  /** cloud browser: open an address in a new tab of the running Chromium */
+  const openUrl = useCallback((url) => send({ t: 'open-url', url }), [send]);
+  /** the session's project folder as a ZIP (Uint8Array) — node_modules / vendor… are left out by the gateway */
+  const pull = useCallback(() => new Promise((resolve, reject) => {
+    if (pullRef.current) { reject(new Error('A save is already running.')); return; }
+    if (!wsRef.current || wsRef.current.readyState !== 1) { reject(new Error('Not connected.')); return; }
+    const id = ++reqId.current;
+    const timer = setTimeout(() => { if (pullRef.current?.id === id) { pullRef.current = null; reject(new Error('Saving took too long.')); } }, 150_000);
+    pullRef.current = { id, size: null, resolve, reject, timer };
+    send({ t: 'pull', id });
+  }), [send]);
+  /** a short fingerprint of the project folder; '' when it could not be read. Cheap enough to ask every few seconds. */
+  const treeHash = useCallback(() => new Promise((resolve) => {
+    if (!wsRef.current || wsRef.current.readyState !== 1) { resolve(''); return; }
+    const id = ++reqId.current;
+    hashRefs.current.set(id, resolve);
+    setTimeout(() => { if (hashRefs.current.delete(id)) resolve(''); }, 20_000);
+    send({ t: 'hash', id });
+  }), [send]);
   const resize = useCallback((cols, rows) => { sizeRef.current = { cols, rows }; send({ t: 'resize', cols, rows }); }, [send]);
   const reset = useCallback(() => {
     clearMark(idRef.current);
     runRef.current += 1; send({ t: 'stop' }); closeSocket();
     outRef.current = ''; sinkRef.current?.reset?.();
-    setPhase('idle'); setStatusText(''); setPreviewUrl(null); setHint(''); setError('');
+    setPhase('idle'); setStatusText(''); setPreviewUrl(null); setPorts([]); setHint(''); setError('');
   }, [send, closeSocket]);
 
   /** a run from before a refresh is still alive on the gateway? -> { kind, entry, choice } else null */
@@ -162,5 +195,5 @@ export function useSandbox(projectId, tokenPath) {
   const busy = phase === 'connecting' || phase === 'starting';
   /** everything printed in the terminal so far (last 200 KB) — read by the "explain this error" button */
   const getOutput = useCallback(() => outRef.current, []);
-  return { phase, busy, statusText, previewUrl, hint, error, expiresAt, getOutput, attach, start, reconnect, resumable, resumeSaved, restart, stop, input, resize, reset };
+  return { phase, busy, statusText, previewUrl, ports, hint, error, expiresAt, pull, treeHash, openUrl, getOutput, attach, start, reconnect, resumable, resumeSaved, restart, stop, input, resize, reset };
 }

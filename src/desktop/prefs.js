@@ -18,7 +18,7 @@ export const DESK_ICONS = [
 ];
 export const DOCK_ICONS = [
   ['launchpad', 'Launchpad', 'لوحة التطبيقات', 'launchpad'], ['explorer', 'This PC', 'جهازي', 'explorer'], ['settings', 'Settings', 'الإعدادات', 'settings'],
-  ['shortcuts', 'Keyboard shortcuts', 'اختصارات الكيبورد', 'shortcuts'], ['notes', 'Notes', 'الملاحظات', 'notes'], ['calendar', 'Calendar', 'التقويم', 'calendar'], ['calculator', 'Calculator', 'الآلة الحاسبة', 'calculator'], ['terminal', 'UIPE Terminal', 'ترمينال UIPE', 'terminal'], ['lock', 'Lock screen', 'قفل الشاشة', 'lock'], ['portal', 'UIPE Portal', 'بوابة UIPE', 'portal'], ['logout', 'Sign out', 'تسجيل الخروج', 'logout'], ['bin', 'Recycle Bin', 'سلة المحذوفات', 'bin'],
+  ['shortcuts', 'Keyboard shortcuts', 'اختصارات الكيبورد', 'shortcuts'], ['notes', 'Notes', 'الملاحظات', 'notes'], ['calendar', 'Calendar', 'التقويم', 'calendar'], ['calculator', 'Calculator', 'الآلة الحاسبة', 'calculator'], ['terminal', 'UIPE Terminal', 'ترمينال UIPE', 'terminal'], ['vscode', 'VS Code', 'VS Code', 'vscode'], ['browser', 'Browser', 'المتصفح', 'browser'], ['lock', 'Lock screen', 'قفل الشاشة', 'lock'], ['portal', 'UIPE Portal', 'بوابة UIPE', 'portal'], ['logout', 'Sign out', 'تسجيل الخروج', 'logout'], ['bin', 'Recycle Bin', 'سلة المحذوفات', 'bin'],
   ...VM_DOCK_ICONS,
 ];
 export const NO_ICONS = []; // one shared empty list, so memo dependencies do not change on every render

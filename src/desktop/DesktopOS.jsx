@@ -64,6 +64,8 @@ import SnapAssist from './SnapAssist';
 import { CalendarApp, NotesApp } from './miniApps';
 import SciCalc from './SciCalc';
 const TerminalApp = lazy(() => import('./TerminalApp'));
+const VsCodeApp = lazy(() => import('./VsCodeApp'));
+const BrowserApp = lazy(() => import('./BrowserApp'));
 const VirtualApp = lazy(() => import('../virtual/VirtualApp'));
 import './desktop.css';
 import './mac.css';
@@ -152,6 +154,8 @@ const RUN_ALIASES = {
   bin: 'bin', recycle: 'bin', trash: 'bin', 'سلة المحذوفات': 'bin',
   notes: 'notes', note: 'notes', 'الملاحظات': 'notes', calendar: 'calendar', 'التقويم': 'calendar', calc: 'calculator', calculator: 'calculator', 'الآلة الحاسبة': 'calculator',
   terminal: 'terminal', term: 'terminal', cmd: 'terminal', shell: 'terminal', bash: 'terminal', 'الترمينال': 'terminal', uip: 'terminal', 'uip terminal': 'terminal', 'ترمينال uip': 'terminal', 'ترمينال': 'terminal',
+  vscode: 'vscode', code: 'vscode', 'vs code': 'vscode', 'visual studio code': 'vscode', 'محرر الأكواد': 'vscode', 'فيجوال ستوديو': 'vscode',
+  browser: 'browser', web: 'browser', internet: 'browser', chrome: 'browser', google: 'browser', search: 'browser', 'المتصفح': 'browser', 'متصفح': 'browser', 'بحث': 'browser', 'جوجل': 'browser',
   shortcuts: 'shortcuts', help: 'shortcuts', 'الاختصارات': 'shortcuts',
   cloud: 'cloud', backup: 'cloud', storage: 'cloud', 'النسخ الاحتياطي': 'cloud', 'التخزين': 'cloud',
   lock: 'lock', 'قفل': 'lock', portal: 'portal', exit: 'portal', 'البوابة': 'portal',
@@ -356,7 +360,7 @@ export default function DesktopOS() {
       case 'personalize': openApp('settings', { tab: 'personalize' }); break;
       case 'taskmgr': openApp('taskmgr'); break;
       case 'shortcuts': openApp('shortcuts'); break;
-      case 'notes': case 'calendar': case 'calculator': case 'terminal': openApp(id); break;
+      case 'notes': case 'calendar': case 'calculator': case 'terminal': case 'vscode': case 'browser': openApp(id); break;
       case 'ai': setOverlay(null); window.dispatchEvent(new Event(OPEN_AI_EVENT)); break;
       case 'run': setOverlay('run'); break;
       case 'lock': setOverlay(null); setLocked(true); break;
@@ -396,6 +400,8 @@ export default function DesktopOS() {
 
   // images / PDFs / media / ZIPs open in a Viewer window, text & code in a Code-editor window (one window per file)
   const openFileWin = useCallback((p) => {
+    if (p.kind === 'vscode') { openApp('vscode', { req: { folder: p.folder, nonce: Date.now() } }, { maximized: prefs.openMax !== false }); return; }
+    if (p.kind === 'browser') { openApp('browser', { req: { url: p.url, nonce: Date.now() } }, { maximized: prefs.openMax !== false }); return; }
     if (p.kind === 'viewer') {
       const f = p.files.find((x) => x.id === p.startId);
       if (f) addRecent(uidRef.current, { id: f.driveId ?? f.id, name: f.original_name, type: 'file', size_bytes: f.size_bytes });
@@ -1018,6 +1024,8 @@ export default function DesktopOS() {
     { id: 'calendar', en: 'Calendar', ar: 'التقويم', glyph: 'calendar' },
     { id: 'calculator', en: 'Calculator', ar: 'الآلة الحاسبة', glyph: 'calculator' },
     { id: 'terminal', en: 'UIPE Terminal', ar: 'ترمينال UIPE', glyph: 'terminal' },
+    { id: 'vscode', en: 'VS Code', ar: 'VS Code', glyph: 'vscode' },
+    { id: 'browser', en: 'Browser', ar: 'المتصفح', glyph: 'browser' },
     { id: 'taskmgr', en: 'Task Manager', ar: 'مدير المهام', glyph: 'taskmgr' },
     { id: 'shortcuts', en: 'Keyboard shortcuts', ar: 'اختصارات الكيبورد', glyph: 'shortcuts' },
     { id: 'run', en: 'Run', ar: 'تشغيل', glyph: 'run' },
@@ -1063,6 +1071,8 @@ export default function DesktopOS() {
       case 'calendar': return <CalendarApp uid={user?.id} role={user?.role} tt={tt} ar={ar} onGo={(p) => { if (!(virtual && openVirtualPath(p))) navigate(p); }} />;
       case 'calculator': return <SciCalc tt={tt} />;
       case 'terminal': return <Suspense fallback={WinFallback}><TerminalApp tt={tt} /></Suspense>;
+      case 'vscode': return <Suspense fallback={WinFallback}><VsCodeApp tt={tt} ar={ar} req={w.props.req} registerGuard={guardFor(w.id)} /></Suspense>;
+      case 'browser': return <Suspense fallback={WinFallback}><BrowserApp tt={tt} ar={ar} req={w.props.req} /></Suspense>;
       default:
         if (isVmApp(w.app)) {
           // a platform page with its own private router (see ../virtual/VirtualApp). Rebuilt only when it is asked to show another page.

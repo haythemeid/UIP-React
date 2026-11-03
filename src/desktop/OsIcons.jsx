@@ -100,6 +100,8 @@ const TILES = {
   personalize: ['#f472b6', '#a855f7', 'palette'],
   run: ['#5ac8fa', '#2563eb', 'terminal'],
   terminal: ['#3b4252', '#0d1117', 'terminal'],
+  vscode: ['#38bdf8', '#1d4ed8', 'terminal'],
+  browser: ['#34d399', '#0e7490', 'globe'],
   lock: ['#6b7280', '#1f2937', 'lock'],
   logout: ['#fb7185', '#e11d48', 'logout'],
   search: ['#5ac8fa', '#6366f1', 'search'],

@@ -270,6 +270,8 @@ const RUN_ITEMS = [
   { cmd: 'calendar', en: 'Calendar', ar: 'التقويم', glyph: 'calendar' },
   { cmd: 'calculator', en: 'Calculator', ar: 'الآلة الحاسبة', glyph: 'calculator' },
   { cmd: 'terminal', en: 'UIPE Terminal', ar: 'ترمينال UIPE', glyph: 'terminal' },
+  { cmd: 'vscode', en: 'VS Code', ar: 'VS Code', glyph: 'vscode' },
+  { cmd: 'browser', en: 'Browser', ar: 'المتصفح', glyph: 'browser' },
   { cmd: 'lock', en: 'Lock screen', ar: 'قفل الشاشة', glyph: 'lock' },
   { cmd: 'portal', en: 'Back to portal', ar: 'الرجوع للموقع', glyph: 'portal' },
   { cmd: 'logout', en: 'Sign out', ar: 'تسجيل الخروج', glyph: 'logout' },

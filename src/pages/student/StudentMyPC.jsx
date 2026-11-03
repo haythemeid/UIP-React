@@ -948,6 +948,7 @@ export default function StudentMyPC({ embedded = false, onOpenWindow }) {
     if (one) out.push({ icon: one.type === 'folder' ? 'folder' : 'eye', label: tt('Open', 'فتح'), run: () => openNode(one) });
     if (one && one.type === 'folder' && !one.parent_id && one.kind !== 'project') out.push({ icon: 'hard-drive', label: one.kind === 'disk' ? tt('Convert to a normal folder', 'تحويل لمجلد عادي') : tt('Make it a disk', 'تحويله لقرص'), run: () => toggleDisk(one) });
     if (one && one.type === 'folder') out.push({ icon: 'terminal', label: tt('Open in code editor', 'فتح في محرر الأكواد'), run: () => setEditor({ kind: 'folder', node: one }) });
+    if (one && one.type === 'folder' && onOpenWindow) out.push({ icon: 'terminal', label: tt('Open with VS Code', 'فتح بـ VS Code'), run: () => onOpenWindow({ kind: 'vscode', folder: { id: one.id, name: one.name } }) });
     if (one && one.type === 'file' && isTextName(one.name)) out.push({ icon: 'edit', label: tt('Edit', 'تعديل'), run: () => setEditor({ kind: 'text', node: one }) });
     if (one && one.type === 'file' && extOf(one.name) === 'zip') out.push({ icon: 'archive', label: tt('Extract here', 'فك الضغط هنا'), run: () => extract(one) });
     if (group.length) {
@@ -980,6 +981,7 @@ export default function StudentMyPC({ embedded = false, onOpenWindow }) {
       out.push({ icon: 'terminal', label: tt('New project', 'مشروع جديد'), run: newProject });
       out.push({ icon: 'file-up', label: tt('Upload files', 'رفع ملفات'), run: () => fileInput.current?.click() });
       if (data.breadcrumb.length) out.push({ icon: 'terminal', label: tt('Open this folder in code editor', 'فتح هذا المجلد في محرر الأكواد'), run: () => setEditor({ kind: 'folder', node: data.breadcrumb[data.breadcrumb.length - 1] }) });
+      if (data.breadcrumb.length && onOpenWindow) { const cur = data.breadcrumb[data.breadcrumb.length - 1]; out.push({ icon: 'terminal', label: tt('Open this folder with VS Code', 'فتح هذا المجلد بـ VS Code'), run: () => onOpenWindow({ kind: 'vscode', folder: { id: cur.id, name: cur.name } }) }); }
     }
     return out;
   };
@@ -1073,6 +1075,7 @@ export default function StudentMyPC({ embedded = false, onOpenWindow }) {
             <button type="button" className="mp-btn" onClick={() => fileInput.current?.click()} title={tt('Upload files', 'رفع ملفات')}><Icon name="file-up" size={16} /> <span className="mp-lbl">{tt('Upload files', 'رفع ملفات')}</span></button>
             <button type="button" className="mp-btn" onClick={() => dirInput.current?.click()} title={tt('Upload folder', 'رفع مجلد')}><Icon name="folder-up" size={16} /> <span className="mp-lbl">{tt('Upload folder', 'رفع مجلد')}</span></button>
             {currentFolder && <button type="button" className="mp-btn" onClick={() => setEditor({ kind: 'folder', node: currentFolder })} title={tt('Code editor', 'محرر الأكواد')}><Icon name="terminal" size={16} /> <span className="mp-lbl">{tt('Code editor', 'محرر الأكواد')}</span></button>}
+            {currentFolder && onOpenWindow && <button type="button" className="mp-btn" onClick={() => onOpenWindow({ kind: 'vscode', folder: { id: currentFolder.id, name: currentFolder.name } })} title={tt('Open this folder with VS Code', 'افتح المجلد ده بـ VS Code')}><Icon name="terminal" size={16} /> <span className="mp-lbl">VS Code</span></button>}
             <span className="mp-sep" />
             <button type="button" className="mp-ib" disabled={!selected.length} onClick={() => setClip({ ids: selected.map((n) => n.id), mode: 'copy' })} title={tt('Copy (Ctrl+C)', 'نسخ (Ctrl+C)')} aria-label={tt('Copy', 'نسخ')}><Icon name="copy" size={16} /></button>
             <button type="button" className="mp-ib" disabled={!selected.length} onClick={() => setClip({ ids: selected.map((n) => n.id), mode: 'cut' })} title={tt('Cut (Ctrl+X)', 'قص (Ctrl+X)')} aria-label={tt('Cut', 'قص')}><Icon name="ed-crop" size={16} /></button>

@@ -29,6 +29,9 @@ export const APPS = {
   calendar: { en: 'Calendar', ar: 'التقويم', size: { w: 920, h: 600 }, singleton: true, pin: true },
   terminal: { en: 'UIPE Terminal', ar: 'ترمينال UIPE', size: { w: 860, h: 540 }, singleton: true, pin: true },
   calculator: { en: 'Calculator', ar: 'الآلة الحاسبة', size: { w: 430, h: 800 }, singleton: true, pin: true },
+  // real VS Code (code-server) and a cloud Chromium, both running in the student's own sandbox container (uip-RUN)
+  vscode: { en: 'VS Code', ar: 'VS Code', size: { w: 1180, h: 720 }, singleton: true, pin: true },
+  browser: { en: 'Browser', ar: 'المتصفح', size: { w: 1100, h: 700 }, singleton: true, pin: true },
   // one window per file (title = the file name): images / PDFs / media / ZIPs, and the code editor
   viewer: { en: 'Viewer', ar: 'العارض', size: { w: 1000, h: 660 }, singleton: false, pin: false },
   editor: { en: 'Code editor', ar: 'محرر الأكواد', size: { w: 1120, h: 700 }, singleton: false, pin: false },

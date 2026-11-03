@@ -186,6 +186,8 @@ export default function MobileShell(p) {
     { key: 'calendar', app: 'calendar', label: tt('Calendar', 'التقويم'), run: () => runCommand('calendar') },
     { key: 'calculator', app: 'calculator', label: tt('Calculator', 'الآلة الحاسبة'), run: () => runCommand('calculator') },
     { key: 'terminal', app: 'terminal', label: tt('UIPE Terminal', 'ترمينال UIPE'), run: () => runCommand('terminal') },
+    { key: 'vscode', app: 'vscode', label: tt('VS Code', 'VS Code'), run: () => runCommand('vscode') },
+    { key: 'browser', app: 'browser', label: tt('Browser', 'المتصفح'), run: () => runCommand('browser') },
     { key: 'taskmgr', app: 'taskmgr', label: tt('Task Manager', 'مدير المهام'), run: () => runCommand('taskmgr') },
     { key: 'portal', app: 'portal', label: tt('UIPE Portal', 'بوابة UIPE'), run: () => runCommand('portal') },
   ], [tt, openExplorer, runCommand, aiEnabled]);

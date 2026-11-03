@@ -121,9 +121,10 @@ export const drive = {
     return res;
   },
   /** Save the code editor's ZIP back into its folder (changed → replaced, new → added, removed → recycle bin). */
-  sync: (id, blob) => {
+  sync: (id, blob, opts) => {
     const fd = new FormData();
     fd.append('file', new File([blob], 'folder.zip', { type: 'application/zip' }));
+    (opts?.preserve || []).forEach((n) => fd.append('preserve[]', n)); // folders missing from the ZIP on purpose (node_modules…): keep them in My PC
     return api.postForm(`${B}/nodes/${id}/sync`, fd).then((r) => { emitDriveSaved({ id, name: '', kind: 'sync', size: blob.size }); return r; });
   },
   /** One file per request (clear progress, parallel-safe). rel = "dir/sub/file.txt" when uploading a folder. */
