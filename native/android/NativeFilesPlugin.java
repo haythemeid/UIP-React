@@ -100,7 +100,7 @@ public class NativeFilesPlugin extends Plugin {
     /**
      * Chat media auto-save (like WhatsApp): streams a file straight from its URL into the phone's shared storage,
      * inside a folder called "UIP" of the matching gallery category:
-     *   image -> Pictures/UIP   video -> Movies/UIP   audio -> Music/UIP   anything else -> Documents/UIP
+     *   image -> Pictures/UIPE   video -> Movies/UIPE   audio -> Music/UIPE   anything else -> Documents/UIPE
      * Android 10+ : MediaStore (no permission, shows up in Gallery / Files). Android 9 and older: needs the storage
      * permission (asked once; the call rejects with "no_permission" so JS tries again later).
      * The download is streamed (never loaded into memory / JS), so big videos are fine.
@@ -139,7 +139,7 @@ public class NativeFilesPlugin extends Plugin {
                     ContentValues values = new ContentValues();
                     values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
                     values.put(MediaStore.MediaColumns.MIME_TYPE, mime);
-                    values.put(MediaStore.MediaColumns.RELATIVE_PATH, folder + "/UIP");
+                    values.put(MediaStore.MediaColumns.RELATIVE_PATH, folder + "/UIPE");
                     values.put(MediaStore.MediaColumns.IS_PENDING, 1);
                     pending = resolver.insert(collection, values);
                     if (pending == null) throw new java.io.IOException("insert_failed");
@@ -150,19 +150,19 @@ public class NativeFilesPlugin extends Plugin {
                     ContentValues done = new ContentValues();
                     done.put(MediaStore.MediaColumns.IS_PENDING, 0);
                     resolver.update(pending, done, null, null);
-                    where = folder + "/UIP";
+                    where = folder + "/UIPE";
                     path = pending.toString();
                 } else {
                     if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                         if (getActivity() != null) ActivityCompat.requestPermissions(getActivity(), new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE }, 4711);
                         throw new java.io.IOException("no_permission");
                     }
-                    File dir = new File(Environment.getExternalStoragePublicDirectory(folder), "UIP");
+                    File dir = new File(Environment.getExternalStoragePublicDirectory(folder), "UIPE");
                     if (!dir.exists() && !dir.mkdirs()) throw new java.io.IOException("mkdir_failed");
                     File file = uniqueFile(dir, name);
                     try (InputStream in = conn.getInputStream(); FileOutputStream fos = new FileOutputStream(file)) { copy(in, fos); }
                     MediaScannerConnection.scanFile(getContext(), new String[] { file.getAbsolutePath() }, new String[] { mime }, null);
-                    where = folder + "/UIP";
+                    where = folder + "/UIPE";
                     path = file.getAbsolutePath();
                 }
 

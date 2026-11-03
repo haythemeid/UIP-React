@@ -67,8 +67,8 @@ public class UipMessagingService extends MessagingService {
             NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm == null) return;
 
-            NotificationChannel msg = new NotificationChannel(CH_MESSAGES, "UIP", NotificationManager.IMPORTANCE_HIGH);
-            msg.setDescription("UIP notifications");
+            NotificationChannel msg = new NotificationChannel(CH_MESSAGES, "UIPE", NotificationManager.IMPORTANCE_HIGH);
+            msg.setDescription("UIPE notifications");
             msg.enableVibration(true);
             msg.enableLights(true);
             msg.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
