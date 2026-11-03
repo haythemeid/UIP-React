@@ -7,6 +7,8 @@ import { BASE, GROUP_META, ROLE_LABELS, SEARCH_PROVIDER_LABELS, SETTING_META, Sw
 
 const UNIT = { MB: ['MB', 'ميجا'], KB: ['KB', 'ك.ب'], day: ['days', 'يوم'] };
 const WIDE = ['list_role', 'list_ext', 'map_int'];
+const FULL = ['secret', 'enum']; // text-like controls that need room: full-width row, label above
+const isFull = (k, m) => FULL.includes(m.type) || (m.type === 'string' && k.startsWith('web_search_'));
 const parseExt = (t) => [...new Set(String(t || '').split(/[\s,;]+/).map((x) => x.replace(/^\./, '').toLowerCase()).filter(Boolean))];
 
 /** Renders the My PC settings catalog (GET /control/settings) for the given groups. One Save; each override can be reset alone.
@@ -90,7 +92,7 @@ export default function SettingsTab({ groups, footer }) {
       const status = m.overridden ? L('Saved in the database', 'محفوظ في الداتابيز') : m.default_set ? L('Using the .env value', 'بيستخدم قيمة .env') : L('Not set', 'غير مظبوط');
       return (
         <div className="dvc-secret">
-          <input id={`dvs-${k}`} className="form-input" type="password" dir="ltr" autoComplete="new-password" maxLength={m.max_length || 500} value={v}
+          <input id={`dvs-${k}`} className="form-input" type="password" dir="ltr" autoComplete="off" data-allow-clipboard maxLength={m.max_length || 500} value={v}
             placeholder={m.hint || L('Paste a new key…', 'الصق مفتاح جديد…')} onChange={(e) => set(k, e.target.value)} />
           <small className="mtc-muted">{status}{m.hint ? ` · ${m.hint}` : ''}</small>
         </div>
@@ -172,7 +174,7 @@ export default function SettingsTab({ groups, footer }) {
                 const m = meta(k);
                 const changed = k in draft;
                 return (
-                  <div key={k} className={`mtc-setting${changed ? ' is-changed' : ''}${WIDE.includes(m.type) ? ' mtc-setting--wide' : ''}`}>
+                  <div key={k} className={`mtc-setting${changed ? ' is-changed' : ''}${WIDE.includes(m.type) ? ' mtc-setting--wide' : ''}${isFull(k, m) ? ' mtc-setting--field' : ''}`}>
                     <div className="mtc-setting__text">
                       <label htmlFor={`dvs-${k}`} className="mtc-setting__label">{ar ? sm.ar : sm.en}</label>
                       {(ar ? sm.hint_ar : sm.hint_en) && <small className="mtc-muted">{ar ? sm.hint_ar : sm.hint_en}</small>}
