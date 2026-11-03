@@ -18,6 +18,11 @@ export const networkApi = {
   search: (params, page = 1) => api.get(`${N}/search`, { ...params, page }).then(list),
   suggestions: (limit = 12) => api.get(`${N}/suggestions`, { limit }).then(d),
   person: (id) => api.get(`${N}/people/${id}`).then(d),
+  /** A person's friends (connections) — the profile "Friends" tab. Each item carries MY relation to that friend. */
+  friendsOf: (id, q, page = 1) => api.get(`${N}/people/${id}/connections`, { q: q || undefined, page }).then(list),
+  /** Cover photo (multipart `cover`). */
+  setCover: (file) => { const fd = new FormData(); fd.append('cover', file, file.name); return api.postForm(`${N}/me/cover`, fd).then(d); },
+  removeCover: () => api.del(`${N}/me/cover`).then(d),
 
   connect: (id, message) => api.post(`${N}/connect/${id}`, message ? { message } : {}).then(d),
   accept: (requestId) => api.post(`${N}/requests/${requestId}/accept`).then(d),

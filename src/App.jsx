@@ -192,6 +192,7 @@ const DesktopOS = lazy(() => import('./desktop/DesktopOS'));
 const MyLibrary = lazy(() => import('./pages/MyLibrary'));
 const PostsFeed = lazy(() => import('./pages/posts/PostsFeed'));
 const PublicPost = lazy(() => import('./pages/posts/PublicPost'));
+const PostsProfile = lazy(() => import('./pages/posts/PostsProfile'));
 const AdminPosts = lazy(() => import('./pages/posts/AdminPosts'));
 const Network = lazy(() => import('./pages/network/Network'));
 /** The classic "My PC" view has no lock screen of its own: while the desktop is locked (or never unlocked in this tab) send the person back to the lock screen. */
@@ -435,6 +436,8 @@ export default function App() {
                 ])}
                 {/* Social posts live in every portal: /student/posts, /faculty/posts, … (the API enforces posts.use). */}
                 {MY_PC_PREFIXES.map((px) => <Route key={`${px}-posts`} path={`/${px}/posts`} element={<PostsFeed />} />)}
+                {/* A person's profile (cover, photo + story ring, bio, friends, photos, posts): /student/posts/u/12 … */}
+                {MY_PC_PREFIXES.map((px) => <Route key={`${px}-posts-profile`} path={`/${px}/posts/u/:id`} element={<PostsProfile />} />)}
                 {/* "My network" (شبكتي): connections, follow requests and people search in every portal — notification links point at /{portal}/network?tab=… */}
                 {MY_PC_PREFIXES.map((px) => <Route key={`${px}-network`} path={`/${px}/network`} element={<Network />} />)}
                 <Route path="/admin/posts-control" element={<AdminPosts />} />

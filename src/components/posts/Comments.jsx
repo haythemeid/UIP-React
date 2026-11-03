@@ -5,6 +5,7 @@ import { errorMessage } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { ago } from '../feed/feedUi';
 import { Alert, Empty, PAvatar, REACTIONS, REPORT_REASONS, RichText, useTt } from './shared';
+import UserAvatar from './UserAvatar';
 import usePostsRealtime, { isOwnEcho, markLocalWrite } from '../../lib/usePostsRealtime';
 import { Dialog, useDialogs } from './Dialogs';
 
@@ -177,7 +178,7 @@ function Comment({ c, postId, canComment, onChange, onDeleted, onReply, depth = 
 
   return (
     <li className={`pp-cm${leaving ? ' is-leaving' : ''}${depth > 0 ? ' is-reply' : ''}`} id={`comment-${c.id}`}>
-      <PAvatar user={c.author} size={depth > 0 ? 28 : 36} />
+      <UserAvatar user={c.author} size={depth > 0 ? 28 : 36} />
       <div className="pp-cm__main">
         {editing ? (
           <div className="pp-cm__edit">

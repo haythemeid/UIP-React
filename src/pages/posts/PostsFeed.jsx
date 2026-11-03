@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Icon from '../../components/Icon';
 import { postsApi } from '../../api/postsApi';
 import { errorMessage } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { usePageMeta } from '../../context/PageMetaContext';
-import { Alert, Empty, PAvatar, useTt } from '../../components/posts/shared';
+import { Alert, Empty, useTt } from '../../components/posts/shared';
+import UserAvatar, { useProfilePath } from '../../components/posts/UserAvatar';
+import { PostStoriesBar, StoryHubProvider } from '../../components/posts/StoryHub';
 import PostCard from '../../components/posts/PostCard';
 import Composer from '../../components/posts/Composer';
 import FloatingChat from '../../components/posts/FloatingChat';
@@ -22,6 +24,8 @@ const TABS = [
 const MINE = [['', 'Published', 'المنشور'], ['draft', 'Drafts', 'المسودات'], ['scheduled', 'Scheduled', 'المجدولة'], ['pending', 'Pending', 'قيد المراجعة'], ['archived', 'Archived', 'المؤرشف']];
 
 function Side({ tt, onTag, onFollow }) {
+  const nav = useNavigate();
+  const profilePath = useProfilePath();
   const [tags, setTags] = useState([]);
   const [people, setPeople] = useState([]);
   useEffect(() => { postsApi.trendingTags().then((r) => setTags(Array.isArray(r) ? r : r?.tags || [])).catch(() => {}); postsApi.suggestions(6).then((r) => setPeople(Array.isArray(r) ? r : [])).catch(() => {}); }, []);
@@ -35,14 +39,14 @@ function Side({ tt, onTag, onFollow }) {
       {people.length > 0 && (
         <div className="pp-card"><h3>{tt('People to follow', 'أشخاص قد تتابعهم')}</h3>
           <ul className="pp-people">{people.map((u) => (
-            <li key={u.id}><PAvatar user={u} size={36} /><div><strong>{u.full_name}</strong><small>{(u.role || '').replace(/_/g, ' ')}</small></div>
+            <li key={u.id}><UserAvatar user={u} size={36} /><div><button type="button" className="pp-namelink" onClick={() => nav(profilePath(u.id))}>{u.full_name}</button><small>{(u.role || '').replace(/_/g, ' ')}</small></div>
               <button type="button" className="pp-btn is-primary" onClick={() => follow(u)}>{tt('Follow', 'متابعة')}</button></li>))}</ul></div>
       )}
     </aside>
   );
 }
 
-export default function PostsFeed() {
+function PostsFeedPage() {
   const { tt } = useTt();
   const { user } = useAuth();
   const dialogs = useDialogs();
@@ -51,7 +55,7 @@ export default function PostsFeed() {
   const [config, setConfig] = useState(null);
   const [mode, setMode] = useState('for_you');
   const [status, setStatus] = useState('');
-  const [tag, setTag] = useState('');
+  const [tag, setTag] = useState(params.get('tag') || '');
   const [q, setQ] = useState('');
   const [qIn, setQIn] = useState('');
   const [items, setItems] = useState([]);
@@ -159,6 +163,7 @@ export default function PostsFeed() {
       )}
       <div className="pp-layout">
         <main className="pp-main">
+          {!single && <PostStoriesBar />}
           {!single && config && !editing && <Composer config={config} me={{ full_name: user?.full_name }} onSaved={saved} />}
           {editing && <Composer config={config} post={editing} me={{ full_name: user?.full_name }} onSaved={(p) => { replace(p); setEditing(null); }} onCancel={() => setEditing(null)} />}
           {toast && <div className="pp-ok pp-toast">{toast}</div>}
@@ -204,4 +209,9 @@ export default function PostsFeed() {
       {dialogs.dialogs}
     </div>
   );
+}
+
+/** The posts page: the stories provider wraps it so the top bar and every avatar share ONE story feed + viewer. */
+export default function PostsFeed() {
+  return <StoryHubProvider><PostsFeedPage /></StoryHubProvider>;
 }

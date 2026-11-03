@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../Icon';
 import { networkApi } from '../../api/networkApi';
 import { errorMessage } from '../../api/client';
 import { Alert, PAvatar, useTt } from '../posts/shared';
 import { roleText } from './PersonCard';
 import PersonActions from './PersonActions';
+import { useProfilePath } from '../posts/UserAvatar';
 
 /** Person profile drawer: counters, mutual connections, relation to me and every action (connect / follow / message). */
 export default function PersonProfile({ person, onClose, onPatch, onChanged }) {
   const { tt, locale } = useTt();
+  const nav = useNavigate();
+  const profilePath = useProfilePath();
   const [data, setData] = useState(person);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -62,7 +66,7 @@ export default function PersonProfile({ person, onClose, onPatch, onChanged }) {
           {stat(data.connections_count, 'Connections', 'اتصالات')}
         </div>
         {data.bio && <p className="nw-drawer__bio" dir="auto">{data.bio}</p>}
-        <div className="nw-drawer__actions"><PersonActions p={data} onPatch={patch} onRemove={(id, why) => { onChanged?.(); if (why !== 'accepted') onClose(); }} /></div>
+        <div className="nw-drawer__actions"><button type="button" className="pp-btn is-primary" onClick={() => { onClose(); nav(profilePath(data.id)); }}><Icon name="user" size={14} /> {tt('View full profile', 'عرض البروفايل الكامل')}</button><PersonActions p={data} onPatch={patch} onRemove={(id, why) => { onChanged?.(); if (why !== 'accepted') onClose(); }} /></div>
         {data.connection === 'pending_received' && <p className="pp-muted nw-drawer__hint">{tt('Accepting also makes you follow each other, so you see each other’s posts.', 'قبول الاتصال يجعلكما تتابعان بعضكما فتظهر منشوراتكما في الفيد.')}</p>}
       </aside>
     </div>

@@ -24,7 +24,7 @@ function Img({ m, onOpen, className = '' }) {
   );
 }
 
-function Lightbox({ items, start, onClose }) {
+export function Lightbox({ items, start, onClose }) {
   const [i, setI] = useState(start);
   const m = items[i];
   const full = useMediaUrl(m, 'file');

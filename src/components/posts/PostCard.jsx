@@ -4,8 +4,10 @@ import { postsApi } from '../../api/postsApi';
 import { errorMessage } from '../../api/client';
 import { ago } from '../feed/feedUi';
 import { compact } from '../../lib/postMedia';
-import { Alert, PAvatar, REACTIONS, REPORT_REASONS, RichText, VIS, useTt } from './shared';
+import { Alert, REACTIONS, REPORT_REASONS, RichText, VIS, useTt } from './shared';
 import PostMedia from './PostMedia';
+import UserAvatar, { useProfilePath } from './UserAvatar';
+import { useNavigate } from 'react-router-dom';
 import LinkCard from './LinkCard';
 import SaveDialog from './SaveDialog';
 import ShareDialog from './ShareDialog';
@@ -49,6 +51,8 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
   const [shareOpen, setShareOpen] = useState(false);
   const [repostOpen, setRepostOpen] = useState(false);
   const dialogs = useDialogs();
+  const nav = useNavigate();
+  const profilePath = useProfilePath();
   const [insights, setInsights] = useState(null); // null | 'reactions' | 'shares' | 'reposts' | 'views'
   const ref = useRef(null);
   useEffect(() => setPost(initial), [initial]);
@@ -123,11 +127,12 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
   const my = post.my_reaction ? REACTIONS[post.my_reaction] : null;
 
   return (
-    <article ref={ref} className={`pp-post${post.is_pinned ? ' is-pinned' : ''}${post.status !== 'published' ? ' is-draft' : ''}`}>
+    <article ref={ref} className={`pp-post${post.subtype ? ` pp-post--${post.subtype}` : ''}${post.is_pinned ? ' is-pinned' : ''}${post.status !== 'published' ? ' is-draft' : ''}`}>
       <header className="pp-post__head">
-        <button type="button" className="pp-plain" onClick={() => onOpenAuthor?.(post.author)}><PAvatar user={post.author} /></button>
+        <UserAvatar user={post.author} size={40} />
         <div className="pp-post__who">
-          <strong>{post.author.full_name}</strong>
+          <strong><button type="button" className="pp-namelink" onClick={() => (onOpenAuthor ? onOpenAuthor(post.author) : nav(profilePath(post.author.id)))}>{post.author.full_name}</button>
+            {post.subtype && <span className="pp-subtype"> {post.subtype === 'profile_photo' ? tt('updated their profile picture', 'غيّر صورته الشخصية') : tt('updated their cover photo', 'غيّر صورة الغلاف')}</span>}</strong>
           <span>
             {post.author.role && <em>{post.author.role.replace(/_/g, ' ')} · </em>}
             {ago(post.published_at || post.created_at, locale)}{post.edited_at ? ` · ${tt('edited', 'معدّل')}` : ''} · <Icon name={vis.icon} size={11} /> {tt(vis.en, vis.ar)}
@@ -209,7 +214,7 @@ export default function PostCard({ post: initial, onChange, onRemoved, onTag, on
           {post.scheduled_at && <small className="pp-muted"><Icon name="clock" size={12} /> {post.scheduled_at}</small>}</div>
       )}
 
-      {insights && <InsightsDialog post={post} tab={insights} onClose={() => setInsights(null)} onOpenComments={() => setPanel('comments')} onOpenAuthor={onOpenAuthor} />}
+      {insights && <InsightsDialog post={post} tab={insights} onClose={() => setInsights(null)} onOpenComments={() => setPanel('comments')} onOpenAuthor={onOpenAuthor || ((a) => nav(profilePath(a.id)))} />}
       {repostOpen && <RepostDialog post={post} onClose={() => setRepostOpen(false)} onDone={repostDone} />}
       {dialogs.dialogs}
       {shareOpen && <ShareDialog post={post} onClose={() => setShareOpen(false)} onShared={shared} />}
