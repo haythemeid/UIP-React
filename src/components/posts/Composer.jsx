@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
 import { postsApi } from '../../api/postsApi';
@@ -323,12 +323,18 @@ function Recorder({ tt, onDone, onCancel, onError }) {
 
 /** Create (or edit, when `post` is given) a post: text, files of any kind (chunked when big), code snippet, voice note, audience & settings, schedule, draft. */
 export default function Composer({ config, me, post, onSaved, onCancel }) {
-  const { tt } = useTt();
+  const { tt, locale } = useTt();
   const editing = !!post;
   const lim = config?.limits || {};
   const [title, setTitle] = useState(post?.title || '');
   const [body, setBody] = useState(post?.body || '');
   const bodyRef = useRef(null);
+  useLayoutEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 360)}px`;
+  }, [body, open]);
   const addEmoji = (e) => { const v = insertAtCaret(bodyRef.current, body, e, lim.max_body || 6000); if (v != null) setBody(v); };
   const [link, setLink] = useState(post?.link_url || '');
   const [vis, setVis] = useState(post?.visibility || (config?.visibilities?.includes('public') ? 'public' : 'followers'));
@@ -412,8 +418,9 @@ export default function Composer({ config, me, post, onSaved, onCancel }) {
           : (
             <div className="pp-composer__fields">
               {showTitle && <input className="pp-input pp-input--title" maxLength={lim.max_title || 180} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={tt('Title', 'العنوان')} />}
-              <textarea ref={bodyRef} className="pp-input" dir="auto" rows={4} autoFocus maxLength={lim.max_body || 6000} value={body} onChange={(e) => setBody(e.target.value)} onPaste={onPaste}
-                placeholder={tt('What do you want to talk about? Use #tags', 'عن ماذا تريد أن تتحدث؟ استخدم #وسوم')} />
+              <textarea ref={bodyRef} className="pp-input pp-input--body" dir={body ? 'auto' : (locale === 'ar' ? 'rtl' : 'ltr')} rows={3} autoFocus maxLength={lim.max_body || 6000} value={body} onChange={(e) => setBody(e.target.value)} onPaste={onPaste}
+                placeholder={tt("What's on your mind?", 'بماذا تفكر؟')} aria-label={tt('Post text', 'نص المنشور')} />
+              {!body && <small className="pp-composer__hint">{tt('Add tags like', 'أضف وسومًا مثل')} <bdi dir="ltr">#design</bdi> <bdi dir="ltr">#project</bdi></small>}
               {showLink && (
                 <div className="pp-linkfield">
                   <div className="pp-linkfield__row">

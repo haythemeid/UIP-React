@@ -152,7 +152,11 @@ select.pp-input:hover{background-color:var(--pp-soft)}
 .pp-composer__fields .pp-input{width:100%;border-radius:14px}
 .pp-composer__fields .pp-input--title{padding:12px 16px;font-size:18px;font-weight:800;background:transparent;border:0;border-bottom:1px solid var(--pp-bd);border-radius:0;padding-inline:2px}
 .pp-composer__fields .pp-input--title:focus{box-shadow:none;border-bottom-color:var(--pp-pri);background:transparent}
-.pp-composer__fields textarea.pp-input{background:transparent;border-color:transparent;padding:6px 2px;font-size:16px;min-height:120px;box-shadow:none}
+.pp-composer__fields textarea.pp-input{background:transparent;border-color:transparent;padding:8px 2px;font-size:17px;line-height:1.75;min-height:96px;max-height:360px;overflow-y:auto;box-shadow:none;text-align:start;unicode-bidi:plaintext;overflow-wrap:anywhere}
+.pp-composer__fields textarea.pp-input::placeholder{color:var(--pp-mut);opacity:.7;font-weight:500;font-size:18px}
+.pp-composer__fields textarea.pp-input:focus::placeholder{opacity:.45}
+.pp-composer__hint{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:-4px;color:var(--pp-mut);font-size:12.5px;line-height:1.6;opacity:.85}
+.pp-composer__hint bdi{padding:1px 9px;border-radius:999px;background:var(--pp-soft);color:var(--pp-pri);font-weight:700;font-size:12px}
 .pp-composer__fields textarea.pp-input:focus{background:transparent;box-shadow:none;border-color:transparent}
 .pp-composer__fields input[type=url]{padding:10px 14px;font-size:13px;background:var(--pp-canvas)}
 
