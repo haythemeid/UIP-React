@@ -30,6 +30,7 @@ export default function Landing() {
   const [featured, setFeatured] = useState([]);
   const [liveStats, setLiveStats] = useState(null);
   const [role, setRole] = useState('students');
+  const [faqOpen, setFaqOpen] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -110,12 +111,12 @@ export default function Landing() {
   ];
 
   const faqs = [
-    [t('Is UIPE free?', 'هل UIPE مجانية؟'), t('It is free for students. You do not need a credit card to create an account.', 'مجانية للطلاب. مش محتاج كريدت كارد عشان تعمل حساب.')],
-    [t('Who can use it?', 'مين يقدر يستخدمها؟'), t('Students, instructors and supervisors, universities and faculties, and data and security teams. Each role gets its own tools under one account.', 'الطلاب والدكاترة والمشرفين والجامعات والكليات وفرق البيانات والأمن. كل دور بياخد أدواته تحت حساب واحد.')],
-    [t('Can I use it on my phone?', 'أقدر أستخدمها على الموبايل؟'), t('Yes. It works in any browser and there is an Android app for calls, chat and notifications.', 'أيوه. بتشتغل في أي متصفح، وفي تطبيق أندرويد للمكالمات والشات والإشعارات.')],
-    [t('Who sees my posts, photo and stories?', 'مين يشوف منشوراتي وصورتي والستوريز؟'), t('You choose. Each post and story has its own audience, you can lock your profile so only friends and followers see it, and your photo can be opened or downloaded only if you allow it.', 'إنت اللي بتختار. كل منشور وستوري ليهم جمهورهم، وتقدر تقفل بروفايلك ليشوفه أصدقاؤك ومتابعوك بس، وصورتك مش بتتفتح أو تتنزّل غير لو سمحت.')],
-    [t('How do exams stay fair?', 'الامتحانات بتتأمّن إزاي؟'), t('Secure mode logs tab switches, and AI grading only suggests marks. The instructor approves them.', 'الوضع الآمن بيسجل تبديل التابات، والذكاء الاصطناعي بيقترح الدرجات بس والدكتور هو اللي يعتمدها.')],
-    [t('How can an employer verify my certificate?', 'إزاي جهة العمل تتحقق من شهادتي؟'), t('Open the Verify a Certificate page, enter the number printed on it and see whether it is valid.', 'تفتح صفحة التحقق من شهادة وتدخل الرقم المطبوع عليها وتشوف هل هي صحيحة.')],
+    [t('Is UIPE free?', 'هل UIPE مجانية؟'), t('It is free for students. You do not need a credit card to create an account.', 'مجانية للطلاب بالكامل، ومش محتاج كريدت كارد عشان تعمل حسابك.')],
+    [t('Who can use it?', 'مين يقدر يستخدمها؟'), t('Students, instructors and supervisors, universities and faculties, and data and security teams. Each role gets its own tools under one account.', 'الطلاب، الدكاترة والمشرفين، الجامعات والكليات، وفرق البيانات والأمن. كل دور بياخد أدواته الخاصة تحت حساب واحد.')],
+    [t('Can I use it on my phone?', 'أقدر أستخدمها من الموبايل؟'), t('Yes. It works in any browser, and there is an Android app for calls, chat and notifications.', 'أيوه. بتشتغل على أي متصفح، وفي تطبيق أندرويد للمكالمات والشات والإشعارات.')],
+    [t('Who sees my posts, photo and stories?', 'مين يشوف منشوراتي وصورتي والستوريز؟'), t('You choose. Each post and story has its own audience, you can lock your profile so only friends and followers see it, and your photo can be opened or downloaded only if you allow it.', 'إنت اللي بتختار. كل منشور وستوري ليه جمهوره، وتقدر تقفل بروفايلك فيشوفه أصدقاؤك ومتابعوك بس، وصورتك مش بتتفتح ولا بتتحمّل غير لو سمحت.')],
+    [t('How do exams stay fair?', 'إزاي الامتحانات بتفضل عادلة وآمنة؟'), t('Secure mode logs tab switches, and AI grading only suggests marks. The instructor approves them.', 'الوضع الآمن بيسجّل أي تبديل بين التابات، والذكاء الاصطناعي بيقترح الدرجات بس، والدكتور هو اللي بيعتمدها.')],
+    [t('How can an employer verify my certificate?', 'إزاي جهة العمل تتحقق من شهادتي؟'), t('Open the Verify a Certificate page, enter the number printed on it and see whether it is valid.', 'تفتح صفحة التحقق من الشهادة، وتدخل الرقم المطبوع عليها، وتعرف فورًا هل هي صحيحة.')],
   ];
   const activeRole = audiences.find(([k]) => k === role) || audiences[0];
 
@@ -408,14 +409,32 @@ export default function Landing() {
 
         {/* ============================ FAQ ============================ */}
         <section className="lp4-section lp4-shell" id="faq">
-          <div className="lp4-head">
-            <span className="lp4-eyebrow">{t('Questions', 'أسئلة')}</span>
-            <h2>{t('Frequently asked questions', 'الأسئلة الشائعة')}</h2>
-          </div>
-          <div className="lp5-faq">
-            {faqs.map(([q, a]) => (
-              <details key={q}><summary>{q}<Icon name="chevron-down" size={16} /></summary><p>{a}</p></details>
-            ))}
+          <div className="lp6-faq">
+            <aside className="lp6-faq__side">
+              <span className="lp4-eyebrow">{t('FAQ', 'الأسئلة الشائعة')}</span>
+              <h2>{t('Got questions? We have answers.', 'عندك سؤال؟ هنا الإجابة.')}</h2>
+              <p>{t('Everything you need to know before you start. Still unsure? Create an account and try it free.', 'كل اللي محتاج تعرفه قبل ما تبدأ. لسه محتار؟ اعمل حسابك وجرّبها مجانًا.')}</p>
+              <Link to="/auth/register" className="btn btn-primary">{t('Create a free account', 'اعمل حساب مجاني')} <Icon name="arrow-right" size={16} /></Link>
+            </aside>
+            <div className="lp6-faq__list">
+              {faqs.map(([q, a], i) => {
+                const open = faqOpen === i;
+                return (
+                  <div key={q} className={`lp6-faq__item${open ? ' is-open' : ''}`}>
+                    <h3>
+                      <button type="button" id={`faq-q-${i}`} aria-expanded={open} aria-controls={`faq-a-${i}`} onClick={() => setFaqOpen(open ? -1 : i)}>
+                        <span className="lp6-faq__num">{String(i + 1).padStart(2, '0')}</span>
+                        <span className="lp6-faq__q">{q}</span>
+                        <span className="lp6-faq__ic"><Icon name="plus" size={16} /></span>
+                      </button>
+                    </h3>
+                    <div className="lp6-faq__a" id={`faq-a-${i}`} role="region" aria-labelledby={`faq-q-${i}`}>
+                      <div><p>{a}</p></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
 
