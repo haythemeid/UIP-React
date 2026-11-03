@@ -147,3 +147,6 @@
 .pf-share__aud{display:flex;flex-direction:column;gap:5px;margin-top:10px;font-size:13px;color:var(--text-secondary,#6b7280)}
 
 @media(prefers-reduced-motion:reduce){.pf-head,.pf-sheet,.pf-sheet-scrim,.pf-photo{animation:none}.pf-av{transition:none}}
+
+/* offline notice above the feed */
+.pp-offline{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:9px 14px;border:1px solid color-mix(in srgb,#f59e0b 45%,transparent);border-radius:12px;background:color-mix(in srgb,#f59e0b 12%,transparent);color:var(--text-primary,#111827);font-size:13px}

@@ -12,10 +12,26 @@ const PUBLIC_BASE = '/api/v1/public/posts/media';
 /** Media of the public post page (/post/:id) arrive with urls under /api/v1/public/posts/media (no sign-in needed); everything else uses the signed-in endpoints. */
 export const mediaBaseOf = (media) => (typeof media?.urls?.file === 'string' && media.urls.file.startsWith(PUBLIC_BASE) ? PUBLIC_BASE : BASE);
 
+const CACHE = 'uip-post-media-v1';
+const PERSIST = new Set(['thumbnail', 'preview']); // thumbnails / previews and small images survive reloads / offline (Cache Storage)
+const PERSIST_MAX = 1.5 * 1024 * 1024;
+
 export async function fetchMediaBlob(id, variant = 'file', base = BASE) {
+  const keep = base === BASE && typeof caches !== 'undefined';
+  const key = `/__uip-post-media/${id}/${variant}`;
+  if (keep) {
+    try { const hit = await (await caches.open(CACHE)).match(key); if (hit) return await hit.blob(); } catch { /* ignore */ }
+  }
   const res = await api.blob(`${base}/${id}/${variant}`);
-  return res.blob();
+  const blob = await res.blob();
+  if (keep && blob.size <= PERSIST_MAX && (PERSIST.has(variant) || (blob.type || '').startsWith('image/'))) {
+    caches.open(CACHE).then((c) => c.put(key, new Response(blob, { headers: { 'Content-Type': blob.type || 'image/jpeg' } }))).catch(() => {});
+  }
+  return blob;
 }
+
+/** Forget the persisted thumbnails (another account signed in on this browser). */
+export function clearPersistedMedia() { try { caches?.delete(CACHE); } catch { /* ignore */ } }
 
 const blobCache = new Map(); // `${id}/${variant}` -> Promise<string objectURL>
 export function cachedBlobUrl(id, variant, base = BASE) {
