@@ -15,7 +15,7 @@ function appId() {
   const fromTs = existsSync(ts) && /appId:\s*['"]([^'"]+)['"]/.exec(readFileSync(ts, 'utf8'));
   if (fromTs) return fromTs[1];
   if (existsSync(json)) { try { return JSON.parse(readFileSync(json, 'utf8')).appId; } catch { /* ignore */ } }
-  return 'com.uip.platform';
+  return 'com.uipe.platform';
 }
 
 const pkg = appId();

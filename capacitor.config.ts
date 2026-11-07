@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.uip.platform',
+  appId: 'com.uipe.platform',
   appName: 'UIPE',
   webDir: 'dist',
   backgroundColor: '#F4F6FF',
