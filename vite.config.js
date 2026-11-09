@@ -46,7 +46,7 @@ windowUnits.postcss = true;
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const target = env.VITE_API_TARGET || "https://uip-laravel.up.railway.app";
+  const target = env.VITE_API_TARGET || "https://uip-reverb-production.up.railway.app";
   const proxy = {
     "/api": { target, changeOrigin: true, secure: true },
     "/uploads": { target, changeOrigin: true, secure: true },
