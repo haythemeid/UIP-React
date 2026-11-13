@@ -7,7 +7,8 @@
  * everything else is plain text. The result opens straight in the existing viewer / editors (FileViewer, code editor).
  */
 import { buildPptx } from './newPptx';
-import { DOCX_TEMPLATES, docxTemplateHtml } from './docxTemplates';
+import { DOCX_TEMPLATES, DOCX_GROUPS, docxTemplateHtml } from './docxTemplates';
+import { XLSX_TEMPLATES, XLSX_GROUPS, buildTemplateWorkbook } from './xlsxTemplates';
 
 
 const MIME = {
@@ -23,9 +24,9 @@ const L = (en, ar) => ({ en, ar });
 /** Starter templates per type: `id` is passed to createFile; the first one is the blank file. */
 export const NEW_TYPES = [
   { id: 'docx', ext: 'docx', group: 'office', color: '#2b6cdf', label: L('Word document', 'مستند Word'), hint: L('Letters, reports, CVs', 'خطابات، تقارير، سيرة ذاتية'),
-    templates: DOCX_TEMPLATES.map((x) => ({ id: x.id, label: L(x.label.en, x.label.ar) })) },
+    templates: DOCX_TEMPLATES.map((x) => ({ id: x.id, group: x.group, label: L(x.label.en, x.label.ar), hint: L(x.hint.en, x.hint.ar) })), groups: DOCX_GROUPS },
   { id: 'xlsx', ext: 'xlsx', group: 'office', color: '#16a34a', label: L('Excel workbook', 'جدول Excel'), hint: L('Tables, lists, grades', 'جداول، قوائم، درجات'),
-    templates: [{ id: 'blank', label: L('Blank workbook', 'جدول فارغ') }, { id: 'tasks', label: L('Task tracker', 'متابعة مهام') }, { id: 'attendance', label: L('Attendance sheet', 'كشف حضور') }, { id: 'grades', label: L('Grades sheet', 'كشف درجات') }] },
+    templates: XLSX_TEMPLATES.map((x) => ({ id: x.id, group: x.group, label: L(x.label.en, x.label.ar), hint: L(x.hint.en, x.hint.ar) })), groups: XLSX_GROUPS },
   { id: 'pptx', ext: 'pptx', group: 'office', color: '#ea580c', label: L('PowerPoint presentation', 'عرض PowerPoint'), hint: L('Slides for a talk or a project', 'شرائح لعرض أو مشروع'),
     templates: [{ id: 'blank', label: L('Title slide only', 'شريحة عنوان فقط') }, { id: 'outline', label: L('Presentation outline (5 slides)', 'هيكل عرض (٥ شرائح)') }, { id: 'empty', label: L('Empty slide', 'شريحة فاضية') }] },
   { id: 'pdf', ext: 'pdf', group: 'office', color: '#e5484d', label: L('PDF document', 'ملف PDF'), hint: L('Blank pages you can annotate / fill', 'صفحات فاضية تكتب وترسم عليها'),
@@ -146,16 +147,14 @@ async function makeDocx(template, title, locale) {
 }
 
 /* ----------------------------------------------------------------- Excel */
-function sheetRows(template, ar) {
-  if (template === 'tasks') return ar ? [['المهمة', 'المسؤول', 'الأولوية', 'الحالة', 'الموعد'], ['', '', '', '', ''], ['', '', '', '', '']] : [['Task', 'Owner', 'Priority', 'Status', 'Due date'], ['', '', '', '', ''], ['', '', '', '', '']];
-  if (template === 'attendance') return ar ? [['الاسم', 'رقم الطالب', 'المحاضرة ١', 'المحاضرة ٢', 'المحاضرة ٣', 'المحاضرة ٤', 'ملاحظات']] : [['Name', 'Student ID', 'Lecture 1', 'Lecture 2', 'Lecture 3', 'Lecture 4', 'Notes']];
-  if (template === 'grades') return ar ? [['الاسم', 'رقم الطالب', 'أعمال السنة', 'الميد', 'النهائي', 'المجموع']] : [['Name', 'Student ID', 'Coursework', 'Midterm', 'Final', 'Total']];
-  return [['']];
-}
 async function makeXlsx(template, title, locale) {
-  const { buildSheets } = await import('./xlsx');
   const ar = locale === 'ar';
-  return buildSheets([{ name: ar ? 'ورقة1' : 'Sheet1', cells: sheetRows(template, ar) }], 'xlsx', { rtl: ar });
+  if (template !== 'blank' && XLSX_TEMPLATES.some((x) => x.id === template)) {
+    const { writeXlsx } = await import('../sheet/xlsxio');
+    return new Blob([writeXlsx(buildTemplateWorkbook(template, { ar }))], { type: MIME.xlsx });
+  }
+  const { buildSheets } = await import('./xlsx');
+  return buildSheets([{ name: ar ? 'ورقة1' : 'Sheet1', cells: [['']] }], 'xlsx', { rtl: ar });
 }
 
 /* ------------------------------------------------------------ PowerPoint */

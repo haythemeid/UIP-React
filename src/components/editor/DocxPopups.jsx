@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { B, ColorBtn, keep } from './ribbonParts';
 import { FONTS, SIZES } from './docxEdit';
+import { DOCX_GROUPS } from '../../lib/officeFmt/docxTemplates';
 
 /** Mini toolbar that floats over a text selection (like Word): the most used formatting without going to the ribbon. */
 export function FloatingBar({ editor, fmt, A, tt, tick, host }) {
@@ -64,7 +65,7 @@ export function DocxContextMenu({ menu, onClose }) {
 /** Template gallery: pick a ready-made document and insert it (or replace the document). */
 export function TemplateGallery({ open, onClose, templates, tt, ar, onPick }) {
   if (!open) return null;
-  const groups = [['basic', tt('Basic', 'أساسي')], ['work', tt('Work', 'عمل')], ['academic', tt('Academic', 'أكاديمي')]];
+  const groups = DOCX_GROUPS.map((g) => [g.id, ar ? g.label.ar : g.label.en]);
   return createPortal(
     <div className="dxtpl" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} role="dialog" aria-modal="true">
       <div className="dxtpl__box">

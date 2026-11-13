@@ -14,7 +14,7 @@ import '../styles/css/new-file.css';
  *   `kinds` (optional): only these type ids, e.g. ['docx','xlsx','pptx','pdf']
  */
 /** extra words people type for a language (besides its name / extension / hint) */
-const ALIASES = { go: 'golang', cs: 'csharp c-sharp dotnet', sh: 'shell terminal', ps1: 'powershell pwsh', js: 'node nodejs', ts: 'typescript', py: 'python3', rb: 'rails', rs: 'cargo', kt: 'android', swift: 'ios apple', objc: 'ios apple cocoa', vb: 'vbnet visual basic dotnet', bas: 'vb6 visual basic', dpr: 'delphi pascal', fs: 'fsharp', ml: 'ocaml', ex: 'elixir', pl: 'perl', pro: 'prolog', sol: 'solidity ethereum smart contract', cls: 'apex salesforce', abap: 'sap', plsql: 'oracle', tsql: 'sql server mssql', matlab: 'octave', sb3: 'scratch', asm: 'assembler nasm', lisp: 'common lisp', cob: 'cobol', v: 'vlang' };
+const ALIASES = { xlsx: 'excel spreadsheet template data analysis statistics survey regression budget gantt', docx: 'word template cv resume letter report contract invoice thesis', go: 'golang', cs: 'csharp c-sharp dotnet', sh: 'shell terminal', ps1: 'powershell pwsh', js: 'node nodejs', ts: 'typescript', py: 'python3', rb: 'rails', rs: 'cargo', kt: 'android', swift: 'ios apple', objc: 'ios apple cocoa', vb: 'vbnet visual basic dotnet', bas: 'vb6 visual basic', dpr: 'delphi pascal', fs: 'fsharp', ml: 'ocaml', ex: 'elixir', pl: 'perl', pro: 'prolog', sol: 'solidity ethereum smart contract', cls: 'apex salesforce', abap: 'sap', plsql: 'oracle', tsql: 'sql server mssql', matlab: 'octave', sb3: 'scratch', asm: 'assembler nasm', lisp: 'common lisp', cob: 'cobol', v: 'vlang' };
 const norm = (x) => String(x || '').toLowerCase().replace(/[\s_-]+/g, ' ').trim();
 
 export default function NewFileDialog({ locale = 'en', parentId = null, kinds, initialType = 'docx', onClose, onCreated }) {
@@ -134,11 +134,20 @@ export default function NewFileDialog({ locale = 'en', parentId = null, kinds, i
               <div className="nf__field">
                 <span>{tt('Start from', 'ابدأ من')}</span>
                 <div className="nf__tpls" role="radiogroup">
-                  {t.templates.map((x) => (
-                    <button key={x.id} type="button" role="radio" aria-checked={x.id === template} className={x.id === template ? 'is-on' : ''} onClick={() => setTemplate(x.id)} disabled={busy}>
-                      <i aria-hidden="true" />{ar ? x.label.ar : x.label.en}
-                    </button>
-                  ))}
+                  {(t.groups || [{ id: '_', label: null }]).map((g) => {
+                    const list = t.groups ? t.templates.filter((x) => x.group === g.id) : t.templates;
+                    if (!list.length) return null;
+                    return (
+                      <div key={g.id} className="nf__tgrp">
+                        {g.label && <h5>{ar ? g.label.ar : g.label.en}</h5>}
+                        {list.map((x) => (
+                          <button key={x.id} type="button" role="radio" aria-checked={x.id === template} className={x.id === template ? 'is-on' : ''} onClick={() => setTemplate(x.id)} disabled={busy} title={x.hint ? (ar ? x.hint.ar : x.hint.en) : undefined}>
+                            <i aria-hidden="true" /><span className="nf__tl">{ar ? x.label.ar : x.label.en}{x.hint && <small>{ar ? x.hint.ar : x.hint.en}</small>}</span>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               <p className="nf__note">{tt('It is saved in My PC and opens in the editor — you can edit it, then Save.', 'بيتحفظ في جهازي وبيتفتح في المحرر — تعدّل عليه وتدوس حفظ.')}</p>
