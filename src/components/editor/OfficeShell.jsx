@@ -3,6 +3,7 @@ import useAutoDraft, { DraftChip } from '../../lib/useAutoDraft';
 import { afterGuard, askUnsaved } from '../../lib/saveCenter';
 import { discardDraft } from '../../lib/draftStore';
 import { Btn } from './EditorUI';
+import { edThemeOf, useEdTheme } from '../../lib/officeFmt/edThemes';
 import '../../styles/css/editor.css';
 import '../../styles/css/office.css';
 
@@ -12,6 +13,14 @@ import '../../styles/css/office.css';
  */
 export default function OfficeShell({ className = '', actionsRef, saveKeyRef, fileName, tt, guardRef, onSave, onClose, dirty, build, onSaved, tools, children, status, draftKey, draftToken, draftBuild, draftDelay }) {
   const saveRef = useRef(null);
+  const [themeId] = useEdTheme();
+  const theme = edThemeOf(themeId);
+  // floating bars / menus / dialogs are portaled to <body>, so the theme variables must live there too while an Office editor is open
+  useEffect(() => {
+    const st = document.body.style; const keys = Object.keys(theme.vars);
+    keys.forEach((k) => st.setProperty(k, theme.vars[k]));
+    return () => keys.forEach((k) => st.removeProperty(k));
+  }, [theme]);
   // draftBuild: a cheap snapshot for the local autosave (the full file is only built on Save / Download, never every few seconds)
   const draft = useAutoDraft({ draftKey, dirty, token: draftToken, build: draftBuild || build, delay: draftDelay, meta: { name: fileName }, saver: () => saveRef.current?.() });
   const [saving, setSaving] = useState(false);
@@ -55,7 +64,7 @@ export default function OfficeShell({ className = '', actionsRef, saveKeyRef, fi
 
   if (actionsRef) actionsRef.current = { download, close: () => afterGuard(dirty ? ask() : true, onClose), exportAs: null, ...(actionsRef.current || {}), download, close: () => afterGuard(dirty ? ask() : true, onClose) };
   return (
-    <div className={`ed ed--office ${className}`}>
+    <div className={`ed ed--office ${className}`} data-edtheme={theme.id} style={theme.vars}>
       <div className="ed__top">
         <Btn icon="x" label={tt('Cancel', 'إلغاء')} onClick={() => afterGuard(dirty ? ask() : true, onClose)} />
         <strong className="ed__title" dir="auto">{fileName}</strong>

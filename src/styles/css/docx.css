@@ -1,5 +1,5 @@
 /* Word editor + preview (DocxView / DocxRibbon / DocxPreview). Page look matches the exporter in lib/officeFmt/docx.js. */
-.dx__stage { flex: 1; min-height: 0; overflow: auto; background: #0b0f19; padding: 22px 16px 40px; display: flex; flex-direction: column; align-items: center; }
+.dx__stage { flex: 1; min-height: 0; overflow: auto; background: var(--ed-stage, #0b0f19); padding: 22px 16px 40px; display: flex; flex-direction: column; align-items: center; }
 .dx__preview { overflow: auto; padding: 12px; display: flex; flex-direction: column; align-items: center; }
 
 .dxp {
@@ -42,18 +42,18 @@
 
 /* find bar, status bar, notices */
 .dx__find { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; background: var(--ed-panel, #161c2b); border-bottom: 1px solid var(--ed-line); }
-.dx__find input[type="text"], .dx__find input:not([type]) { background: rgba(255, 255, 255, .07); color: var(--ed-text); border: 1px solid var(--ed-line); border-radius: 8px; padding: 6px 9px; font: inherit; min-width: 130px; }
+.dx__find input[type="text"], .dx__find input:not([type]) { background: color-mix(in srgb, var(--ed-ink, #fff) 7%, transparent); color: var(--ed-text); border: 1px solid var(--ed-line); border-radius: 8px; padding: 6px 9px; font: inherit; min-width: 130px; }
 .dx__cnt { font-size: 12px; opacity: .7; min-width: 36px; text-align: center; } .dx__mc { display: inline-flex; gap: 4px; align-items: center; font-size: 12px; }
 .dx__status { display: flex; align-items: center; gap: 14px; padding: 5px 12px; font-size: 12px; border-top: 1px solid var(--ed-line); background: var(--ed-panel, #161c2b); color: var(--ed-text); flex-wrap: wrap; }
 .dx__sp { flex: 1; } .dx__status input[type="range"] { width: 120px; } .dx__zoomlbl { background: none; border: 0; color: inherit; font: inherit; min-width: 40px; cursor: pointer; }
 .dx__warn { color: #fbbf24; } .dx__err { margin: 0; padding: 6px 12px; cursor: pointer; }
 
 /* ribbon extras */
-.dxr .pxr__sel { background: rgba(255, 255, 255, .07); color: var(--ed-text); border: 1px solid var(--ed-line); border-radius: 8px; padding: 6px 8px; font: inherit; } .dxr .pxr__sel option { color: #111; }
+.dxr .pxr__sel { background: color-mix(in srgb, var(--ed-ink, #fff) 7%, transparent); color: var(--ed-text); border: 1px solid var(--ed-line); border-radius: 8px; padding: 6px 8px; font: inherit; } .dxr .pxr__sel option { color: #111; }
 .dxr .pxr__ctx { color: #fbbf24; }
-.dxr__gcells { display: grid; grid-template-columns: repeat(8, 18px); gap: 3px; padding: 4px; } .dxr__gcells button { width: 18px; height: 18px; border: 1px solid var(--ed-line); background: rgba(255, 255, 255, .05); border-radius: 3px; padding: 0; cursor: pointer; } .dxr__gcells button.is-on { background: var(--ed-accent); border-color: transparent; }
+.dxr__gcells { display: grid; grid-template-columns: repeat(8, 18px); gap: 3px; padding: 4px; } .dxr__gcells button { width: 18px; height: 18px; border: 1px solid var(--ed-line); background: color-mix(in srgb, var(--ed-ink, #fff) 5%, transparent); border-radius: 3px; padding: 0; cursor: pointer; } .dxr__gcells button.is-on { background: var(--ed-accent); border-color: transparent; }
 .dxr__grid small { display: block; text-align: center; padding: 2px 0 4px; opacity: .8; }
-.dxr__sym { display: grid; grid-template-columns: repeat(8, 30px); gap: 2px; padding: 4px; } .dxr__sym button { height: 30px; border: 0; background: none; color: inherit; border-radius: 6px; font-size: 16px; cursor: pointer; } .dxr__sym button:hover { background: rgba(255, 255, 255, .13); }
+.dxr__sym { display: grid; grid-template-columns: repeat(8, 30px); gap: 2px; padding: 4px; } .dxr__sym button { height: 30px; border: 0; background: none; color: inherit; border-radius: 6px; font-size: 16px; cursor: pointer; } .dxr__sym button:hover { background: color-mix(in srgb, var(--ed-ink, #fff) 13%, transparent); }
 .dxr__flipv svg { transform: scaleY(-1); } .dxr__fliph svg { transform: scaleX(-1); }
 
 @media (max-width: 760px) { .dx__stage { padding: 12px 6px 30px; } }

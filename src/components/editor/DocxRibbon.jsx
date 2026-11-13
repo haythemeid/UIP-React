@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { B, Grp, Pop, ColorBtn, NumField, keep } from './ribbonParts';
+import EdThemePicker from './EdThemePicker';
 import { DOC_THEMES } from '../../lib/officeFmt/docxTemplates';
 import { FONTS, SIZES, PAGE_SIZES, MARGIN_PRESETS, SYMBOLS, STYLES, twToCm, cmToTw } from './docxEdit';
 
@@ -161,6 +162,9 @@ export default function DocxRibbon({ tt, S, A }) {
         </>}
 
         {cur === 'view' && <>
+          <Grp title={tt('Theme', 'السمة')}>
+            <EdThemePicker tt={tt} />
+          </Grp>
           <Grp title={tt('Zoom', 'التكبير')}>
             <B icon="ed-minus" label={tt('Zoom out', 'تصغير')} onClick={() => A.setZoom(Math.max(0.3, Math.round((zoom - 0.1) * 10) / 10))} />
             <select className="pxr__sel" value={String(Math.round(zoom * 100))} aria-label={tt('Zoom', 'تكبير')} onChange={(e) => A.setZoom(Number(e.target.value) / 100)} style={{ width: 80 }}>

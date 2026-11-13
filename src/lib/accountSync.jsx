@@ -22,6 +22,7 @@ export const SYNCED_KEYS = [
   'uip_msg_wallpaper', 'uip_msg_wallpaper_anim', 'uip_msg_style',       // chat background + bubble style
   'uip_ai_wallpaper', 'uip_ai_history_hidden',                          // AI assistant
   'zb-theme',                                                           // code editor theme
+  'uip.office.theme',                                                   // Word / PowerPoint editor theme
   'mp-view',                                                            // My PC: grid / list
   'uip_sound_enabled', 'uip_motion',                                    // sounds, reduced motion
 ];

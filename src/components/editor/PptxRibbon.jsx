@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
 import { Btn } from './EditorUI';
+import EdThemePicker from './EdThemePicker';
 import { SHAPE_MENU, geomPath } from './pptxGeom';
 
 const keep = (e) => { if (!/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) e.preventDefault(); }; // keep the text selection while clicking the ribbon
@@ -185,6 +186,7 @@ export default function Ribbon({ tt, S, A }) {
           <B icon="layers" label={tt('Apply this background to every slide', 'تطبيق الخلفية على كل الشرائح')} onClick={() => A.bg(S.bg, true)} disabled={!S.bg}><span>{tt('Apply to all', 'تطبيق على الكل')}</span></B>
         </Grp>}
         {tab === 'view' && <>
+          <Grp title={tt('Theme', 'السمة')}><EdThemePicker tt={tt} /></Grp>
           <Grp title={tt('Zoom', 'التكبير')}>
             <select className="pxr__sel" aria-label={tt('Zoom', 'التكبير')} value={S.zoom} onChange={(e) => A.zoom(parseFloat(e.target.value))} style={{ width: 82 }}>{ZOOMS.map(([v, l]) => <option key={v} value={v}>{l === 'Fit' ? tt('Fit', 'ملاءمة') : l}</option>)}</select>
           </Grp>
