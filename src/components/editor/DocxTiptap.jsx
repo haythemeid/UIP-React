@@ -6,6 +6,7 @@ import { Btn } from './EditorUI';
 import DocxTabs from './DocxTabs';
 import { IllustrationsDialog } from './DocxPicture';
 import DocxRuler from './DocxRuler';
+import DocxPageNav from './DocxPageNav';
 import { FloatingBar, DocxContextMenu } from './DocxPopups';
 import { PageBorders } from './DocxView';
 import { readDocx, htmlToDocx, sanitizeHtml } from '../../lib/officeFmt/docx';
@@ -56,6 +57,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
   const [tab, setTab] = useState('home'); const [zoom, setZoom] = useState(1); const [fmt, setFmt] = useState({ has: false }); const [hist, setHist] = useState({ u: false, r: false });
   const [find, setFind] = useState({ open: false, q: '', r: '', mc: false, idx: 0, total: 0, showReplace: false });
   const [words, setWords] = useState({ all: 0, sel: 0 }); const [pages, setPages] = useState(1); const [err, setErr] = useState('');
+  const [starts, setStarts] = useState([0]); const startsRef = useRef([0]); const [curPage, setCurPage] = useState(0); const [navOpen, setNavOpen] = useState(() => (typeof window === 'undefined' ? true : window.innerWidth >= 980));
   const [emptyBand, setEmptyBand] = useState({ hdr: isBlankHtml(initial.header), ftr: isBlankHtml(initial.footer) });
   const [menu, setMenu] = useState(null); const [dlg, setDlg] = useState(null); const [ruler, setRuler] = useState(false); const [ftick, setFtick] = useState(0);
   const [paged, setPaged] = useState(() => (initial.html || '').length < 600000); const [picVer, setPicVer] = useState(0);
@@ -63,7 +65,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
   const bodyRef = useRef(null); const geomRef = useRef({ enabled: false }); const bandSig = useRef(''); const bandT = useRef(0); const picTok = useRef(0); const themeRef = useRef(DOC_THEMES.find((t) => t.font === initial.defaults.font) || DOC_THEMES[0]);
   const stage = useRef(null); const pageEl = useRef(null); const activeKey = useRef('body'); const A_ref = useRef(null); const fmtRaf = useRef(0); const selWas = useRef(false); const A_live = useRef(null);
   // page view options: read through refs so the extension (built once) always sees the current page setup
-  const pagedOpts = useMemo(() => ({ getGeom: () => geomRef.current, onPages: (n) => { if (n) setPages(n); }, onTooBig: () => { setPaged(false); setErr('This document is very long: the page view was switched off to keep typing fast (View > Separate pages turns it back on).'); }, bands: () => bandSig.current, sheet: () => pageEl.current }), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const pagedOpts = useMemo(() => ({ getGeom: () => geomRef.current, onPages: (n, st) => { if (n) setPages(n); if (st) { startsRef.current = st; setStarts((p) => (p.length === st.length && p.every((v, i) => v === st[i]) ? p : st)); } }, onTooBig: () => { setPaged(false); setErr('This document is very long: the page view was switched off to keep typing fast (View > Separate pages turns it back on).'); }, bands: () => bandSig.current, sheet: () => pageEl.current }), []); // eslint-disable-line react-hooks/exhaustive-deps
   // typing must not re-render the whole editor tree: `dirty` flips once, the change counter (autosave / word count) is debounced
   const verTimer = useRef(0);
   const mark = useCallback(() => { setDirty(true); clearTimeout(verTimer.current); verTimer.current = setTimeout(() => setVer((v) => v + 1), 500); }, []);
@@ -141,6 +143,17 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
     el.addEventListener('wheel', h, { passive: false }); return () => el.removeEventListener('wheel', h);
   }, []);
 
+  useEffect(() => { // which page is in the middle of the screen: drives the page panel highlight and the status bar
+    const el = stage.current; if (!el || !paged) { setCurPage(0); return undefined; }
+    const calc = () => {
+      const host = pageEl.current; if (!host) return;
+      const sr = el.getBoundingClientRect(); const hr = host.getBoundingClientRect(); const unit = (twToPx(pgRef.current.h) + PAGE_GAP) * zoom;
+      const i = Math.floor((sr.top + sr.height * 0.35 - hr.top) / unit); setCurPage(Math.max(0, Math.min(pages - 1, i)));
+    };
+    calc(); el.addEventListener('scroll', calc, { passive: true }); const t = setTimeout(calc, 300);
+    return () => { el.removeEventListener('scroll', calc); clearTimeout(t); };
+  }, [paged, zoom, pages, pg.h]);
+
   /* -------------------------------------------------------------- actions (same contract as the old editor, so the ribbon is shared) */
   const setPage = (fn) => { const next = fn(pgRef.current); pgRef.current = next; setPg(next); mark(); };
   const insertPicture = async (file) => {
@@ -185,6 +198,36 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
   const insertShape = async ({ item, color, color2, width }) => {
     try { const pic = await svgToPicture(svgOf(item, color, color2), item.vb, { width }); setDlg(null); run((ed, c) => c.setImage({ src: pic.src, width: pic.w, height: pic.h }).run()); } catch { setErr(tt('That shape could not be added.', 'تعذّر إضافة الشكل.')); }
   };
+  /* -------------------------------------------------------------- pages: go to / add blank / delete, page numbers */
+  const pageOfPos = (pos) => { const st = startsRef.current; let k = 0; for (let i = 0; i < st.length; i += 1) if (st[i] <= pos) k = i; return k; };
+  const goPage = (i) => {
+    const el = stage.current; const host = pageEl.current; if (!el || !host || !body) return;
+    const sr = el.getBoundingClientRect(); const hr = host.getBoundingClientRect(); const unit = (twToPx(pgRef.current.h) + PAGE_GAP) * zoom;
+    el.scrollTo({ top: Math.max(0, el.scrollTop + (hr.top - sr.top) + i * unit - 14), behavior: 'smooth' });
+    const pos = startsRef.current[i]; activeKey.current = 'body';
+    if (pos != null) { try { const size = body.state.doc.content.size; body.view.dispatch(body.state.tr.setSelection(TextSelection.near(body.state.doc.resolve(Math.min(pos, size)), 1))); body.view.focus(); } catch { /* the caret stays where it was */ } }
+  };
+  const addPageAfter = (i) => { // a blank page right after page i (the last page = at the end of the document)
+    if (!body || body.isDestroyed) return; const st = startsRef.current; const size = body.state.doc.content.size; activeKey.current = 'body';
+    if (!paged || i >= st.length - 1) body.chain().insertContentAt(size, [{ type: 'pageBreak' }, { type: 'paragraph' }]).run();
+    else body.chain().insertContentAt(Math.min(st[i + 1], size), [{ type: 'paragraph' }, { type: 'pageBreak' }]).run();
+    setTimeout(() => goPage(Math.min(i + 1, Math.max(0, startsRef.current.length - 1))), 330);
+  };
+  const delPage = (i) => {
+    if (!body || body.isDestroyed) return; const st = startsRef.current;
+    if (st.length < 2) { setErr(tt('A document needs at least one page.', 'المستند لازم يكون فيه صفحة واحدة على الأقل.')); return; }
+    const doc = body.state.doc; const size = doc.content.size; let from = Math.min(st[i], size); const to = i + 1 < st.length ? Math.min(st[i + 1], size) : size;
+    if (i === st.length - 1) { const nb = doc.resolve(from).nodeBefore; if (nb?.type.name === 'pageBreak') from -= nb.nodeSize; } // the last page also takes the break that opened it
+    if (from >= to) return;
+    let used = !!doc.textBetween(from, to, ' ').trim(); doc.nodesBetween(from, to, (n) => { if (n.type.name === 'image' || n.type.name === 'table') used = true; return !used; });
+    if (used && !window.confirm(tt(`Delete page ${i + 1} and everything on it? (Undo brings it back.)`, `حذف صفحة ${i + 1} وكل اللي عليها؟ (التراجع بيرجّعها.)`))) return;
+    body.view.dispatch(body.state.tr.delete(from, to)); activeKey.current = 'body';
+  };
+  const bandHasNumber = (e) => { let has = false; e.state.doc.descendants((n) => { if (n.type.name === 'field') has = true; return !has; }); return has; };
+  const stripNumbers = (e) => { // remove the paragraphs of a header / footer that hold a page-number field
+    const del = []; e.state.doc.forEach((n, off) => { let has = false; n.descendants((c) => { if (c.type.name === 'field') has = true; return !has; }); if (has) del.push([off, off + n.nodeSize]); });
+    if (!del.length) return false; const tr = e.state.tr; for (let k = del.length - 1; k >= 0; k -= 1) tr.delete(del[k][0], del[k][1]); e.view.dispatch(tr); return true;
+  };
   const A = {
     setTab, undo: () => run((ed, c) => c.undo().run()), redo: () => run((ed, c) => c.redo().run()),
     toggle: (k) => run((ed, c) => ({ bold: c.toggleBold(), italic: c.toggleItalic(), underline: c.toggleUnderline(), strikeThrough: c.toggleStrike(), subscript: c.toggleSubscript(), superscript: c.toggleSuperscript() }[k]?.run())),
@@ -218,6 +261,28 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
     },
     unlink: () => run((ed, c) => c.extendMarkRange('link').unsetLink().run()),
     symbol: (ch) => run((ed, c) => c.insertContent(ch).run()),
+    blankPage: () => { if (activeKey.current !== 'body' || !body) { setErr(tt('Click inside the document first.', 'دوس جوه المستند الأول.')); return; } addPageAfter(paged ? pageOfPos(body.state.selection.from) : 0); },
+    addPage: addPageAfter, delPage, goPage, toggleNav: () => setNavOpen((o) => !o),
+    pageNumbers: ({ where = 'ftr', align = 'center', format = 'n' } = {}) => {
+      const target = where === 'hdr' ? hdr : ftr; const other = where === 'hdr' ? ftr : hdr; if (!target || !other) return;
+      if (stripNumbers(other) && isBlankHtml(other.getHTML())) setEmptyBand((b) => ({ ...b, [where === 'hdr' ? 'ftr' : 'hdr']: true }));
+      stripNumbers(target);
+      const F = (kind) => ({ type: 'field', attrs: { kind } }); const T = (text) => ({ type: 'text', text });
+      const parts = { n: [F('PAGE')], dash: [T('- '), F('PAGE'), T(' -')], page: [T(tt('Page ', 'صفحة ')), F('PAGE')], of: [T(tt('Page ', 'صفحة ')), F('PAGE'), T(tt(' of ', ' من ')), F('NUMPAGES')], slash: [F('PAGE'), T(' / '), F('NUMPAGES')] }[format] || [F('PAGE')];
+      const para = { type: 'paragraph', attrs: { style: `text-align:${align}` }, content: parts };
+      if (isBlankHtml(target.getHTML())) target.commands.setContent({ type: 'doc', content: [para] }, { emitUpdate: true });
+      else target.chain().insertContentAt(target.state.doc.content.size, para).run();
+      setEmptyBand((b) => ({ ...b, [where]: false })); bandSig.current = String(Date.now()); repage(bodyRef.current); mark();
+    },
+    pageNumbersOff: () => { [['hdr', hdr], ['ftr', ftr]].forEach(([k, e]) => { if (e && bandHasNumber(e) && stripNumbers(e) && isBlankHtml(e.getHTML())) setEmptyBand((b) => ({ ...b, [k]: true })); }); bandSig.current = String(Date.now()); repage(bodyRef.current); mark(); },
+    pageBorderSet: (patch) => setPage((cur) => { // custom page border: style / width / colour / sides / distance / which pages
+      const b = cur.borders; const first = b && (b.top || b.left || b.bottom || b.right);
+      const spec = { val: 'single', sz: 12, color: '#1F3864', space: 24, ...(first || {}) }; ['val', 'sz', 'color', 'space'].forEach((k) => { if (patch[k] != null) spec[k] = patch[k]; });
+      const sides = patch.sides || (b ? (b.top && b.left && b.bottom && b.right ? 'box' : b.top && b.bottom ? 'tb' : b.left && b.right ? 'lr' : b.top ? 'top' : 'bottom') : 'box');
+      const out = { offsetFrom: patch.offsetFrom || b?.offsetFrom || 'page', display: patch.display || b?.display || 'allPages', zOrder: b?.zOrder || 'front' };
+      ({ box: ['top', 'left', 'bottom', 'right'], tb: ['top', 'bottom'], lr: ['left', 'right'], top: ['top'], bottom: ['bottom'] }[sides] || []).forEach((k) => { out[k] = { ...spec }; });
+      return { ...cur, borders: out };
+    }),
     pageBreak: () => { if (activeKey.current === 'body') run((ed, c) => c.insertContent([{ type: 'pageBreak' }, { type: 'paragraph' }]).run()); },
     field: (kind) => run((ed, c) => c.insertContent({ type: 'field', attrs: { kind } }).run()),
     band: (which) => { const e = which === 'hdr' ? hdr : ftr; if (!e) return; activeKey.current = which; setEmptyBand((s) => ({ ...s, [which]: false })); e.commands.focus('end'); },
@@ -320,6 +385,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
       const o = { ...old }; ['shape', 'radius', 'border', 'frame', 'shadow'].forEach((k) => delete o[k]); if (st.id === 'plain') delete o.adj;
       return { ...o, ...st.ops, adj: st.ops.adj ? { ...(old.adj || {}), ...st.ops.adj } : o.adj, crop: st.ops.crop ? { ...(old.crop || {}), ...st.ops.crop } : o.crop };
     }),
+    picFilter: (f) => picApply((old) => { const o = { ...old }; if (f.adj) o.adj = { ...f.adj }; else delete o.adj; return o; }),
     picReset: () => picApply(() => ({})),
     picAlt: (alt) => run((ed) => { const n = ed.state.selection.node; if (n?.type.name === 'image') ed.view.dispatch(ed.state.tr.setNodeMarkup(ed.state.selection.from, undefined, { ...n.attrs, alt })); }),
     picFit: () => A_live.current.imgWidth(twToPx(pgRef.current.w - pgRef.current.left - pgRef.current.right)),
@@ -368,7 +434,19 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
   const borderId = useMemo(() => (pg.borders ? PAGE_BORDERS.find((p) => JSON.stringify(p.borders) === JSON.stringify(pg.borders))?.id || 'custom' : 'none'), [pg.borders]);
   const styleSetId = STYLE_SETS.find((x) => x.line === def.line && x.after === def.after)?.id || null;
   const theme = useMemo(() => DOC_THEMES.find((t) => t.id === themeId) || DOC_THEMES[0], [themeId]);
-  const S = useMemo(() => ({ fmt, pg, zoom, canUndo: hist.u, canRedo: hist.r, inTable: !!fmt.inTable, imgSel: fmt.img ? { w: fmt.img, fl: fmt.imgFl, alt: fmt.imgAlt } : null, themeId, theme, borderId, styleSetId, paged, ruler, picVer }), [fmt, pg, zoom, hist, themeId, theme, borderId, styleSetId, paged, ruler, picVer]);
+  const navItems = useMemo(() => { // one preview (text + first picture) per page, rebuilt only when the page starts or the text change
+    if (!body || body.isDestroyed || !paged) return [];
+    const doc = body.state.doc; const size = doc.content.size;
+    return starts.map((s0, i) => {
+      const a = Math.min(s0, size); const b = Math.max(a, Math.min(i + 1 < starts.length ? starts[i + 1] : size, size)); let text = ''; let img = null; let hasImg = false;
+      try {
+        text = doc.textBetween(a, b, ' ', ' ').replace(/\s+/g, ' ').trim().slice(0, 240);
+        doc.nodesBetween(a, b, (n) => { if (n.type.name === 'image' && !hasImg) { hasImg = true; const src = n.attrs.src || ''; if (src.length < 300000) img = src; } return !hasImg; });
+      } catch { /* a stale range: show the page without a preview */ }
+      return { text, img, hasImg };
+    });
+  }, [starts, ver, body, paged]); // eslint-disable-line react-hooks/exhaustive-deps
+  const S = useMemo(() => ({ navOpen, curPage, pages, fmt, pg, zoom, canUndo: hist.u, canRedo: hist.r, inTable: !!fmt.inTable, imgSel: fmt.img ? { w: fmt.img, fl: fmt.imgFl, alt: fmt.imgAlt } : null, themeId, theme, borderId, styleSetId, paged, ruler, picVer }), [navOpen, curPage, pages, fmt, pg, zoom, hist, themeId, theme, borderId, styleSetId, paged, ruler, picVer]);
   if (!body || !hdr || !ftr) return <div className="ed ed--center"><span className="st-fv-spinner" /></div>;
 
   const sizeName = PAGE_SIZES.find((s) => (s[1] === Math.min(pg.w, pg.h) && s[2] === Math.max(pg.w, pg.h)))?.[0] || `${Math.round(pg.w / 56.7)}×${Math.round(pg.h / 56.7)} mm`;
@@ -379,7 +457,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
       className="ed--docx" tools={<DocxTabs tt={ttS} ar={ar} S={S} A={Astable} />}
       status={(
         <div className="dx__status">
-          <span>{tt('Page', 'صفحة')} {pages}</span><span>{tt('Words', 'كلمات')}: {words.sel ? `${words.sel} / ${words.all}` : words.all}</span><span>{sizeName}{pg.w > pg.h ? ` · ${tt('Landscape', 'عرضي')}` : ''}</span>
+          <span>{tt('Page', 'صفحة')} {paged ? `${Math.min(curPage + 1, pages)} / ${pages}` : pages}</span><span>{tt('Words', 'كلمات')}: {words.sel ? `${words.sel} / ${words.all}` : words.all}</span><span>{sizeName}{pg.w > pg.h ? ` · ${tt('Landscape', 'عرضي')}` : ''}</span>
           {(initial.warnings || []).map((w) => <span key={w} className="dx__warn" title={WARN[w]?.[0]}>⚠ {tt(WARN[w]?.[0] || w, WARN[w]?.[1] || w)}</span>)}
           <span className="dx__sp" />
           <input type="range" min="30" max="250" step="5" value={Math.round(zoom * 100)} onChange={(e) => setZoom(Number(e.target.value) / 100)} aria-label={tt('Zoom', 'تكبير')} />
@@ -399,13 +477,16 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
         </div>
       )}
       {err && <p className="ed__err dx__err" role="alert" onClick={() => setErr('')}>{err}</p>}
-      <div className="dx__stage" ref={stage}>
-        {ruler && <DocxRuler pg={pg} zoom={zoom} onMargins={(m, commit) => { if (Object.keys(m).length) setPage((p) => ({ ...p, ...m })); else if (commit) mark(); }} />}
-        <div className={`dxp${paged ? ' dxp--paged' : ''}`} ref={pageEl} dir={def.rtl ? 'rtl' : 'ltr'} style={pageStyle(pg, def, zoom, paged ? Math.max(twToPx(pg.h), pages * (twToPx(pg.h) + PAGE_GAP) - PAGE_GAP) : twToPx(pg.h))}>
-          <PageBorders pg={pg} zoom={zoom} gap={paged ? PAGE_GAP : 0} count={paged ? pages : 0} />
-          <div className="dxp__bandwrap">{emptyBand.hdr && <span className="dxp__ph">{tt('Header', 'رأس الصفحة')}</span>}<EditorContent editor={hdr} /></div>
-          <div className="dxp__bodywrap"><EditorContent editor={body} /></div>
-          <div className="dxp__bandwrap">{emptyBand.ftr && <span className="dxp__ph">{tt('Footer', 'تذييل الصفحة')}</span>}<EditorContent editor={ftr} /></div>
+      <div className="dx__wrap">
+        {navOpen && <DocxPageNav tt={tt} pages={pages} cur={curPage} items={navItems} ratio={pg.w / pg.h} paged={paged} onGo={goPage} onAdd={addPageAfter} onDel={delPage} onPaged={() => setPaged(true)} onClose={() => setNavOpen(false)} />}
+        <div className="dx__stage" ref={stage}>
+          {ruler && <DocxRuler pg={pg} zoom={zoom} onMargins={(m, commit) => { if (Object.keys(m).length) setPage((p) => ({ ...p, ...m })); else if (commit) mark(); }} />}
+          <div className={`dxp${paged ? ' dxp--paged' : ''}`} ref={pageEl} dir={def.rtl ? 'rtl' : 'ltr'} style={pageStyle(pg, def, zoom, paged ? Math.max(twToPx(pg.h), pages * (twToPx(pg.h) + PAGE_GAP) - PAGE_GAP) : twToPx(pg.h))}>
+            <PageBorders pg={pg} zoom={zoom} gap={paged ? PAGE_GAP : 0} count={paged ? pages : 0} />
+            <div className="dxp__bandwrap">{emptyBand.hdr && <span className="dxp__ph">{tt('Header', 'رأس الصفحة')}</span>}<EditorContent editor={hdr} /></div>
+            <div className="dxp__bodywrap"><EditorContent editor={body} /></div>
+            <div className="dxp__bandwrap">{emptyBand.ftr && <span className="dxp__ph">{tt('Footer', 'تذييل الصفحة')}</span>}<EditorContent editor={ftr} /></div>
+          </div>
         </div>
       </div>
       <FloatingBar editor={active()} fmt={fmt} A={A} tt={tt} tick={ftick} host={document.body} />

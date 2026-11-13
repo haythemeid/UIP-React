@@ -55,12 +55,12 @@ function measure(view, opts) {
   const dom = view.dom; const st = pageKey.getState(view.state);
   const g = opts.getGeom();
   const sheet = dom.closest('.dxp');
-  const done = (set, sig, n) => {
-    if (sig === st.sig) { opts.onPages?.(n); return; }
+  const done = (set, sig, n, starts) => {
+    if (sig === st.sig) { opts.onPages?.(n, starts); return; }
     view.dispatch(view.state.tr.setMeta(pageKey, { set, sig }).setMeta('addToHistory', false));
-    opts.onPages?.(n);
+    opts.onPages?.(n, starts);
   };
-  if (!g.enabled || !sheet || !dom.isConnected) { done([], 'off', 0); return; }
+  if (!g.enabled || !sheet || !dom.isConnected) { done([], 'off', 0, [0]); return; }
 
   // ---- 1. read natural positions (spacers hidden) -------------------------------------------------------------
   dom.classList.add('dx-nopg');
@@ -78,7 +78,7 @@ function measure(view, opts) {
     if (node.type.name === 'pageBreak') { items.push({ t: 'b', pos, node }); return false; }
     return true;
   });
-  if (count > MAX_BLOCKS || C < 120) { dom.classList.remove('dx-nopg'); done([], 'off', 0); opts.onTooBig?.(); return; }
+  if (count > MAX_BLOCKS || C < 120) { dom.classList.remove('dx-nopg'); done([], 'off', 0, [0]); opts.onTooBig?.(); return; }
   const Y = (v) => (v - root.top) / scale;
   const rects = items.map((it) => { const el = view.nodeDOM(it.pos); return el && el.getBoundingClientRect ? el.getBoundingClientRect() : null; });
   const caret = (pos) => { try { return view.coordsAtPos(pos, 1); } catch { return null; } };
@@ -126,7 +126,11 @@ function measure(view, opts) {
   const n = Math.max(1, Math.floor((Math.max(lastBottom, 0) - 1) / P) + 1);
   const sig = `${out.map((o) => `${o.pos}:${Math.round(o.h)}:${o.cols || 0}:${Math.round(o.ml)}:${Math.round(o.mr)}`).join('|')}#${n}#${Math.round(hz)}#${Math.round(fz)}#${Math.round(g.pageH)}#${g.ghost}#${opts.bands()}`;
   const set = out.map((o) => ({ ...o, n, hz, fz, hdPad: g.hdPad, ftPad: g.ftPad }));
-  done(set, sig, n);
+  // where each page starts in the document (page 0 = 0): the page navigator uses it to jump, add and delete pages
+  const starts = new Array(n).fill(null); starts[0] = 0;
+  out.forEach((o) => { if (o.k + 1 < n) starts[o.k + 1] = o.pos; });
+  for (let i = 1; i < n; i += 1) if (starts[i] == null) starts[i] = starts[i - 1];
+  done(set, sig, n, starts);
 }
 
 export const PageView = Extension.create({

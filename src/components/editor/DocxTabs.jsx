@@ -4,7 +4,7 @@ import Icon from '../Icon';
 import { B, ColorBtn, NumField, keep } from './ribbonParts';
 import { Pop2, Group, Sep, Big, UiThemeButton } from './DocxUi';
 import FontPicker from './DocxFonts';
-import { PicStyleGallery, Slider } from './DocxPicture';
+import { PicStyleGallery, PicFilterGallery, Slider } from './DocxPicture';
 import { PAGE_SIZES, MARGIN_PRESETS, SYMBOLS, STYLES, SIZES, twToCm, cmToTw } from './docxEdit';
 import { DOC_THEMES, STYLE_SETS, PAGE_BORDERS } from '../../lib/officeFmt/docxThemes';
 import { ASPECTS } from '../../lib/officeFmt/docxImageFx';
@@ -128,6 +128,64 @@ function HomeTab({ tt, ar, S, A }) {
   );
 }
 
+/** Page numbers: pick a format, then a position (top / bottom × left / centre / right). The number goes into the header or footer. */
+const NUM_FORMATS = [['n', '1', '1'], ['dash', '- 1 -', '- 1 -'], ['page', 'Page 1', 'صفحة 1'], ['of', 'Page 1 of N', 'صفحة 1 من N'], ['slash', '1 / N', '1 / N']];
+function PageNumberPanel({ tt, A, close, has }) {
+  const [fmt, setFmt] = useState('n');
+  const pos = [['hdr', 'left', 'Top left', 'أعلى يسار'], ['hdr', 'center', 'Top centre', 'أعلى وسط'], ['hdr', 'right', 'Top right', 'أعلى يمين'], ['ftr', 'left', 'Bottom left', 'أسفل يسار'], ['ftr', 'center', 'Bottom centre', 'أسفل وسط'], ['ftr', 'right', 'Bottom right', 'أسفل يمين']];
+  return (
+    <div className="dxpn">
+      <Cap>{tt('Number format', 'شكل الرقم')}</Cap>
+      <div className="dxb__line">{NUM_FORMATS.map(([id, en, ar]) => <button key={id} type="button" className={`dxb__chip${fmt === id ? ' is-on' : ''}`} onMouseDown={keep} onClick={() => setFmt(id)}>{tt(en, ar)}</button>)}</div>
+      <Cap>{tt('Position (click to apply)', 'المكان (دوس عشان يتطبق)')}</Cap>
+      <div className="dxpn__grid">
+        {pos.map(([w, a, en, ar]) => (
+          <button key={`${w}${a}`} type="button" onMouseDown={keep} onClick={() => { A.pageNumbers({ where: w, align: a, format: fmt }); close(); }}>
+            <span className={`dxpn__pg dxpn__pg--${w === 'hdr' ? 't' : 'b'}${a[0]}`} /><small>{tt(en, ar)}</small>
+          </button>
+        ))}
+      </div>
+      <Cap>{tt('More', 'المزيد')}</Cap>
+      <Item close={close} label={tt('Page number at the cursor', 'رقم الصفحة عند المؤشر')} onClick={() => A.field('PAGE')} disabled={!has} />
+      <Item close={close} label={tt('Number of pages at the cursor', 'عدد الصفحات عند المؤشر')} onClick={() => A.field('NUMPAGES')} disabled={!has} />
+      <Item close={close} label={tt('Remove page numbers', 'إزالة ترقيم الصفحات')} onClick={A.pageNumbersOff} />
+      <Item close={close} label={tt('Remove header', 'حذف الرأس')} onClick={() => A.delBand('hdr')} />
+      <Item close={close} label={tt('Remove footer', 'حذف التذييل')} onClick={() => A.delBand('ftr')} />
+    </div>
+  );
+}
+
+/** Page borders: ready-made frames, plus line style / width / colour / sides / distance / which pages. */
+const LINE_STYLES = [['single', 'Solid', 'متصل'], ['double', 'Double', 'مزدوج'], ['dashed', 'Dashed', 'متقطع'], ['dotted', 'Dotted', 'منقط'], ['triple', 'Triple', 'ثلاثي'], ['thinThickSmallGap', 'Fancy', 'مزخرف']];
+const BORDER_PT = [0.5, 1, 1.5, 2.25, 3, 4.5, 6];
+const BORDER_SIDES = [['box', 'Box', 'إطار كامل'], ['tb', 'Top & bottom', 'أعلى وأسفل'], ['lr', 'Sides', 'الجوانب'], ['top', 'Top', 'أعلى'], ['bottom', 'Bottom', 'أسفل']];
+const BORDER_GAP = [[8, 'Close', 'قريب'], [24, 'Normal', 'عادي'], [31, 'Wide', 'واسع']];
+const BORDER_PAGES = [['allPages', 'All pages', 'كل الصفحات'], ['firstPage', 'First page only', 'الأولى بس'], ['notFirstPage', 'All but the first', 'ماعدا الأولى']];
+function PageBorderPanel({ tt, S, A, close }) {
+  const b = S.pg.borders; const first = b && (b.top || b.left || b.bottom || b.right); const bd = S.borderId;
+  const sides = !b ? null : (b.top && b.left && b.bottom && b.right ? 'box' : b.top && b.bottom ? 'tb' : b.left && b.right ? 'lr' : b.top ? 'top' : 'bottom');
+  const chip = (on, label, fn, k) => <button key={k} type="button" className={`dxb__chip${on ? ' is-on' : ''}`} onMouseDown={keep} onClick={fn}>{label}</button>;
+  return (
+    <div className="dxbd2">
+      <div className="dxbd">
+        {PAGE_BORDERS.map((p) => <button key={p.id} type="button" className={p.id === bd ? 'is-on' : ''} onMouseDown={keep} onClick={() => A.pageBorder(p.id)}><span className="dxbd__pg" style={p.borders ? { border: `${p.borders.top ? Math.max(1, Math.min(4, p.borders.top.sz / 6)) : 1}px ${/double|thin|thick/i.test(p.borders.top?.val || '') ? 'double' : p.borders.top?.val === 'dotted' ? 'dotted' : 'solid'} ${p.borders.top?.color}` } : undefined} /><small>{tt(p.label.en, p.label.ar)}</small></button>)}
+      </div>
+      <Cap>{tt('Line style', 'شكل الخط')}</Cap>
+      <div className="dxb__line">{LINE_STYLES.map(([v, en, ar]) => chip(first?.val === v, tt(en, ar), () => A.pageBorderSet({ val: v }), v))}</div>
+      <Cap>{tt('Width (pt)', 'السمك (نقطة)')}</Cap>
+      <div className="dxb__line">{BORDER_PT.map((w) => chip(first && first.sz === w * 8, String(w), () => A.pageBorderSet({ sz: Math.round(w * 8) }), w))}</div>
+      <Cap>{tt('Show on', 'يظهر على')}</Cap>
+      <div className="dxb__line">{BORDER_SIDES.map(([v, en, ar]) => chip(sides === v, tt(en, ar), () => A.pageBorderSet({ sides: v }), v))}</div>
+      <Cap>{tt('Distance from the edge', 'المسافة من الحافة')}</Cap>
+      <div className="dxb__line">{BORDER_GAP.map(([v, en, ar]) => chip(first?.space === v, tt(en, ar), () => A.pageBorderSet({ space: v }), v))}</div>
+      <Cap>{tt('Apply to', 'تطبيق على')}</Cap>
+      <div className="dxb__line">{BORDER_PAGES.map(([v, en, ar]) => chip(b?.display === v, tt(en, ar), () => A.pageBorderSet({ display: v }), v))}</div>
+      <label className="dxbd__col"><span>{tt('Border colour', 'لون الحد')}</span><input type="color" value={/^#[0-9a-f]{6}$/i.test(first?.color || '') ? first.color : '#1F3864'} onChange={(e) => A.pageBorderSet({ color: e.target.value })} /></label>
+      <div className="dxb__line"><button type="button" className="dxb__chip" onMouseDown={keep} onClick={() => { A.pageBorder('none'); close(); }}>{tt('No border', 'بدون حدود')}</button><button type="button" className="dxb__chip" onMouseDown={keep} onClick={close}>{tt('Done', 'تم')}</button></div>
+    </div>
+  );
+}
+
 function InsertTab({ tt, ar, S, A }) {
   const f = S.fmt || {}; const has = !!f.has; const body = f.root === 'body'; const [grid, setGrid] = useState([0, 0]);
   return (
@@ -135,7 +193,9 @@ function InsertTab({ tt, ar, S, A }) {
       <Group title={tt('Pages', 'الصفحات')}>
         <Big icon="layers" label={tt('Templates', 'قوالب')} onClick={() => A.templates('all')} title={tt('Ready-made documents: add at the cursor, at the start, at the end, or replace', 'مستندات جاهزة: أضف عند المؤشر أو في البداية أو في النهاية أو استبدل')} />
         <Big icon="file" label={tt('Cover page', 'غلاف')} onClick={() => A.templates('covers')} />
+        <Big icon="ed-page-plus" label={tt('Blank page', 'صفحة فاضية')} onClick={A.blankPage} title={tt('Add an empty page after the page you are on', 'إضافة صفحة فاضية بعد الصفحة اللي واقف فيها')} />
         <Big icon="ed-page-break" label={tt('Page break', 'فاصل صفحة')} onClick={A.pageBreak} disabled={!body} />
+        <Big icon="panel-left" label={tt('Pages panel', 'لوحة الصفحات')} on={S.navOpen} onClick={A.toggleNav} title={tt('Show every page on the side: jump to a page, add or delete one', 'عرض كل الصفحات على الجنب: انتقل لأي صفحة أو أضف أو احذف')} />
       </Group>
       <Sep />
       <Group title={tt('Tables', 'الجداول')}>
@@ -158,14 +218,8 @@ function InsertTab({ tt, ar, S, A }) {
       <Group title={tt('Header & footer', 'الرأس والتذييل')}>
         <Big icon="ed-header" label={tt('Header', 'رأس')} onClick={() => A.band('hdr')} />
         <Big icon="ed-footer" label={tt('Footer', 'تذييل')} onClick={() => A.band('ftr')} />
-        <Pop2 icon="ed-hash" label={tt('Page number', 'رقم الصفحة')} text={tt('Numbers', 'ترقيم')} w={230} btnClass="dxt__bigpop">
-          {(close) => (<div className="dxb__more">
-            <Item close={close} label={tt('Page number', 'رقم الصفحة')} onClick={() => A.field('PAGE')} disabled={!has} />
-            <Item close={close} label={tt('Number of pages', 'عدد الصفحات')} onClick={() => A.field('NUMPAGES')} disabled={!has} />
-            <Cap>{tt('Remove', 'حذف')}</Cap>
-            <Item close={close} label={tt('Remove header', 'حذف الرأس')} onClick={() => A.delBand('hdr')} />
-            <Item close={close} label={tt('Remove footer', 'حذف التذييل')} onClick={() => A.delBand('ftr')} />
-          </div>)}
+        <Pop2 icon="ed-hash" label={tt('Page number', 'رقم الصفحة')} text={tt('Numbers', 'ترقيم')} w={320} btnClass="dxt__bigpop">
+          {(close) => <PageNumberPanel tt={tt} A={A} close={close} has={has} />}
         </Pop2>
       </Group>
       <Sep />
@@ -206,13 +260,8 @@ function DesignTab({ tt, ar, S, A }) {
       </Group>
       <Sep />
       <Group title={tt('Page background', 'خلفية الصفحة')}>
-        <Pop2 icon="ed-outline" label={tt('Page borders', 'حدود الصفحة')} text={tt('Page borders', 'حدود الصفحة')} w={300} btnClass="dxt__bigpop">
-          {(close) => (
-            <div className="dxbd">
-              {PAGE_BORDERS.map((p) => <button key={p.id} type="button" className={p.id === bd ? 'is-on' : ''} onMouseDown={keep} onClick={() => { A.pageBorder(p.id); close(); }}><span className="dxbd__pg" style={p.borders ? { border: `${p.borders.top ? Math.max(1, Math.min(4, p.borders.top.sz / 6)) : 1}px ${/double|thin|thick/i.test(p.borders.top?.val || '') ? 'double' : p.borders.top?.val === 'dotted' ? 'dotted' : 'solid'} ${p.borders.top?.color}` } : undefined} /><small>{tt(p.label.en, p.label.ar)}</small></button>)}
-              <label className="dxbd__col"><span>{tt('Border colour', 'لون الحد')}</span><input type="color" defaultValue="#1F3864" onChange={(e) => A.pageBorderColor(e.target.value)} /></label>
-            </div>
-          )}
+        <Pop2 icon="ed-outline" label={tt('Page borders', 'حدود الصفحة')} text={tt('Page borders', 'حدود الصفحة')} w={330} btnClass="dxt__bigpop">
+          {(close) => <PageBorderPanel tt={tt} S={S} A={A} close={close} />}
         </Pop2>
       </Group>
       <Sep />
@@ -265,6 +314,7 @@ function ViewTab({ tt, S, A }) {
       <Group title={tt('Page view', 'عرض الصفحة')}>
         <Big icon="file" label={S.paged ? tt('Separate pages', 'صفحات منفصلة') : tt('One sheet', 'ورقة واحدة')} on={S.paged} onClick={A.togglePaged} title={tt('Show the document as separate pages (like Word) or one long sheet (faster for very long documents)', 'عرض المستند كصفحات منفصلة (زي Word) أو ورقة طويلة (أسرع للمستندات الكبيرة جدًا)')} />
         <Big icon="ed-margins" label={S.ruler ? tt('Hide ruler', 'إخفاء المسطرة') : tt('Ruler', 'مسطرة')} on={S.ruler} onClick={A.toggleRuler} />
+        <Big icon="panel-left" label={tt('Pages panel', 'لوحة الصفحات')} on={S.navOpen} onClick={A.toggleNav} />
       </Group>
       <Sep />
       <Group title={tt('Zoom', 'التكبير')}>
@@ -342,7 +392,10 @@ function PictureTab({ tt, ar, S, A }) {
             </div>
           )}
         </Pop2>
-        <Pop2 icon="ed-sliders" label={tt('Corrections', 'تصحيحات')} text={tt('Adjust', 'ضبط')} w={290} btnClass="dxt__bigpop">
+        <Pop2 icon="palette" label={tt('Ready-made filters', 'فلاتر جاهزة')} text={tt('Filters', 'فلاتر')} w={440} btnClass="dxt__bigpop">
+          {(close) => <PicFilterGallery src={A.picSrc()} current={ops.adj} tt={tt} ar={ar} close={close} onPick={A.picFilter} />}
+        </Pop2>
+        <Pop2 icon="ed-sliders" label={tt('Corrections', 'تصحيحات')} text={tt('Adjust', 'ضبط')} w={300} btnClass="dxt__bigpop">
           {() => (
             <div className="dxpp">
               <Slider label={tt('Brightness', 'السطوع')} value={adj.brightness ?? 100} min={40} max={160} onCommit={(v) => set('brightness', v)} unit="%" />
@@ -351,6 +404,15 @@ function PictureTab({ tt, ar, S, A }) {
               <Slider label={tt('Grayscale', 'رمادي')} value={adj.gray ?? 0} min={0} max={100} onCommit={(v) => set('gray', v)} unit="%" />
               <Slider label={tt('Sepia', 'بني قديم')} value={adj.sepia ?? 0} min={0} max={100} onCommit={(v) => set('sepia', v)} unit="%" />
               <Slider label={tt('Blur', 'تمويه')} value={adj.blur ?? 0} min={0} max={10} step={0.5} onCommit={(v) => set('blur', v)} unit="px" />
+              <Slider label={tt('Warmth', 'الدفء')} value={adj.temp ?? 0} min={-100} max={100} onCommit={(v) => set('temp', v)} />
+              <Slider label={tt('Hue', 'درجة اللون')} value={adj.hue ?? 0} min={-180} max={180} onCommit={(v) => set('hue', v)} unit="°" />
+              <Slider label={tt('Fade', 'بهتان')} value={adj.fade ?? 0} min={0} max={100} onCommit={(v) => set('fade', v)} unit="%" />
+              <Slider label={tt('Sharpen', 'حدّة')} value={adj.sharpen ?? 0} min={0} max={100} onCommit={(v) => set('sharpen', v)} unit="%" />
+              <Slider label={tt('Vignette', 'تعتيم الأطراف')} value={adj.vignette ?? 0} min={0} max={100} onCommit={(v) => set('vignette', v)} unit="%" />
+              <div className="dxb__line">
+                <button type="button" className={`dxb__chip${adj.auto ? ' is-on' : ''}`} onClick={() => set('auto', adj.auto ? 0 : 1)}>{tt('Auto enhance', 'تحسين تلقائي')}</button>
+                <button type="button" className="dxb__chip" onClick={() => A.picFilter({ adj: null })}>{tt('Reset adjustments', 'إلغاء التعديلات')}</button>
+              </div>
             </div>
           )}
         </Pop2>

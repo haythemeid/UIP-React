@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../Icon';
 import { Modal, Seg } from './DocxUi';
 import { SHAPE_SETS, svgOf } from '../../lib/officeFmt/docxShapes';
-import { renderImage, PIC_STYLES } from '../../lib/officeFmt/docxImageFx';
+import { renderImage, PIC_STYLES, PIC_FILTERS } from '../../lib/officeFmt/docxImageFx';
 
 const PALETTE = ['#1F3864', '#2F5496', '#0F766E', '#15803d', '#B91C1C', '#C2410C', '#B8891A', '#6D28D9', '#0F172A', '#64748B', '#ffffff'];
 
@@ -69,6 +69,32 @@ export function PicStyleGallery({ src, onPick, tt, ar, close }) {
       {PIC_STYLES.map((s) => (
         <button key={s.id} type="button" onClick={() => { onPick(s); close?.(); }} title={ar ? s.label.ar : s.label.en}>
           <span className="dxpsg__th">{thumbs[s.id] ? <img src={thumbs[s.id]} alt="" /> : <i />}</span><small>{ar ? s.label.ar : s.label.en}</small>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Gallery of ready-made colour filters (Vivid, Warm, Noir, Vintage …) with REAL previews of the selected picture. The picture is shrunk once, then each filter is applied to that small copy. */
+export function PicFilterGallery({ src, current, onPick, tt, ar, close }) {
+  const [thumbs, setThumbs] = useState({}); const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    (async () => {
+      let small = src; try { small = (await renderImage(src, {}, { maxSide: 120, quality: 0.8 })).src; } catch { return; }
+      for (const f of PIC_FILTERS) {
+        if (!alive.current) return;
+        try { const r = await renderImage(small, f.adj ? { adj: f.adj } : {}, { maxSide: 120, quality: 0.8 }); if (alive.current) setThumbs((t) => ({ ...t, [f.id]: r.src })); } catch { /* skip this preview */ }
+      }
+    })();
+    return () => { alive.current = false; };
+  }, [src]);
+  const same = (f) => JSON.stringify(f.adj || {}) === JSON.stringify(current || {});
+  return (
+    <div className="dxpsg dxpsg--f">
+      {PIC_FILTERS.map((f) => (
+        <button key={f.id} type="button" className={same(f) ? 'is-on' : ''} onClick={() => { onPick(f); close?.(); }} title={ar ? f.label.ar : f.label.en}>
+          <span className="dxpsg__th">{thumbs[f.id] ? <img src={thumbs[f.id]} alt="" /> : <i />}</span><small>{ar ? f.label.ar : f.label.en}</small>
         </button>
       ))}
     </div>
