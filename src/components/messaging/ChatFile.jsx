@@ -5,6 +5,8 @@ import Icon from '../Icon';
 import { BlobPreviewModal } from '../FilePreviewButton';
 import { confirmRiskyDownload } from '../../lib/pdfSafety';
 import { saveBlob } from '../../lib/exporter';
+import { saveBlobToLibrary } from '../../lib/libraryFromChat';
+import { showToast } from '../../native';
 import { useLanguage } from '../../context/LanguageContext';
 import { attachmentUrl } from './format';
 
@@ -44,6 +46,7 @@ export default function ChatFile({ attachment: a, fmtBytes }) {
     try {
       const blob = await load();
       if (mode === 'download') saveBlob(blob, name);
+      else if (mode === 'library') { await saveBlobToLibrary(blob, name); showToast(tt('Saved to My Library', 'تم الحفظ في مكتبتي')); }
       else setPreview({ blob, filename: name });
     } catch (err) {
       if (err instanceof ApiError && err.status === 423) {
@@ -117,6 +120,9 @@ export default function ChatFile({ attachment: a, fmtBytes }) {
         </button>
         <button type="button" className="btn btn-ghost btn-sm" disabled={busy} title={tt('Download', 'تنزيل')} aria-label={tt('Download', 'تنزيل')} onClick={() => run('download')}>
           <Icon name="download" size={14} />
+        </button>
+        <button type="button" className="btn btn-ghost btn-sm" disabled={busy} title={tt('Save to My Library', 'حفظ في مكتبتي')} aria-label={tt('Save to My Library', 'حفظ في مكتبتي')} onClick={() => run('library')}>
+          <Icon name="bookmark" size={14} />
         </button>
       </span>
       {error && <span role="alert" className="form-error" style={{ display: 'block', fontSize: 12 }}>{error}</span>}

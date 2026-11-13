@@ -18,6 +18,7 @@ const ICONS = {
   audio: svg(<><path d="M4 14v-2a8 8 0 0 1 16 0v2" /><rect x="3" y="14" width="4" height="6" rx="1.5" /><rect x="17" y="14" width="4" height="6" rx="1.5" /></>),
   poll: svg(<><path d="M5 20V10M12 20V4M19 20v-7" /></>),
   pin: svg(<><path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z" /><circle cx="12" cy="10" r="2.5" /></>),
+  lib: svg(<><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" /></>),
   sticker: svg(<><path d="M20 12.5V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h5.5z" /><path d="M20 12.5a7.5 7.5 0 0 1-7.5 7.5v-3a4.5 4.5 0 0 1 4.5-4.5z" /></>),
 };
 
@@ -31,8 +32,8 @@ function Item({ color, icon, label, onClick, delay }) {
 }
 
 export default function AttachMenu({
-  ar, canFiles, canMedia, canPoll, canLocation, canAudio, canSticker,
-  onPickFiles, onPickMedia, onPickCamera, onPickAudio, onPoll, onLocation, onNewSticker, onGalleryFiles, title,
+  ar, canFiles, canLibrary, canMedia, canPoll, canLocation, canAudio, canSticker,
+  onPickFiles, onPickLibrary, onPickMedia, onPickCamera, onPickAudio, onPoll, onLocation, onNewSticker, onGalleryFiles, title,
 }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef(null);
@@ -62,6 +63,7 @@ export default function AttachMenu({
   const run = (fn) => () => { setOpen(false); fn?.(); };
   const items = [
     canFiles && { k: 'doc', color: '#7f66ff', icon: ICONS.doc, label: ar ? 'مستند' : 'Document', fn: onPickFiles },
+    canFiles && canLibrary && onPickLibrary && { k: 'lib', color: '#6366f1', icon: ICONS.lib, label: ar ? 'من مكتبتي' : 'From My Library', fn: onPickLibrary },
     canMedia && { k: 'media', color: '#1d8bf1', icon: ICONS.media, label: ar ? 'صور وفيديو' : 'Photos & videos', fn: onPickMedia },
     canMedia && { k: 'camera', color: '#e53e6b', icon: ICONS.camera, label: ar ? 'الكاميرا' : 'Camera', fn: onPickCamera },
     canAudio && onPickAudio && { k: 'audio', color: '#f2672a', icon: ICONS.audio, label: ar ? 'صوت' : 'Audio', fn: onPickAudio },

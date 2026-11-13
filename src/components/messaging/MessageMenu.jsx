@@ -41,6 +41,7 @@ const I = {
   edit: <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />,
   select: <><rect x="3" y="3" width="18" height="18" rx="3" /><path d="m8 12 3 3 5-6" /></>,
   save: <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />,
+  library: <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />,
   report: <><path d="M12 3 2 20h20L12 3Z" /><path d="M12 10v4M12 17v.01" /></>,
   trash: <><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" /><path d="M10 11v5M14 11v5" /></>,
   back: <path d="M19 12H5m6-6-6 6 6 6" />,
@@ -168,6 +169,7 @@ export function MessageContextMenu({ m, at, touch, caps, on, onClose, rowEl }) {
     if (caps.edit) add('edit', 'edit', 'Edit', 'تعديل', on.edit);
     if (on.select) add('select', 'select', 'Select', 'تحديد', on.select, { sep: true });
     if (caps.saveAs) add('save', 'save', 'Save as…', 'حفظ باسم…', on.saveAs);
+    if (caps.saveLib) add('savelib', 'library', 'Save to My Library', 'حفظ في مكتبتي', on.saveLib);
     if (caps.report) add('report', 'report', 'Report', 'إبلاغ', on.report, { danger: true, sep: true });
     add('del', 'trash', 'Delete', 'حذف', on.del, { danger: true, sep: !caps.report });
     return list;

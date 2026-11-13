@@ -20,6 +20,8 @@ import VoiceMessage, { isVoiceAttachment } from './VoiceMessage';
 import { createVoiceEngine, voiceConstraints, LIVE_PROCESSING } from './voiceEngine';
 import { warmRnnoise } from '../../lib/rnnoise';
 import { saveAttachmentsToPhone, isAutoSaveOn } from '../../lib/autoSaveMedia';
+import { saveAttachmentsToLibrary } from '../../lib/libraryFromChat';
+import LibraryPicker from '../library/LibraryPicker';
 import { useCachedVideo } from '../../lib/mediaCache';
 import { useProtectedSrc, useSignedMediaUrl } from '../../lib/chatMedia';
 import { isNative, canCacheNatively } from '../../native';
@@ -443,6 +445,7 @@ function MessageBubble({ m, myUserId, showAvatar, others, onCallBack, onOpenVide
     copyImage: !!stickerUrl && !!window.ClipboardItem,
     edit: canEdit,
     saveAs: canSave || !!stickerUrl,
+    saveLib: canSave,
     report: !m.is_mine && !!onReport && m.message_type !== 'system',
     mineReaction,
   };
@@ -475,6 +478,7 @@ function MessageBubble({ m, myUserId, showAvatar, others, onCallBack, onOpenVide
       if (canSave) saveAttachmentsToPhone(m.attachments);
       else if (stickerUrl) downloadFromUrl(stickerUrl, (m.metadata?.label || m.metadata?.title || 'sticker')).catch(() => menuToast(t('Could not save the file', 'تعذّر حفظ الملف')));
     },
+    saveLib: () => saveAttachmentsToLibrary(m.attachments),
     report: () => onReport(m),
     del: () => setShowDelete(true),
   };
@@ -999,6 +1003,7 @@ export default function ThreadPanel({
   const [groupCallBusy, setGroupCallBusy] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [showMaker, setShowMaker] = useState(false);
+  const [showLib, setShowLib] = useState(false); // "From My Library" picker
   const [reviewOpen, setReviewOpen] = useState(false); // several photos / videos picked together -> review screen (MediaReview)
   const [hd, setHd] = useState(false);                 // "HD": photos keep their full quality instead of being shrunk before upload
   const [stickersRev, setStickersRev] = useState(0);
@@ -1860,6 +1865,8 @@ export default function ThreadPanel({
                 onPickAudio={() => audioInputRef.current?.click()}
                 onNewSticker={() => setShowMaker(true)}
                 onPickFiles={() => fileInputRef.current?.click()}
+                canLibrary={canSend}
+                onPickLibrary={() => setShowLib(true)}
                 onPickMedia={() => mediaInputRef.current?.click()}
                 onGalleryFiles={(files) => handleFiles(files)}
                 onPickCamera={() => {
@@ -1874,6 +1881,7 @@ export default function ThreadPanel({
               onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ''; }} />
             <input type="file" accept="audio/*" multiple hidden ref={audioInputRef}
               onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ''; }} />
+            {showLib && <LibraryPicker ar={ar} onClose={() => setShowLib(false)} onPick={(files) => handleFiles(files)} />}
             {showMaker && (
               <StickerMaker
                 ar={ar}
