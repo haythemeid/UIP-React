@@ -192,6 +192,7 @@ const StudentPortfolio = lazy(() => import('./pages/student/StudentPortfolio'));
 const StudentMyPC = lazy(() => import('./pages/student/StudentMyPC'));
 const DesktopOS = lazy(() => import('./desktop/DesktopOS'));
 const MyLibrary = lazy(() => import('./pages/MyLibrary'));
+const LibraryLockGate = lazy(() => import('./components/library/LibraryLockGate'));
 const PostsFeed = lazy(() => import('./pages/posts/PostsFeed'));
 const PublicPost = lazy(() => import('./pages/posts/PublicPost'));
 const PostsProfile = lazy(() => import('./pages/posts/PostsProfile'));
@@ -441,7 +442,7 @@ export default function App() {
                 <Route path="/my-pc" element={<MyPcRedirect />} />
                 {MY_PC_PREFIXES.map((px) => [
                   <Route key={`${px}-pc`} path={`/${px}/my-pc`} element={<MyPcAccessGate><DesktopOS /></MyPcAccessGate>} />,
-                  <Route key={`${px}-lib`} path={`/${px}/my-library`} element={<MyPcAccessGate><MyLibrary /></MyPcAccessGate>} />,
+                  <Route key={`${px}-lib`} path={`/${px}/my-library`} element={<MyPcAccessGate><LibraryLockGate><MyLibrary /></LibraryLockGate></MyPcAccessGate>} />,
                   <Route key={`${px}-pc-classic`} path={`/${px}/my-pc/classic`} element={<MyPcAccessGate><ClassicLockGuard><StudentMyPC /></ClassicLockGuard></MyPcAccessGate>} />,
                 ])}
                 {/* Social posts live in every portal: /student/posts, /faculty/posts, … (the API enforces posts.use). */}

@@ -1,0 +1,38 @@
+.ll-wrap { min-height: 62vh; display: grid; place-items: center; padding: 24px 16px; }
+.ll-card { width: min(380px, 100%); display: grid; gap: 12px; justify-items: stretch; text-align: center; padding: 28px 24px; border-radius: 20px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent); background: color-mix(in srgb, currentColor 4%, transparent); }
+.ll-card[data-shake] { animation: ll-shake .35s; }
+@keyframes ll-shake { 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
+.ll-card h2 { margin: 0; font-size: 20px; }
+.ll-card p { margin: 0; opacity: .75; font-size: 14px; }
+.ll-badge { justify-self: center; width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--color-primary, #0a84ff) 16%, transparent); color: var(--color-primary, #0a84ff); }
+.ll-badge.is-warn { background: color-mix(in srgb, #e8a200 16%, transparent); color: #e8a200; }
+.ll-field { display: grid; gap: 6px; text-align: start; font-size: 13px; font-weight: 600; }
+.ll-field input { width: 100%; box-sizing: border-box; padding: 11px 12px; border-radius: 11px; font: inherit; color: inherit;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent); background: color-mix(in srgb, currentColor 5%, transparent); }
+.ll-field input:focus { outline: none; border-color: var(--color-primary, #0a84ff); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #0a84ff) 22%, transparent); }
+.ll-pw { position: relative; display: flex; }
+.ll-pw input { padding-inline-end: 42px; }
+.ll-eye { position: absolute; inset-block: 0; inset-inline-end: 4px; width: 36px; display: grid; place-items: center; border: 0; background: none; color: inherit; opacity: .65; cursor: pointer; }
+.ll-eye:hover { opacity: 1; }
+.ll-btn { padding: 11px 14px; border-radius: 11px; border: 1px solid color-mix(in srgb, currentColor 16%, transparent); background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+.ll-btn.is-primary { background: var(--color-primary, #0a84ff); border-color: transparent; color: var(--color-on-primary, #fff); }
+.ll-btn:disabled { opacity: .5; cursor: not-allowed; }
+.ll-link { border: 0; background: none; color: var(--color-primary, #0a84ff); font: inherit; font-size: 13px; cursor: pointer; padding: 4px; }
+.ll-hint { display: flex; gap: 5px; align-items: center; justify-content: center; color: #e8a200; font-size: 12px; }
+.ll-err { padding: 9px 12px; border-radius: 10px; font-size: 13px; text-align: start; color: var(--color-danger, #d33); background: color-mix(in srgb, var(--color-danger, #d33) 12%, transparent); }
+.ll-note { padding: 9px 12px; border-radius: 10px; font-size: 13px; background: color-mix(in srgb, #e8a200 14%, transparent); }
+.ll-set { display: grid; gap: 14px; min-width: min(460px, 78vw); }
+.ll-lead { margin: 0; font-weight: 600; }
+.ll-opts { display: grid; gap: 8px; }
+.ll-opt { display: flex; gap: 12px; align-items: center; text-align: start; padding: 12px 14px; border-radius: 13px; font: inherit; color: inherit; cursor: pointer;
+  border: 1px solid color-mix(in srgb, currentColor 16%, transparent); background: transparent; }
+.ll-opt span { display: grid; gap: 2px; }
+.ll-opt small { opacity: .7; font-size: 12px; }
+.ll-opt.is-on { border-color: var(--color-primary, #0a84ff); background: color-mix(in srgb, var(--color-primary, #0a84ff) 10%, transparent); }
+.ll-opt:disabled { opacity: .5; cursor: not-allowed; }
+.ll-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 520px) { .ll-two { grid-template-columns: 1fr; } }
+.ll-check { display: flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; }
+.ll-fine { margin: 0; font-size: 12px; opacity: .65; }

@@ -13,6 +13,7 @@ import { myPcPath } from '../config/myPc';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageMeta } from '../context/PageMetaContext';
+import { useLibraryLock } from '../components/library/LibraryLockGate';
 import '../styles/css/my-library.css';
 
 /**
@@ -79,6 +80,7 @@ export default function MyLibrary() {
   const navigate = useNavigate();
   usePageMeta(tt('My Library', 'مكتبتي'), tt('Everything in My PC, sorted by type — find, preview, share and move it from one place.', 'كل اللي في جهازي مرتّب حسب النوع — دوّر وشوف وشارك وانقل من مكان واحد.'));
   const marks = useDriveMarks(uid);
+  const libLock = useLibraryLock(); // optional lock: { enabled, lockNow, openSettings }
 
   const [nodes, setNodes] = useState(null);
   const [error, setError] = useState('');
@@ -327,6 +329,8 @@ export default function MyLibrary() {
           <button type="button" className="lib-btn" onClick={() => setAdding('link')}><Icon name="link" size={15} /><span>{tt('Link', 'لينك')}</span></button>
           <button type="button" className="lib-btn" onClick={() => setAdding('note')}><Icon name="note" size={15} /><span>{tt('Note', 'ملاحظة')}</span></button>
           <button type="button" className="lib-btn" onClick={() => setAdding('code')}><Icon name="terminal" size={15} /><span>{tt('Code', 'كود')}</span></button>
+          <button type="button" className={`lib-btn${libLock.enabled ? ' is-on' : ''}`} onClick={libLock.openSettings} title={tt('Library lock', 'قفل المكتبة')}><Icon name="lock" size={15} /><span>{tt('Lock', 'قفل')}</span></button>
+          {libLock.enabled && <button type="button" className="lib-btn" onClick={libLock.lockNow} title={tt('Lock the library now', 'اقفل المكتبة دلوقتي')}><Icon name="shield" size={15} /><span>{tt('Lock now', 'اقفل دلوقتي')}</span></button>}
           <input ref={fileRef} type="file" multiple hidden onChange={(e) => { uploadFiles(e.target.files); e.target.value = ''; }} />
         </div>
       </header>
