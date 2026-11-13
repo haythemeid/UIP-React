@@ -1,58 +1,116 @@
 /* Word editor UI chrome (DocxTabs ribbon, DocxUi Modal/Seg/Pop2, DocxFonts, DocxTemplates, DocxPicture).
    Uses the editor theme variables (--ed-*), same as docx-bar.css / docx-pro.css. */
 
-/* ───── Ribbon (tabs + panel) ───── */
-.dxt { background: var(--ed-panel); border-bottom: 1px solid var(--ed-line); color: var(--ed-text); display: flex; flex-direction: column; flex: none; position: relative; z-index: 6; }
-.dxt__tabs { display: flex; align-items: center; gap: 2px; padding: 4px 8px 0; overflow-x: auto; scrollbar-width: none; }
-.dxt__tabs::-webkit-scrollbar { display: none; }
-.dxt__tab { flex: none; border: 0; background: none; color: var(--ed-muted); font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: 8px 8px 0 0; cursor: pointer; position: relative; white-space: nowrap; }
-.dxt__tab:hover { color: var(--ed-text); background: color-mix(in srgb, var(--ed-ink, #fff) 7%, transparent); }
-.dxt__tab.is-on { color: var(--ed-accent, #60a5fa); font-weight: 700; background: color-mix(in srgb, var(--ed-ink, #fff) 6%, transparent); }
-.dxt__tab.is-on::after { content: ''; position: absolute; inset-inline: 10px; bottom: 0; height: 2px; border-radius: 2px; background: var(--ed-accent, #60a5fa); }
-.dxt__tab.is-ctx { color: #fbbf24; }
-.dxt__tab.is-ctx.is-on { color: #fbbf24; } .dxt__tab.is-ctx.is-on::after { background: #fbbf24; }
-.dxt__fill { flex: 1; min-width: 8px; }
-.dxt__fold, .dxt__theme { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 0; border-radius: 7px; background: none; color: var(--ed-muted); cursor: pointer; }
-.dxt__fold:hover, .dxt__theme:hover { background: color-mix(in srgb, var(--ed-ink, #fff) 10%, transparent); color: var(--ed-text); }
-.dxt__panel { display: flex; align-items: stretch; gap: 2px; padding: 6px 8px 4px; border-top: 1px solid var(--ed-line); overflow-x: auto; scrollbar-width: thin; min-height: 74px; }
+/* ───── Thin, themed scrollbars everywhere in the Word editor (no default grey bars) ───── */
+.ed--docx, .ed--docx *, .dxm, .dxm *, .dxpop, .dxpop * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--ed-ink, #fff) 26%, transparent) transparent; }
+.ed--docx ::-webkit-scrollbar, .dxm ::-webkit-scrollbar, .dxpop::-webkit-scrollbar, .dxpop ::-webkit-scrollbar { width: 8px; height: 8px; }
+.ed--docx ::-webkit-scrollbar-track, .dxm ::-webkit-scrollbar-track, .dxpop::-webkit-scrollbar-track, .dxpop ::-webkit-scrollbar-track { background: transparent; }
+.ed--docx ::-webkit-scrollbar-thumb, .dxm ::-webkit-scrollbar-thumb, .dxpop::-webkit-scrollbar-thumb, .dxpop ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ed-ink, #fff) 24%, transparent); border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+.ed--docx ::-webkit-scrollbar-thumb:hover, .dxm ::-webkit-scrollbar-thumb:hover, .dxpop ::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--ed-ink, #fff) 42%, transparent); background-clip: content-box; }
+.ed--docx ::-webkit-scrollbar-corner, .dxpop ::-webkit-scrollbar-corner { background: transparent; }
 
-/* group = row of controls + caption underneath */
-.dxt__g { display: flex; flex-direction: column; justify-content: space-between; align-items: center; gap: 3px; padding: 0 6px; flex: none; }
+/* number fields: no native spin arrows (↑ ↓ on the keyboard still step the value) */
+.ed--docx input[type="number"], .dxm input[type="number"], .dxpop input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+.ed--docx input[type="number"]::-webkit-inner-spin-button, .ed--docx input[type="number"]::-webkit-outer-spin-button,
+.dxm input[type="number"]::-webkit-inner-spin-button, .dxm input[type="number"]::-webkit-outer-spin-button,
+.dxpop input[type="number"]::-webkit-inner-spin-button, .dxpop input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
+
+/* ───── Ribbon (tabs + panel) ───── */
+.dxt { --dxt-h: 28px; --dxt-hover: color-mix(in srgb, var(--ed-ink, #fff) 9%, transparent); --dxt-on: color-mix(in srgb, var(--ed-accent, #3b82f6) 20%, transparent); background: var(--ed-panel); border-bottom: 1px solid var(--ed-line); color: var(--ed-text); display: flex; flex-direction: column; flex: none; position: relative; z-index: 6; font-size: 12.5px; user-select: none; }
+.dxt__tabs { display: flex; align-items: flex-end; gap: 2px; padding: 6px 12px 0; min-height: 38px; overflow-x: auto; scrollbar-width: none; }
+.dxt__tabs::-webkit-scrollbar { display: none; }
+.dxt__tab { flex: none; height: 32px; border: 0; background: none; color: var(--ed-muted); font: inherit; font-size: 13px; font-weight: 500; padding: 0 14px; border-radius: 8px 8px 0 0; cursor: pointer; position: relative; white-space: nowrap; transition: color .12s, background .12s; }
+.dxt__tab:hover { color: var(--ed-text); background: var(--dxt-hover); }
+.dxt__tab.is-on { color: var(--ed-text); font-weight: 700; background: color-mix(in srgb, var(--ed-ink, #fff) 6%, transparent); }
+.dxt__tab.is-on::after { content: ''; position: absolute; inset-inline: 12px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--ed-accent, #60a5fa); }
+.dxt__tab.is-ctx { color: #d99a00; } .dxt__tab.is-ctx.is-on { color: #d99a00; } .dxt__tab.is-ctx.is-on::after { background: #d99a00; }
+.dxt__fill { flex: 1; min-width: 8px; }
+.dxt__fold, .dxt__theme { flex: none; align-self: center; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin-bottom: 2px; border: 0; border-radius: 6px; background: none; color: var(--ed-muted); cursor: pointer; padding: 0; min-width: 0; }
+.dxt__fold:hover, .dxt__theme:hover { background: var(--dxt-hover); color: var(--ed-text); }
+.dxt__panel { display: flex; align-items: stretch; gap: 0; padding: 8px 10px 6px; border-top: 1px solid var(--ed-line); background: color-mix(in srgb, var(--ed-ink, #fff) 3%, transparent); overflow-x: auto; overflow-y: hidden; min-height: 92px; scrollbar-width: thin; scrollbar-color: transparent transparent; }
+.dxt__panel:hover { scrollbar-color: color-mix(in srgb, var(--ed-ink, #fff) 30%, transparent) transparent; }
+.dxt__panel::-webkit-scrollbar { height: 6px; } .dxt__panel::-webkit-scrollbar-thumb { background: transparent; border-radius: 6px; border: 0; } .dxt__panel:hover::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ed-ink, #fff) 28%, transparent); }
+
+/* group = row(s) of controls + caption underneath */
+.dxt__g { display: flex; flex-direction: column; justify-content: space-between; align-items: center; gap: 4px; padding: 0 8px; flex: none; }
 .dxt__g--grow { flex: 1 1 auto; }
-.dxt__row { display: flex; align-items: center; gap: 3px; min-height: 0; }
+.dxt__row { display: flex; align-items: center; gap: 2px; min-height: 0; }
 .dxt__wrap { flex-wrap: wrap; max-width: 380px; }
-.dxt__col { display: flex; flex-direction: column; justify-content: center; gap: 2px; align-items: stretch; }
-.dxt__2r { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
-.dxt__lbl { font-size: 10.5px; color: var(--ed-muted); white-space: nowrap; letter-spacing: .02em; }
-.dxt__sep { width: 1px; align-self: stretch; margin: 4px 3px 14px; background: var(--ed-line); flex: none; }
+.dxt__col { display: flex; flex-direction: column; justify-content: center; gap: 4px; align-items: stretch; }
+.dxt__2r { display: flex; flex-direction: column; justify-content: center; gap: 4px; flex: 1; }
+.dxt__lbl { font-size: 11px; color: var(--ed-muted); white-space: nowrap; line-height: 1; padding-top: 2px; }
+.dxt__sep { width: 1px; align-self: stretch; margin: 2px 2px 18px; background: var(--ed-line); flex: none; }
+
+/* every small button in the ribbon: flat, square, same height — hover / pressed like Office */
+.dxt .ed__btn { height: var(--dxt-h); min-width: var(--dxt-h); padding: 0 6px; gap: 5px; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ed-text); font-size: 12.5px; font-weight: 500; box-shadow: none; }
+.dxt .ed__btn:hover:not(:disabled) { background: var(--dxt-hover); }
+.dxt .ed__btn:active:not(:disabled) { background: color-mix(in srgb, var(--ed-ink, #fff) 14%, transparent); }
+.dxt .ed__btn.is-on { background: var(--dxt-on); border-color: color-mix(in srgb, var(--ed-accent, #3b82f6) 45%, transparent); color: var(--ed-accent, #60a5fa); }
+.dxt .ed__btn:disabled { opacity: .35; cursor: default; }
+.dxt .ed__btn:focus-visible, .dxt__big:focus-visible, .dxt__tab:focus-visible, .dxt__st:focus-visible { outline: 2px solid var(--ed-accent, #3b82f6); outline-offset: -2px; }
+.dxt .pxr__cur { display: block; width: 12px; height: 3px; border-radius: 2px; margin-top: 1px; }
+.dxt .pxr__pw { display: inline-flex; }
 
 /* big icon-over-label button */
-.dxt__big, .dxt__bigpop.ed__btn, .dxt__bigpop { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 54px; padding: 4px 8px; border: 1px solid transparent; border-radius: 8px; background: none; color: var(--ed-text); font: inherit; font-size: 11.5px; line-height: 1.15; cursor: pointer; }
-.dxt__big:hover:not(:disabled), .dxt__bigpop:hover:not(:disabled) { background: color-mix(in srgb, var(--ed-ink, #fff) 9%, transparent); }
-.dxt__big.is-on { background: color-mix(in srgb, var(--ed-accent, #3b82f6) 24%, transparent); color: var(--ed-accent, #60a5fa); }
-.dxt__big:disabled, .dxt__bigpop:disabled { opacity: .38; cursor: default; }
-.dxt__big span { max-width: 70px; text-align: center; }
+.dxt__big, .dxt .dxt__bigpop.ed__btn { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 56px; height: 62px; padding: 6px 8px; border: 1px solid transparent; border-radius: 8px; background: none; color: var(--ed-text); font: inherit; font-size: 11.5px; font-weight: 500; line-height: 1.15; cursor: pointer; }
+.dxt__big:hover:not(:disabled), .dxt .dxt__bigpop.ed__btn:hover:not(:disabled) { background: var(--dxt-hover); }
+.dxt__big.is-on, .dxt .dxt__bigpop.ed__btn.is-on { background: var(--dxt-on); color: var(--ed-accent, #60a5fa); border-color: color-mix(in srgb, var(--ed-accent, #3b82f6) 45%, transparent); }
+.dxt__big:disabled, .dxt .dxt__bigpop.ed__btn:disabled { opacity: .35; cursor: default; }
+.dxt__big span, .dxt .dxt__bigpop.ed__btn > span { max-width: 74px; text-align: center; }
+.dxt .dxt__bigpop.ed__btn svg:last-child { margin-top: -2px; opacity: .6; }
+.dxt .dxt__bigpop.ed__btn { flex-direction: column; }
+
+/* small text chips (Remove link, Contents, Date …): flat rectangles, not pills */
+.dxt .dxb__chip { height: 26px; padding: 0 10px; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ed-text); font: inherit; font-size: 12.5px; font-weight: 500; white-space: nowrap; cursor: pointer; }
+.dxt .dxb__chip:hover:not(:disabled) { background: var(--dxt-hover); border-color: transparent; }
+.dxt .dxb__chip.is-on { background: var(--dxt-on); color: var(--ed-accent, #60a5fa); border-color: color-mix(in srgb, var(--ed-accent, #3b82f6) 45%, transparent); }
+.dxt .dxb__chip:disabled { opacity: .35; cursor: default; }
+
+/* selects / numeric fields inside the ribbon */
+.dxt .pxr__sel, .dxt .pxr__num, .dxt .dxb__sel { height: var(--dxt-h); padding: 0 8px; border: 1px solid var(--ed-line); border-radius: 6px; background: color-mix(in srgb, var(--ed-ink, #fff) 4%, transparent); color: var(--ed-text); font: inherit; font-size: 12.5px; outline: none; box-sizing: border-box; }
+.dxt .pxr__num { text-align: center; font-variant-numeric: tabular-nums; }
+.dxt .pxr__sel:hover, .dxt .pxr__num:hover { border-color: color-mix(in srgb, var(--ed-ink, #fff) 32%, transparent); }
+.dxt .pxr__sel:focus, .dxt .pxr__num:focus { border-color: var(--ed-accent, #3b82f6); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ed-accent, #3b82f6) 25%, transparent); }
+.dxt .pxr__fld, .dxt .dxb__margins label { font-size: 11px; color: var(--ed-muted); }
+
+/* font name drop-down */
+.dxt .dxf__trigger { min-width: 150px; max-width: 170px; justify-content: space-between; border: 1px solid var(--ed-line); background: color-mix(in srgb, var(--ed-ink, #fff) 4%, transparent); padding: 0 8px; }
+.dxt .dxf__trigger:hover:not(:disabled) { border-color: color-mix(in srgb, var(--ed-ink, #fff) 32%, transparent); background: color-mix(in srgb, var(--ed-ink, #fff) 6%, transparent); }
+.dxt .dxf__trigger > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-align: start; }
+
+/* font-size box: type a number or pick from the list */
+.dxsz { position: relative; display: inline-flex; }
+.dxsz__in { width: 46px; height: var(--dxt-h, 28px); box-sizing: border-box; padding: 0 4px; text-align: center; border: 1px solid var(--ed-line); border-radius: 6px; background: color-mix(in srgb, var(--ed-ink, #fff) 4%, transparent); color: var(--ed-text); font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; outline: none; cursor: text; transition: border-color .12s, box-shadow .12s; }
+.dxsz__in:hover:not(:disabled) { border-color: color-mix(in srgb, var(--ed-ink, #fff) 32%, transparent); }
+.dxsz__in:focus { border-color: var(--ed-accent, #3b82f6); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ed-accent, #3b82f6) 25%, transparent); }
+.dxsz__in:disabled { opacity: .4; cursor: default; }
+.dxsz__pop { padding: 4px; min-width: 72px; border-radius: 10px; overflow: hidden; }
+.dxsz__list { max-height: 268px; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; }
+.dxsz__opt { flex: none; height: 28px; border: 0; border-radius: 6px; background: none; color: var(--ed-text); font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; text-align: center; cursor: pointer; padding: 0 8px; }
+.dxsz__opt.is-hi { background: color-mix(in srgb, var(--ed-ink, #fff) 10%, transparent); }
+.dxsz__opt.is-on { background: var(--dxt-on, rgba(59,130,246,.2)); color: var(--ed-accent, #60a5fa); font-weight: 700; }
 
 /* paragraph-style gallery */
-.dxt__styles { display: flex; gap: 4px; align-items: stretch; max-width: 360px; overflow-x: auto; scrollbar-width: thin; padding-bottom: 2px; }
-.dxt__st { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 68px; padding: 4px 8px; border: 1px solid var(--ed-line); border-radius: 8px; background: color-mix(in srgb, var(--ed-ink, #fff) 5%, transparent); color: var(--ed-text); cursor: pointer; font: inherit; }
+.dxt__styles { display: flex; gap: 4px; align-items: stretch; max-width: 380px; overflow-x: auto; overflow-y: hidden; padding: 0 0 4px; }
+.dxt__styles::-webkit-scrollbar { height: 5px; }
+.dxt__st { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 70px; height: 56px; padding: 4px 8px; border: 1px solid var(--ed-line); border-radius: 8px; background: color-mix(in srgb, var(--ed-ink, #fff) 4%, transparent); color: var(--ed-text); cursor: pointer; font: inherit; }
 .dxt__st > span { font-size: 15px; line-height: 1.2; max-width: 100%; overflow: hidden; white-space: nowrap; }
-.dxt__st small { font-size: 9.5px; color: var(--ed-muted); }
+.dxt__st small { font-size: 10px; color: var(--ed-muted); }
 .dxt__st:hover:not(:disabled) { border-color: var(--ed-accent, #3b82f6); }
-.dxt__st.is-on { border-color: var(--ed-accent, #3b82f6); background: color-mix(in srgb, var(--ed-accent, #3b82f6) 20%, transparent); }
-.dxt__st:disabled { opacity: .45; cursor: default; }
+.dxt__st.is-on { border-color: var(--ed-accent, #3b82f6); background: var(--dxt-on); }
+.dxt__st:disabled { opacity: .4; cursor: default; }
 
 /* menu rows inside popups */
 .dxt__item { display: flex; align-items: center; gap: 9px; width: 100%; }
 .dxt__item .dxth__dots { margin-inline-start: auto; }
-.dxt__themes { display: flex; gap: 6px; flex-wrap: wrap; max-width: 520px; align-items: stretch; }
+.dxt__themes { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); gap: 6px; align-items: stretch; }
 
 /* document theme tile */
-.dxth { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 74px; padding: 6px 8px; border: 1px solid var(--ed-line); border-radius: 9px; background: color-mix(in srgb, var(--ed-ink, #fff) 5%, transparent); color: var(--ed-text); cursor: pointer; font: inherit; }
+.dxth { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 72px; padding: 6px 8px; border: 1px solid var(--ed-line); border-radius: 9px; background: color-mix(in srgb, var(--ed-ink, #fff) 4%, transparent); color: var(--ed-text); cursor: pointer; font: inherit; }
 .dxth b { font-size: 20px; line-height: 1.1; }
 .dxth small { font-size: 10.5px; opacity: .85; white-space: nowrap; }
 .dxth:hover { border-color: var(--ed-accent, #3b82f6); }
-.dxth.is-on { border-color: var(--ed-accent, #3b82f6); background: color-mix(in srgb, var(--ed-accent, #3b82f6) 20%, transparent); }
+.dxth.is-on { border-color: var(--ed-accent, #3b82f6); background: var(--dxt-on, rgba(59,130,246,.2)); }
 .dxth--s { min-width: 60px; padding: 4px 6px; } .dxth--s b { font-size: 16px; }
 .dxth__dots { display: inline-flex; gap: 2px; }
 .dxth__dots i { display: block; width: 11px; height: 11px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--ed-ink, #fff) 20%, transparent); }

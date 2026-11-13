@@ -43,12 +43,27 @@ const BY_NAME = Object.fromEntries(FONT_LIST.map((f) => [f.name, f]));
 
 /* ---------------------------------------------------------------- Google Fonts on demand */
 const loaded = new Set(['Cairo', 'Tajawal', 'Amiri', 'Reem Kufi', 'Lalezar', 'Inter', 'JetBrains Mono', 'Plus Jakarta Sans', 'Playfair Display', 'Bebas Neue', 'Pacifico']); // index.html loads these
+const gfUrl = (name, extra = '') => `https://fonts.googleapis.com/css2?family=${encodeURIComponent(name).replace(/%20/g, '+')}${extra}&display=swap`;
+const previews = new Map(); // name -> <link> of the tiny preview stylesheet
+/** The whole font (all weights it needs): only when the font is really used — picked, or already in the document. */
 export function loadWebFont(name) {
   const f = BY_NAME[name]; if (!f?.web || loaded.has(name) || typeof document === 'undefined') return;
   loaded.add(name);
   const l = document.createElement('link'); l.rel = 'stylesheet'; l.setAttribute('data-dx-font', name);
-  l.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(name).replace(/%20/g, '+')}:wght@400;700&display=swap`;
+  l.href = gfUrl(name, ':wght@400;700');
+  const pv = previews.get(name);
+  if (pv) { const drop = () => { pv.remove(); previews.delete(name); }; l.addEventListener('load', drop); l.addEventListener('error', drop); }
   document.head.appendChild(l);
+}
+/**
+ * Preview in the font list: Google Fonts can send a font that holds ONLY the letters of its own name (`&text=`): about 1–3 KB instead of
+ * 60–400 KB for a whole Arabic font. The list asks for it only for the rows that are on screen, so opening the list costs a few KB.
+ */
+export function previewWebFont(name) {
+  const f = BY_NAME[name]; if (!f?.web || loaded.has(name) || previews.has(name) || typeof document === 'undefined') return;
+  const l = document.createElement('link'); l.rel = 'stylesheet'; l.setAttribute('data-dx-font-preview', name);
+  l.href = gfUrl(name, `&text=${encodeURIComponent(name)}`);
+  previews.set(name, l); document.head.appendChild(l);
 }
 /** the editor opened a document that uses fonts: make sure the ones we know are available */
 export function ensureFontsIn(html) {

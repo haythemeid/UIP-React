@@ -2,10 +2,10 @@ import { memo, useEffect, useRef, useState } from 'react';
 import '../../styles/css/docx-bar.css';
 import Icon from '../Icon';
 import { B, ColorBtn, NumField, keep } from './ribbonParts';
-import { Pop2, Group, Sep, Big, UiThemeButton } from './DocxUi';
+import { Pop2, Group, Sep, Big, UiThemeButton, SizeBox } from './DocxUi';
 import FontPicker from './DocxFonts';
 import { PicStyleGallery, PicFilterGallery, Slider } from './DocxPicture';
-import { PAGE_SIZES, MARGIN_PRESETS, SYMBOLS, STYLES, SIZES, twToCm, cmToTw } from './docxEdit';
+import { PAGE_SIZES, MARGIN_PRESETS, SYMBOLS, STYLES, twToCm, cmToTw } from './docxEdit';
 import { DOC_THEMES, STYLE_SETS, PAGE_BORDERS } from '../../lib/officeFmt/docxThemes';
 import { ASPECTS } from '../../lib/officeFmt/docxImageFx';
 import { loadTemplateLibrary } from '../../lib/officeFmt/docxTemplateIndex';
@@ -65,10 +65,9 @@ function HomeTab({ tt, ar, S, A }) {
         <div className="dxt__2r">
           <div className="dxt__row">
             <FontPicker tt={tt} ar={ar} current={f.font} disabled={!has} A={A} />
-            <B icon="ed-minus" label={tt('Smaller', 'أصغر')} onClick={() => A.size(Math.max(1, (size || 11) - ((size || 11) > 12 ? 2 : 1)))} disabled={!has} />
-            <NumField value={size} step={0.5} min={1} width={50} title={tt('Font size (pt)', 'حجم الخط (نقطة)')} onCommit={A.size} />
-            <B icon="plus" label={tt('Larger', 'أكبر')} onClick={() => A.size((size || 11) + ((size || 11) >= 12 ? 2 : 1))} disabled={!has} />
-            <Pop2 icon="ed-type" label={tt('Common sizes', 'أحجام شائعة')} w={110}>{(close) => <div className="pxr__list">{SIZES.map((s) => <button key={s} type="button" className={size === s ? 'is-on' : ''} onClick={() => { A.size(s); close(); }}>{s}</button>)}</div>}</Pop2>
+            <B icon="ed-minus" label={tt('Decrease font size', 'تصغير الخط')} onClick={() => A.size(Math.max(1, (size || 11) - ((size || 11) > 12 ? 2 : 1)))} disabled={!has} />
+            <SizeBox value={size} disabled={!has} title={tt('Font size (pt)', 'حجم الخط (نقطة)')} onCommit={A.size} />
+            <B icon="plus" label={tt('Increase font size', 'تكبير الخط')} onClick={() => A.size((size || 11) + ((size || 11) >= 12 ? 2 : 1))} disabled={!has} />
           </div>
           <div className="dxt__row">
             <B icon="ed-bold" label={tt('Bold (Ctrl+B)', 'عريض (Ctrl+B)')} on={!!f.b} onClick={() => A.toggle('bold')} disabled={!has} />

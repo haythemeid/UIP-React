@@ -1,20 +1,27 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../Icon';
 import { Pop2 } from './DocxUi';
-import { FONT_GROUPS, FONT_LIST, loadWebFont, listUserFonts, addUserFont, removeUserFont, getRecentFonts, pushRecentFont, fontInstalled } from '../../lib/officeFmt/docxFonts';
+import { FONT_GROUPS, FONT_LIST, loadWebFont, previewWebFont, listUserFonts, addUserFont, removeUserFont, getRecentFonts, pushRecentFont, fontInstalled } from '../../lib/officeFmt/docxFonts';
 
 /**
  * Font picker of the Word editor: search, recently used, fonts used in this document, the built-in library (Arabic first),
  * the student's own font files, and a button to add a font file (.ttf / .otf / .woff / .woff2) that stays on this device.
- * Web fonts are only fetched when you hover / pick them, so opening the list costs nothing.
+ * Rows on screen preview with a tiny name-only font (a few KB); the real font downloads only when you pick it.
  */
 function FontList({ tt, ar, current, onPick, close, used, setErr }) {
   const [q, setQ] = useState(''); const [mine, setMine] = useState([]); const [recent, setRecent] = useState([]); const file = useRef(null);
+  const io = useRef(null); // previews only the rows that are really on screen
+  const watch = (el) => {
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    if (!io.current) io.current = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { previewWebFont(e.target.dataset.font); io.current.unobserve(e.target); } }), { rootMargin: '40px' });
+    io.current.observe(el);
+  };
+  useEffect(() => () => io.current?.disconnect(), []);
   useEffect(() => { let on = true; listUserFonts().then((l) => on && setMine(l)); getRecentFonts().then((l) => on && setRecent(l)); return () => { on = false; }; }, []);
   const norm = q.trim().toLowerCase();
   const match = (n) => !norm || n.toLowerCase().includes(norm);
   const groups = useMemo(() => FONT_GROUPS.map((g) => ({ ...g, list: FONT_LIST.filter((f) => f.g === g.id && match(f.name)) })).filter((g) => g.list.length), [norm]); // eslint-disable-line react-hooks/exhaustive-deps
-  const pick = (name) => { onPick(name); pushRecentFont(name); close(); };
+  const pick = (name) => { loadWebFont(name); onPick(name); pushRecentFont(name); close(); };
   const add = async (f) => {
     if (!f) return;
     try { const r = await addUserFont(f); setMine((l) => [...l.filter((x) => x.name !== r.name), r]); onPick(r.name); setErr?.(''); }
@@ -24,7 +31,7 @@ function FontList({ tt, ar, current, onPick, close, used, setErr }) {
     const ok = fontInstalled(name);
     return (
       <div key={key} className={`dxf__row${name === current ? ' is-on' : ''}`}>
-        <button type="button" className="dxf__pick" onMouseEnter={() => loadWebFont(name)} onFocus={() => loadWebFont(name)} onClick={() => pick(name)} style={{ fontFamily: `'${name}', sans-serif` }}>
+        <button type="button" className="dxf__pick" ref={watch} data-font={name} onClick={() => pick(name)} style={{ fontFamily: `'${name}', sans-serif` }}>
           <span>{name}</span>{!ok && <em title={tt('Not installed on this device — it shows in another font here, and in Word only if the reader has it.', 'غير مثبّت على الجهاز ده — بيظهر بخط بديل هنا، وفي Word لو القارئ عنده.')}>!</em>}
         </button>
         {mineFont && <button type="button" className="dxf__del" title={tt('Remove this font', 'حذف الخط')} onClick={async () => { await removeUserFont(name); setMine((l) => l.filter((x) => x.name !== name)); }}><Icon name="trash" size={13} /></button>}

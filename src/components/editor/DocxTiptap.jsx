@@ -11,7 +11,7 @@ import { FloatingBar, DocxContextMenu } from './DocxPopups';
 import { PageBorders } from './DocxView';
 import { readDocx, htmlToDocx, sanitizeHtml } from '../../lib/officeFmt/docx';
 import { DOC_THEMES, STYLE_SETS, PAGE_BORDERS, hexOf } from '../../lib/officeFmt/docxThemes';
-import { loadWebFont, ensureFontsIn } from '../../lib/officeFmt/docxFonts';
+import { loadWebFont } from '../../lib/officeFmt/docxFonts';
 import { renderImage } from '../../lib/officeFmt/docxImageFx';
 import { svgOf, svgToPicture } from '../../lib/officeFmt/docxShapes';
 import { today } from '../../lib/officeFmt/docxHtml';
@@ -232,7 +232,12 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
     setTab, undo: () => run((ed, c) => c.undo().run()), redo: () => run((ed, c) => c.redo().run()),
     toggle: (k) => run((ed, c) => ({ bold: c.toggleBold(), italic: c.toggleItalic(), underline: c.toggleUnderline(), strikeThrough: c.toggleStrike(), subscript: c.toggleSubscript(), superscript: c.toggleSuperscript() }[k]?.run())),
     font: (f) => { loadWebFont(f); run((ed) => applySpan(ed, { 'font-family': `'${f}'` })); },
-    usedFonts: () => (body ? ensureFontsIn(body.getHTML()) : []),
+    usedFonts: () => { // walks the document (not getHTML(): that would serialise every picture just to open the font list)
+      if (!body) return []; const seen = new Set();
+      const add = (st) => { const m = /font-family:\s*([^;]+)/i.exec(st || ''); if (m) m[1].split(',').forEach((x) => { const n = x.replace(/['"]/g, '').trim(); if (n) seen.add(n); }); };
+      body.state.doc.descendants((n) => { add(n.attrs?.style); n.marks.forEach((mk) => add(mk.attrs?.style)); return !n.isAtom; });
+      seen.forEach((n) => loadWebFont(n)); return Array.from(seen);
+    },
     size: (pt) => { if (pt > 0) run((ed) => applySpan(ed, { 'font-size': `${pt}pt` })); },
     color: (c) => run((ed) => applySpan(ed, { color: c || '#000000' })),
     highlight: (c) => run((ed) => applySpan(ed, { 'background-color': c || null })),
@@ -441,7 +446,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
       const a = Math.min(s0, size); const b = Math.max(a, Math.min(i + 1 < starts.length ? starts[i + 1] : size, size)); let text = ''; let img = null; let hasImg = false;
       try {
         text = doc.textBetween(a, b, ' ', ' ').replace(/\s+/g, ' ').trim().slice(0, 240);
-        doc.nodesBetween(a, b, (n) => { if (n.type.name === 'image' && !hasImg) { hasImg = true; const src = n.attrs.src || ''; if (src.length < 300000) img = src; } return !hasImg; });
+        doc.nodesBetween(a, b, (n) => { if (n.type.name === 'image' && !hasImg) { hasImg = true; const src = n.attrs.src || ''; if (src.length < 90000 || !src.startsWith('data:')) img = src; } return !hasImg; });
       } catch { /* a stale range: show the page without a preview */ }
       return { text, img, hasImg };
     });
@@ -453,7 +458,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
 
   return (
     <OfficeShell
-      fileName={fileName} tt={tt} guardRef={guardRef} onSave={onSave} onClose={onClose} dirty={dirty} build={build} onSaved={() => setDirty(false)} draftKey={draftKey} draftToken={ver} draftBuild={draftBuild} draftDelay={20000}
+      fileName={fileName} tt={tt} guardRef={guardRef} onSave={onSave} onClose={onClose} dirty={dirty} build={build} onSaved={() => setDirty(false)} draftKey={draftKey} draftToken={ver} draftBuild={draftBuild} draftDelay={45000}
       className="ed--docx" tools={<DocxTabs tt={ttS} ar={ar} S={S} A={Astable} />}
       status={(
         <div className="dx__status">

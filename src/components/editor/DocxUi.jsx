@@ -91,3 +91,60 @@ export function UiThemeButton({ tt }) {
     </Pop2>
   );
 }
+
+/**
+ * Font-size box like Word / Google Docs: click or tab into it and the list of common sizes opens at once; or just type a size
+ * (Enter applies, Esc cancels, ↑ ↓ walk the list). No native spin arrows and no native scrollbar.
+ */
+export const FONT_SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 40, 48, 56, 64, 72, 96];
+export function SizeBox({ value, onCommit, disabled, title, sizes = FONT_SIZES }) {
+  const [open, setOpen] = useState(false); const [txt, setTxt] = useState(''); const [hi, setHi] = useState(-1); const [pos, setPos] = useState(null);
+  const wrap = useRef(null); const input = useRef(null); const panel = useRef(null); const list = useRef(null);
+  const cur = value ? String(value) : '';
+  useEffect(() => { if (!open) setTxt(cur); }, [cur, open]);
+  const show = () => {
+    if (disabled || open) return;
+    const ed = wrap.current?.closest('.ed'); if (!ed) return;
+    const r = wrap.current.getBoundingClientRect(); const er = ed.getBoundingClientRect();
+    setPos({ ed, left: r.left - er.left, top: r.bottom - er.top + 4, width: Math.max(r.width, 72) });
+    setHi(sizes.indexOf(Number(value))); setOpen(true);
+  };
+  const close = () => setOpen(false);
+  const commit = (v) => {
+    const n = parseFloat(String(v).replace(',', '.')); close();
+    if (Number.isFinite(n) && n > 0) { const pt = Math.min(400, Math.max(1, Math.round(n * 2) / 2)); if (pt !== Number(value)) onCommit(pt); setTxt(String(pt)); } else setTxt(cur);
+  };
+  useEffect(() => { // keep the highlighted row in view
+    if (!open) return;
+    const l = list.current; const el = l?.querySelector('.is-hi') || l?.querySelector('.is-on'); if (!l || !el) return;
+    const a = el.offsetTop; const b = a + el.offsetHeight;
+    if (a < l.scrollTop) l.scrollTop = a; else if (b > l.scrollTop + l.clientHeight) l.scrollTop = b - l.clientHeight;
+  }, [open, hi]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const h = (e) => { if (!panel.current?.contains(e.target) && !wrap.current?.contains(e.target)) { setOpen(false); setTxt(cur); } };
+    document.addEventListener('pointerdown', h); return () => document.removeEventListener('pointerdown', h);
+  }, [open, cur]);
+  const onKey = (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') { e.preventDefault(); commit(hi >= 0 && open && txt === cur ? sizes[hi] : txt); }
+    else if (e.key === 'Escape') { e.preventDefault(); close(); setTxt(cur); input.current?.blur(); }
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault(); if (!open) { show(); return; }
+      const d = e.key === 'ArrowDown' ? 1 : -1; const n = Math.max(0, Math.min(sizes.length - 1, (hi < 0 ? Math.max(0, sizes.findIndex((x) => x >= Number(value))) - (d > 0 ? 1 : 0) : hi) + d)); setHi(n); setTxt(String(sizes[n]));
+    } else if (e.key === 'Tab') commit(txt);
+  };
+  return (
+    <span ref={wrap} className={`dxsz${disabled ? ' is-off' : ''}`}>
+      <input ref={input} className="dxsz__in" type="text" inputMode="decimal" autoComplete="off" spellCheck={false} value={txt} disabled={disabled} title={title} aria-label={title}
+        aria-haspopup="listbox" aria-expanded={open} onFocus={(e) => { e.target.select(); show(); }} onClick={show} onChange={(e) => { setTxt(e.target.value.replace(/[^0-9.,]/g, '').slice(0, 5)); setHi(-1); }} onKeyDown={onKey}
+        onBlur={() => { if (!open) { if (txt !== cur) commit(txt); } }} />
+      {open && pos && createPortal(
+        <div ref={panel} className="dxpop dxsz__pop" role="listbox" data-px-keep style={{ left: pos.left, top: pos.top, width: pos.width }} onMouseDown={(e) => e.preventDefault()}>
+          <div ref={list} className="dxsz__list">
+            {sizes.map((s, i) => <button key={s} type="button" role="option" aria-selected={Number(value) === s} className={`dxsz__opt${Number(value) === s ? ' is-on' : ''}${i === hi ? ' is-hi' : ''}`} onMouseEnter={() => setHi(i)} onClick={() => { commit(s); input.current?.blur(); }}>{s}</button>)}
+          </div>
+        </div>, pos.ed)}
+    </span>
+  );
+}
