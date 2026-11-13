@@ -54,7 +54,8 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
   const ar = !!uiRtl;
   const [dirty, setDirty] = useState(startDirty); const [ver, setVer] = useState(0);
   const [pg, setPg] = useState(initial.page); const [def, setDef] = useState(initial.defaults); const pgRef = useRef(initial.page); const defRef = useRef(initial.defaults);
-  const [tab, setTab] = useState('home'); const [zoom, setZoom] = useState(1); const [fmt, setFmt] = useState({ has: false }); const [hist, setHist] = useState({ u: false, r: false });
+  const [tab, setTab] = useState('home'); const [zoom, setZoomRaw] = useState(1); const zoomUser = useRef(false); // zoomUser: the student picked a zoom, so stop auto-fitting the page to the screen
+  const setZoom = useCallback((z) => { zoomUser.current = true; setZoomRaw(z); }, []); const [fmt, setFmt] = useState({ has: false }); const [hist, setHist] = useState({ u: false, r: false });
   const [find, setFind] = useState({ open: false, q: '', r: '', mc: false, idx: 0, total: 0, showReplace: false });
   const [words, setWords] = useState({ all: 0, sel: 0 }); const [pages, setPages] = useState(1); const [err, setErr] = useState('');
   const [starts, setStarts] = useState([0]); const startsRef = useRef([0]); const [curPage, setCurPage] = useState(0); const [navOpen, setNavOpen] = useState(() => (typeof window === 'undefined' ? true : window.innerWidth >= 980));
@@ -137,9 +138,20 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
     const el = pageEl.current; if (!el || paged) return undefined; const ph = twToPx(pg.h);
     const calc = () => setPages(Math.max(1, Math.ceil(el.offsetHeight / ph - 0.02))); calc(); const ro = new ResizeObserver(calc); ro.observe(el); return () => ro.disconnect();
   }, [pg.h, paged]);
+  useEffect(() => { // phones / tablets / narrow windows: the sheet shrinks to the screen width until the student zooms by hand
+    const el = stage.current; if (!el) return undefined; let raf = 0;
+    const fit = () => {
+      raf = 0; if (zoomUser.current) return;
+      const cs = getComputedStyle(el); const pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight); const w = el.clientWidth - pad - (el.offsetWidth - el.clientWidth);
+      if (w <= 0) return; const z = Math.max(0.3, Math.min(1, Math.floor((w / twToPx(pgRef.current.w)) * 100) / 100));
+      setZoomRaw((p) => (Math.abs(p - z) < 0.015 ? p : z));
+    };
+    const ro = new ResizeObserver(() => { if (!raf) raf = requestAnimationFrame(fit); }); ro.observe(el); fit();
+    return () => { ro.disconnect(); if (raf) cancelAnimationFrame(raf); };
+  }, [pg.w]);
   useEffect(() => { // Ctrl + wheel = zoom
     const el = stage.current; if (!el) return undefined;
-    const h = (e) => { if (!(e.ctrlKey || e.metaKey)) return; e.preventDefault(); setZoom((z) => Math.max(0.3, Math.min(2.5, Math.round((z - Math.sign(e.deltaY) * 0.1) * 10) / 10))); };
+    const h = (e) => { if (!(e.ctrlKey || e.metaKey)) return; e.preventDefault(); zoomUser.current = true; setZoomRaw((z) => Math.max(0.3, Math.min(2.5, Math.round((z - Math.sign(e.deltaY) * 0.1) * 10) / 10))); };
     el.addEventListener('wheel', h, { passive: false }); return () => el.removeEventListener('wheel', h);
   }, []);
 
@@ -314,7 +326,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
     pageSize: (name) => setPage((p) => { const s = PAGE_SIZES.find((x) => x[0] === name); if (!s) return p; return p.w > p.h ? { ...p, w: s[2], h: s[1] } : { ...p, w: s[1], h: s[2] }; }),
     orient: (land) => setPage((p) => { const w = Math.min(p.w, p.h); const h = Math.max(p.w, p.h); return land ? { ...p, w: h, h: w } : { ...p, w, h }; }),
     margins: (m) => setPage((p) => ({ ...p, ...m })),
-    setZoom, fit: () => { const w = stage.current?.clientWidth; if (w) setZoom(Math.max(0.3, Math.min(2, (w - 40) / twToPx(pgRef.current.w)))); },
+    setZoom, fit: () => { const w = stage.current?.clientWidth; zoomUser.current = false; if (w) setZoomRaw(Math.max(0.3, Math.min(2, (w - 40) / twToPx(pgRef.current.w)))); },
     openFind: (replace) => { setFind((f) => ({ ...f, open: true, showReplace: !!replace })); const s = body && body.state.selection; if (s && !s.empty) { const q = body.state.doc.textBetween(s.from, s.to, ' ').slice(0, 80); if (q && !q.includes('\n')) doFind(q, false, 0, true); } },
     print: () => printDocument({ body: body.getHTML(), header: isBlankHtml(hdr.getHTML()) ? '' : hdr.getHTML(), footer: isBlankHtml(ftr.getHTML()) ? '' : ftr.getHTML(), page: pgRef.current, look: defRef.current, rtl: !!defRef.current.rtl }),
     cut: () => run(() => document.execCommand('cut')), copy: () => run(() => document.execCommand('copy')),

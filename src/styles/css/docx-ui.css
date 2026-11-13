@@ -306,4 +306,41 @@
   .dxm { padding: 8px; }
   .dxsl { grid-template-columns: 70px 1fr 40px; }
 }
+/* ───── Responsive: tablets, phones, touch ───── */
+.dxt .ed__btn span, .dxt .dxt__bigpop.ed__btn > span { display: inline; } /* editor.css hides button labels under 900px: the ribbon keeps its own */
+.dxt .dxt__bigpop.ed__btn > span { display: block; }
+@media (max-width: 1100px) { .dxt__tab { padding: 0 11px; } .dxt .dxf__trigger { min-width: 124px; max-width: 140px; } .dxt__styles { max-width: 300px; } }
+@media (max-width: 760px) {
+  .dx__wrap { position: relative; }
+  .dxnav { position: absolute; inset-block: 0; inset-inline-start: 0; z-index: 8; width: 118px; box-shadow: 0 0 24px rgba(0, 0, 0, .45); }
+  .dx__ruler-wrap { display: none; }
+  .dx__find { padding: 6px 8px; } .dx__find input[type="text"], .dx__find input:not([type]) { min-width: 0; flex: 1 1 110px; }
+  .dxm { padding: 0; align-items: stretch; } .dxm__box { width: 100% !important; max-height: 100%; height: 100%; border-radius: 0; border: 0; }
+  .dxm__body { padding: 12px; }
+}
+@media (max-width: 640px) {
+  .ed--docx .ed__top { gap: 4px; padding: 5px 6px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .ed--docx .ed__top::-webkit-scrollbar { display: none; }
+  .ed--docx .ed__top > * { flex: none; }
+  .dxt__tabs { padding: 4px 6px 0; } .dxt__tab { height: 34px; padding: 0 10px; font-size: 12.5px; }
+  .dxt__panel { padding: 6px 4px 4px; min-height: 84px; }
+  .dxt__g { padding: 0 5px; } .dxt__lbl { font-size: 10.5px; }
+  .dxt__themes { grid-template-rows: repeat(1, auto); }
+  .dx__status { gap: 10px; padding: 4px 8px; font-size: 11.5px; } .dx__status input[type="range"] { width: 80px; }
+}
+@media (max-width: 480px) {
+  .ed--docx .ed__pagecount { display: none; }
+  .dx__status > span:nth-of-type(n+2) { display: none; } .dx__status input[type="range"] { display: none; }
+  .dxsz__in { width: 42px; }
+}
+/* touch screens: finger-sized targets */
+@media (pointer: coarse) {
+  .dxt { --dxt-h: 36px; }
+  .dxt__tab { height: 38px; } .dxt__fold, .dxt__theme { width: 36px; height: 36px; }
+  .dxt__big, .dxt .dxt__bigpop.ed__btn { height: 68px; min-width: 60px; }
+  .dxt .dxb__chip { height: 34px; } .dxsz__opt { height: 38px; } .dxsz__in { font-size: 16px; } /* 16px: iOS does not zoom the page when the box is focused */
+  .dxf__pick { padding: 10px 8px; } .dxpsg > button, .dxbl__grid button { min-height: 44px; }
+  .dxnav__act { opacity: 1; }
+  .dxt__panel { scrollbar-width: none; } .dxt__panel::-webkit-scrollbar { display: none; }
+}
 @media print { .dxt, .dxm, .dxnav { display: none; } }
