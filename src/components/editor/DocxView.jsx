@@ -72,7 +72,7 @@ export function DocxPreview({ blob, tt }) {
 }
 
 /** Word editor: a paged, formatting-preserving editor that saves a real .docx (page setup, header / footer, styles, lists, tables). */
-export default function DocxView({ blob, fileName, tt, rtl, guardRef, onSave, onClose, draftKey, startDirty = false }) {
+export default function DocxView({ blob, fileName, tt, rtl, guardRef, onSave, onClose, draftKey, startDirty = false, onModern }) {
   const [status, setStatus] = useState('loading'); const [err, setErr] = useState('');
   const [dirty, setDirty] = useState(startDirty); const [ver, setVer] = useState(0);
   const [pg, setPg] = useState(null); const [def, setDef] = useState(null); const [warns, setWarns] = useState([]);
@@ -358,6 +358,7 @@ export default function DocxView({ blob, fileName, tt, rtl, guardRef, onSave, on
           <span>{tt('Words', 'كلمات')}: {words}</span><span>{sizeName}{pg.w > pg.h ? ` · ${tt('Landscape', 'عرضي')}` : ''}</span>
           {warns.map((w) => <span key={w} className="dx__warn" title={WARN[w]?.[0]}>⚠ {tt(WARN[w]?.[0] || w, WARN[w]?.[1] || w)}</span>)}
           <span className="dx__sp" />
+          {onModern && <button type="button" className="dx__zoomlbl" onClick={() => { if (!dirty || window.confirm(tt('Unsaved changes will be lost. Switch editor?', 'التعديلات غير المحفوظة هتضيع. تغيّر المحرر؟'))) onModern(); }}>{tt('New editor', 'المحرر الجديد')}</button>}
           <input type="range" min="30" max="250" step="5" value={Math.round(zoom * 100)} onChange={(e) => setZoom(Number(e.target.value) / 100)} aria-label={tt('Zoom', 'تكبير')} />
           <button type="button" className="dx__zoomlbl" onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
         </div>

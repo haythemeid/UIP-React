@@ -22,7 +22,7 @@ const JsonViewer = lazy(() => import('./admin/JsonViewer'));
 const ImageEditor = lazy(() => import('./editor/ImageEditor'));
 const PdfEditor = lazy(() => import('./editor/PdfEditor'));
 const XlsxEditor = lazy(() => import('./editor/XlsxView'));
-const DocxEditor = lazy(() => import('./editor/DocxView'));
+const DocxEditor = lazy(() => import('./editor/DocxEditorSwitch'));
 const PptxEditor = lazy(() => import('./editor/PptxView'));
 const MediaEditor = lazy(() => import('./messaging/MediaEditorModal')); // the same trim / crop / filters / subtitles editor the chat uses
 const DocxPreview = lazy(() => import('./editor/DocxView').then((m) => ({ default: m.DocxPreview })));

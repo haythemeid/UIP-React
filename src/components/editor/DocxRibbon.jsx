@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { B, Grp, Pop, ColorBtn, NumField, keep } from './ribbonParts';
+import { DOC_THEMES } from '../../lib/officeFmt/docxTemplates';
 import { FONTS, SIZES, PAGE_SIZES, MARGIN_PRESETS, SYMBOLS, STYLES, twToCm, cmToTw } from './docxEdit';
 
 const LINES = [1, 1.15, 1.5, 2, 2.5, 3];
@@ -10,6 +11,7 @@ export default function DocxRibbon({ tt, S, A }) {
   const { tab, fmt, pg, zoom } = S; const f = fmt || {}; const has = !!f.has;
   const [grid, setGrid] = useState([0, 0]);
   const tabs = [['home', tt('Home', 'الرئيسية')], ['insert', tt('Insert', 'إدراج')], ['layout', tt('Layout', 'تخطيط')], ['view', tt('View', 'عرض')]];
+  if (S.tiptap) tabs.splice(2, 0, ['design', tt('Design', 'التصميم')]);
   if (S.inTable) tabs.push(['table', tt('Table', 'الجدول')]);
   if (S.imgSel) tabs.push(['picture', tt('Picture', 'الصورة')]);
   const cur = tabs.some(([k]) => k === tab) ? tab : 'home';
@@ -86,6 +88,10 @@ export default function DocxRibbon({ tt, S, A }) {
         {cur === 'insert' && <>
           <Grp title={tt('Pages', 'الصفحات')}>
             <B icon="ed-page-break" label={tt('Page break', 'فاصل صفحة')} onClick={A.pageBreak} disabled={f.root !== 'body'} />
+            {S.tiptap && <B icon="file-plus" label={tt('Templates', 'قوالب جاهزة')} onClick={A.templates} />}
+            {S.tiptap && <B icon="ed-list-ordered" label={tt('Table of contents', 'فهرس المحتويات')} onClick={A.toc} disabled={f.root !== 'body'} />}
+            {S.tiptap && <B icon="ed-line" label={tt('Horizontal line', 'خط فاصل')} onClick={A.hr} disabled={f.root !== 'body'} />}
+            {S.tiptap && <B icon="ed-notes" label={tt('Today’s date', 'تاريخ اليوم')} onClick={A.date} disabled={!has} />}
           </Grp>
           <Grp title={tt('Table', 'جدول')}>
             <Pop icon="ed-table" label={tt('Insert table', 'إدراج جدول')}>
@@ -118,6 +124,18 @@ export default function DocxRibbon({ tt, S, A }) {
             <Pop icon="ed-symbol" label={tt('Symbol', 'رمز')}>
               {(close) => <div className="dxr__sym">{SYMBOLS.map((s) => <button key={s} type="button" onClick={() => { A.symbol(s); close(); }}>{s}</button>)}</div>}
             </Pop>
+          </Grp>
+        </>}
+
+        {cur === 'design' && S.tiptap && <>
+          <Grp title={tt('Templates', 'القوالب')}>
+            <B icon="file-plus" label={tt('Browse ready-made templates', 'استعرض القوالب الجاهزة')} onClick={A.templates} />
+          </Grp>
+          <Grp title={tt('Document look', 'شكل المستند')}>
+            {DOC_THEMES.map((t) => <button key={t.id} type="button" className="dxr__theme" onMouseDown={keep} onClick={() => A.theme(t.id)} title={t.label.en}><b style={{ fontFamily: t.font, color: t.head }}>Aa</b><span>{tt(t.label.en, t.label.ar)}</span></button>)}
+          </Grp>
+          <Grp title={tt('Styles', 'الأنماط')}>
+            {STYLES.map(([id, en, arLbl]) => <button key={id} type="button" className={`dxr__style ${f.style === id ? 'is-on' : ''}`} onMouseDown={keep} onClick={() => A.style(id)} disabled={!has}>{tt(en, arLbl)}</button>)}
           </Grp>
         </>}
 
@@ -176,6 +194,11 @@ export default function DocxRibbon({ tt, S, A }) {
             <B icon="ed-valign-mid" label={tt('Align middle', 'محاذاة للوسط')} onClick={() => A.tValign('middle')} />
             <B icon="ed-valign-bottom" label={tt('Align bottom', 'محاذاة للأسفل')} onClick={() => A.tValign('bottom')} />
           </Grp>
+          {A.tStyle && <Grp title={tt('Table style', 'نمط الجدول')}>
+            <button type="button" className="dxr__style" onMouseDown={keep} onClick={() => A.tStyle('header')}>{tt('Dark header', 'عنوان داكن')}</button>
+            <button type="button" className="dxr__style" onMouseDown={keep} onClick={() => A.tStyle('zebra')}>{tt('Light fill', 'تعبئة فاتحة')}</button>
+            <button type="button" className="dxr__style" onMouseDown={keep} onClick={() => A.tStyle('none')}>{tt('Clear fill', 'بدون تعبئة')}</button>
+          </Grp>}
           <Grp title={tt('Table', 'الجدول')}>
             <B icon="ed-outline" label={tt('Show / hide borders', 'إظهار / إخفاء الحدود')} onClick={A.tBorders} />
             <B icon="ed-table-del" label={tt('Delete table', 'حذف الجدول')} onClick={A.tDel} />
@@ -193,6 +216,11 @@ export default function DocxRibbon({ tt, S, A }) {
             <B icon="ed-align-center" label={tt('Centre', 'توسيط')} onClick={() => A.align('center')} />
             <B icon="ed-align-right" label={tt('Align right', 'محاذاة لليمين')} onClick={() => A.align('right')} />
           </Grp>
+          {A.imgFloat && <Grp title={tt('Wrap text', 'التفاف النص')}>
+            <button type="button" className="dxr__style" onMouseDown={keep} onClick={() => A.imgFloat(null)}>{tt('In line', 'ضمن السطر')}</button>
+            <button type="button" className="dxr__style" onMouseDown={keep} onClick={() => A.imgFloat('left')}>{tt('Float left', 'عائم يسار')}</button>
+            <button type="button" className="dxr__style" onMouseDown={keep} onClick={() => A.imgFloat('right')}>{tt('Float right', 'عائم يمين')}</button>
+          </Grp>}
           <Grp title={tt('Picture', 'الصورة')}><B icon="trash" label={tt('Delete picture', 'حذف الصورة')} onClick={A.imgDel} /></Grp>
         </>}
       </div>

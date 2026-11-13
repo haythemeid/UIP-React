@@ -7,6 +7,7 @@
  * everything else is plain text. The result opens straight in the existing viewer / editors (FileViewer, code editor).
  */
 import { buildPptx } from './newPptx';
+import { DOCX_TEMPLATES, docxTemplateHtml } from './docxTemplates';
 
 
 const MIME = {
@@ -22,7 +23,7 @@ const L = (en, ar) => ({ en, ar });
 /** Starter templates per type: `id` is passed to createFile; the first one is the blank file. */
 export const NEW_TYPES = [
   { id: 'docx', ext: 'docx', group: 'office', color: '#2b6cdf', label: L('Word document', 'مستند Word'), hint: L('Letters, reports, CVs', 'خطابات، تقارير، سيرة ذاتية'),
-    templates: [{ id: 'blank', label: L('Blank document', 'مستند فارغ') }, { id: 'report', label: L('Report', 'تقرير') }, { id: 'letter', label: L('Letter', 'خطاب رسمي') }, { id: 'minutes', label: L('Meeting minutes', 'محضر اجتماع') }] },
+    templates: DOCX_TEMPLATES.map((x) => ({ id: x.id, label: L(x.label.en, x.label.ar) })) },
   { id: 'xlsx', ext: 'xlsx', group: 'office', color: '#16a34a', label: L('Excel workbook', 'جدول Excel'), hint: L('Tables, lists, grades', 'جداول، قوائم، درجات'),
     templates: [{ id: 'blank', label: L('Blank workbook', 'جدول فارغ') }, { id: 'tasks', label: L('Task tracker', 'متابعة مهام') }, { id: 'attendance', label: L('Attendance sheet', 'كشف حضور') }, { id: 'grades', label: L('Grades sheet', 'كشف درجات') }] },
   { id: 'pptx', ext: 'pptx', group: 'office', color: '#ea580c', label: L('PowerPoint presentation', 'عرض PowerPoint'), hint: L('Slides for a talk or a project', 'شرائح لعرض أو مشروع'),
@@ -114,6 +115,7 @@ const today = (locale) => new Date().toLocaleDateString(locale === 'ar' ? 'ar-EG
 
 /* ------------------------------------------------------------------ Word */
 function docxHtml(template, title, ar) {
+  if (DOCX_TEMPLATES.some((x) => x.id === template)) return template === 'blank' ? '<p><br></p>' : docxTemplateHtml(template, { ar, title });
   const t = esc(title);
   if (template === 'report') {
     return ar
