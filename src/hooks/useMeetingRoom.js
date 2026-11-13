@@ -1347,7 +1347,13 @@ export function useMeetingRoom({
   // ---- heartbeat --------------------------------------------------------
   useEffect(() => {
     const timer = setInterval(() => {
-      signalingApi.heartbeat(meetingUuid, guestToken).catch((err) => { if (isSessionReplacedError(err)) setSessionConflict('replaced'); });
+      signalingApi.heartbeat(meetingUuid, guestToken)
+        .then((json) => {
+          // fallback لو broadcast ".meeting.status.changed" ما وصلش: السيرفر بيقول إن الاجتماع خلص
+          const st = json?.data?.meeting_status;
+          if (st === 'ended' || st === 'cancelled') setMeetingStatus('ended');
+        })
+        .catch((err) => { if (isSessionReplacedError(err)) setSessionConflict('replaced'); });
     }, 25000);
     return () => clearInterval(timer);
   }, [meetingUuid, guestToken]);
