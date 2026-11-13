@@ -6,6 +6,7 @@ import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
 import { SearchExt } from './search';
 import { imageNodeView } from './imageView';
+import { PageView } from './pagination';
 
 const attr = (name, html, valid) => ({
   default: null,
@@ -51,7 +52,7 @@ export const Field = Node.create({
 });
 
 const DocImage = Image.extend({
-  addAttributes() { return { ...this.parent?.(), dataFl: attr('dataFl', 'data-fl', (v) => v === 'left' || v === 'right') }; },
+  addAttributes() { return { ...this.parent?.(), dataFl: attr('dataFl', 'data-fl', (v) => v === 'left' || v === 'right'), dxId: { default: null, rendered: false } }; // dxId: key of the picture's original in picRegistry (not an HTML attribute, never saved) },
   addNodeView() { return imageNodeView; },
 });
 
@@ -61,11 +62,13 @@ const TabKey = Extension.create({
   addKeyboardShortcuts() { return { Tab: ({ editor }) => editor.commands.insertContent('\t'), 'Shift-Tab': () => true }; },
 });
 
-export function buildExtensions() {
+/** `paged` (body editor only): the page-view plugin, see pagination.js */
+export function buildExtensions(paged) {
   return [
     StarterKit.configure({ codeBlock: false, code: false, horizontalRule: false, link: { openOnClick: false, autolink: false, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } } }),
     SpanMark, Subscript, Superscript, PageBreak, Field, DocImage.configure({ inline: true, allowBase64: true }),
     Table.configure({ resizable: true, lastColumnResizable: true, cellMinWidth: 30 }), TableRow, TableHeader, TableCell,
     SearchExt, BlockAttrs, TabKey,
+    ...(paged ? [PageView.configure(paged)] : []),
   ];
 }

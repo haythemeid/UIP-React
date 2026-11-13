@@ -4,7 +4,8 @@ export function imageNodeView({ node, editor, getPos }) {
   const img = document.createElement('img'); img.draggable = false; dom.appendChild(img);
   let cur = node;
   const paint = (n) => {
-    img.src = n.attrs.src; img.alt = n.attrs.alt || '';
+    if (img.getAttribute('src') !== n.attrs.src) img.src = n.attrs.src; // re-assigning a big data URL re-decodes it
+    img.alt = n.attrs.alt || '';
     ['width', 'height'].forEach((k) => { if (n.attrs[k]) img.setAttribute(k, String(n.attrs[k])); else img.removeAttribute(k); });
     if (n.attrs.dataFl) dom.setAttribute('data-fl', n.attrs.dataFl); else dom.removeAttribute('data-fl');
   };

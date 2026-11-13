@@ -28,6 +28,7 @@ export function prepareForDocx(html) {
     const px = Array.from(t.querySelectorAll('[data-px]')); if (px.length) { const total = Math.max(...rows.map((r) => Array.from(r.children).reduce((a, c) => a + (parseFloat(c.dataset.px) || 0), 0))) || 1; px.forEach((c) => { c.style.width = `${Math.round((parseFloat(c.dataset.px) / total) * 1000) / 10}%`; c.removeAttribute('data-px'); }); }
   });
   box.querySelectorAll('td,th').forEach((td) => td.removeAttribute('colwidth'));
+  box.querySelectorAll('.dxpg').forEach((n) => n.remove());
   return box;
 }
 
