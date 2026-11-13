@@ -11,7 +11,8 @@
  *    shows that message it tries again;
  *  - the person can turn it off from the chat details panel.
  */
-import { isNative, nativeSaveUrl, showToast } from '../native';
+import { isNative, nativeSaveUrl } from '../native';
+import { beginToast } from './transferToast';
 import { resolveMediaUrl, isProtectedAttachmentUrl, loadAttachmentBlob } from './chatMedia';
 import { parseServerDate } from '../utils/serverDate';
 
@@ -120,14 +121,18 @@ export async function saveAttachmentsToPhone(attachments) {
   const list = (attachments || []).filter((a) => a && a.url && !a.local);
   if (!list.length) return;
   const ar = isAr();
+  const nameOf = (a) => a.original_name || `UIPE-${a.id ?? Date.now()}`;
+  const t = beginToast({ title: isNative ? (ar ? 'جارِ الحفظ على الموبايل…' : 'Saving to your phone…') : (ar ? 'جارِ التنزيل…' : 'Downloading…'), detail: nameOf(list[0]), total: list.length });
   let ok = 0;
   let permission = false;
-  for (const a of list) {
+  for (let i = 0; i < list.length; i += 1) {
+    const a = list[i];
+    t.update({ detail: nameOf(a), done: i });
     try {
       const url = a.url;
       if (isNative) {
         const signed = await resolveMediaUrl(url);
-        await nativeSaveUrl({ url: signed, filename: a.original_name || `UIPE-${a.id ?? Date.now()}`, mimeType: a.mime_type, kind: a.kind });
+        await nativeSaveUrl({ url: signed, filename: nameOf(a), mimeType: a.mime_type, kind: a.kind });
         remember(String(a.id ?? a.url));
       } else {
         await webDownload(url, a.original_name);
@@ -137,7 +142,9 @@ export async function saveAttachmentsToPhone(attachments) {
       if (String(e?.message || e).includes('no_permission')) permission = true;
     }
   }
-  if (permission) showToast(ar ? 'اسمح للتطبيق بالوصول للتخزين ثم جرّب تاني' : 'Allow storage access for the app, then try again');
-  else if (!ok) showToast(ar ? 'تعذّر الحفظ، جرّب تاني' : 'Could not save, please try again');
-  else if (isNative) showToast(ar ? `تم الحفظ في مجلد UIPE${ok > 1 ? ` (${ok} ملفات)` : ''}` : `Saved to the UIPE folder${ok > 1 ? ` (${ok} files)` : ''}`);
+  const many = ok > 1;
+  if (permission) t.fail(ar ? 'محتاج صلاحية التخزين' : 'Storage permission needed', ar ? 'اسمح للتطبيق بالوصول للتخزين ثم جرّب تاني' : 'Allow storage access for the app, then try again');
+  else if (!ok) t.fail(ar ? 'تعذّر الحفظ' : 'Could not save', ar ? 'جرّب تاني' : 'Please try again');
+  else if (isNative) t.success(ar ? 'تم الحفظ على الموبايل' : 'Saved to your phone', ar ? `في مجلد UIPE${many ? ` (${ok} ملفات)` : ''}` : `In the UIPE folder${many ? ` (${ok} files)` : ''}`);
+  else t.success(ar ? 'بدأ التنزيل' : 'Download started', many ? (ar ? `${ok} ملفات` : `${ok} files`) : nameOf(list[0]));
 }

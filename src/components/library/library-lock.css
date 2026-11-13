@@ -44,3 +44,5 @@
 @media (max-width: 520px) { .ll-two { grid-template-columns: 1fr; } }
 .ll-check { display: flex; gap: 9px; align-items: center; font-size: 13px; cursor: pointer; }
 .ll-fine { margin: 0; font-size: 12px; opacity: .62; line-height: 1.5; }
+
+.ll-card--flat { border: 0; background: none; padding: 6px 0 0; width: 100%; box-sizing: border-box; }

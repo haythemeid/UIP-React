@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Icon from '../Icon';
 import { StModal } from '../student/stUi';
 import { errorMessage } from '../../api/client';
 import { drive, fetchDriveBlob } from '../../lib/driveApi';
 import { KINDS, KIND_BY_KEY, fmtSize, kindOf } from '../../lib/libraryKinds';
-import { libraryLockApi, readUnlocked } from '../../lib/libraryLock';
+import { libraryLockApi, readLockCache, readUnlocked, writeUnlocked } from '../../lib/libraryLock';
+import { LockPage } from './LibraryLockGate';
 import { useAuth } from '../../context/AuthContext';
-import { portalPrefix } from '../../config/navConfig';
 import './library-picker.css';
 
 /**
@@ -21,10 +20,10 @@ const MAX_PICK = 20;
 export default function LibraryPicker({ ar, onClose, onPick }) {
   const { user } = useAuth();
   const uid = user?.id;
-  const navigate = useNavigate();
   const tt = useCallback((en, a) => (ar ? a : en), [ar]);
   const [nodes, setNodes] = useState(null);
-  const [locked, setLocked] = useState(false);
+  const [lockInfo, setLockInfo] = useState(null); // lock status while the library still has to be unlocked here
+  const [rev, setRev] = useState(0);
   const [error, setError] = useState('');
   const [q, setQ] = useState('');
   const [kind, setKind] = useState('all');
@@ -37,14 +36,19 @@ export default function LibraryPicker({ ar, onClose, onPick }) {
     (async () => {
       try {
         let s = null;
-        try { s = await libraryLockApi.status(); } catch { s = null; }
-        if (s?.enabled && !readUnlocked(uid)) { if (!off) { setLocked(true); setNodes([]); } return; }
+        try { s = await libraryLockApi.status(); } catch {
+          // fail closed: only a library last seen without a lock may list files when the lock status cannot be fetched
+          if (readLockCache(uid) !== false) { if (!off) { setError(tt('Could not check the library lock. Try again.', 'مقدرناش نتأكد من قفل المكتبة. جرّب تاني.')); setNodes([]); } return; }
+        }
+        if (s?.enabled && !readUnlocked(uid)) { if (!off) { setLockInfo(s); setNodes([]); } return; }
         const r = await drive.manifest();
-        if (!off) setNodes(r?.items || []);
+        if (!off) { setLockInfo(null); setNodes(r?.items || []); }
       } catch (e) { if (!off) { setError(errorMessage(e)); setNodes([]); } }
     })();
     return () => { off = true; };
-  }, [uid]);
+  }, [uid, rev]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const unlocked = () => { writeUnlocked(uid, true); setNodes(null); setRev((n) => n + 1); }; // remembered for the whole login session
 
   const byId = useMemo(() => new Map((nodes || []).map((n) => [n.id, n])), [nodes]);
   const libRoot = useMemo(() => (nodes || []).find((n) => n.type === 'folder' && n.parent_id == null && n.name === LIB_ROOT) || null, [nodes]);
@@ -88,26 +92,29 @@ export default function LibraryPicker({ ar, onClose, onPick }) {
           <button type="button" className="btn btn-primary" onClick={send} disabled={!sel.size || !!busy}>{busy || (sel.size ? tt(`Add ${sel.size} to message`, `إضافة ${sel.size} للرسالة`) : tt('Choose files', 'اختار ملفات'))}</button>
         </>
       )}>
-      {locked ? (
-        <div className="lp-empty">
-          <Icon name="lock" size={30} />
-          <b>{tt('My Library is locked', 'مكتبتي مقفولة')}</b>
-          <span>{tt('Open My Library and enter its password first, then come back here.', 'افتح مكتبتي واكتب الباسورد الأول، وبعدين ارجع هنا.')}</span>
-          <button type="button" className="btn btn-outline btn-sm" onClick={() => { onClose(); navigate(`/${portalPrefix(user?.role)}/my-library`); }}>{tt('Open My Library', 'افتح مكتبتي')}</button>
-        </div>
+      {lockInfo ? (
+        <LockPage embedded tt={tt} status={lockInfo} onUnlocked={unlocked} />
       ) : (
         <div className="lp">
           <div className="lp-top">
             <div className="lp-search"><Icon name="search" size={15} /><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={tt('Search files…', 'دوّر على ملف…')} aria-label={tt('Search', 'بحث')} /></div>
-            <label className="lp-check"><input type="checkbox" checked={everything} onChange={(e) => setEverything(e.target.checked)} /><span>{tt('Include all My PC', 'كل جهازي كمان')}</span></label>
+            <button type="button" className={`lp-scope${everything ? ' is-on' : ''}`} onClick={() => setEverything((v) => !v)} aria-pressed={everything}>
+              <Icon name="monitor" size={14} /><span>{everything ? tt('All My PC', 'كل جهازي') : tt('My Library only', 'المكتبة فقط')}</span>
+            </button>
           </div>
-          <div className="lp-chips" role="tablist">
+          <div className="lp-chips">
             <button type="button" className={kind === 'all' ? 'is-on' : ''} onClick={() => setKind('all')}>{tt('All', 'الكل')}</button>
             {kinds.map((k) => <button key={k.key} type="button" className={kind === k.key ? 'is-on' : ''} onClick={() => setKind(k.key)}>{ar ? k.ar : k.en}</button>)}
           </div>
-          {nodes === null ? <div className="lp-empty"><span>{tt('Loading…', 'جارِ التحميل…')}</span></div>
-            : list.length === 0 ? <div className="lp-empty"><Icon name="bookmark" size={28} /><span>{everything ? tt('No files found.', 'مفيش ملفات.') : tt('Nothing in My Library yet. Tick "Include all My PC" or add files from the Library page.', 'مفيش حاجة في مكتبتي لسه. فعّل "كل جهازي كمان" أو ضيف ملفات من صفحة المكتبة.')}</span></div>
-              : (
+          <div className="lp-box">
+            {nodes === null ? <div className="lp-empty"><span>{tt('Loading…', 'جارِ التحميل…')}</span></div>
+              : list.length === 0 ? (
+                <div className="lp-empty">
+                  <Icon name="bookmark" size={26} />
+                  <b>{everything ? tt('No files found', 'مفيش ملفات') : tt('Nothing in My Library yet', 'مكتبتي فاضية لسه')}</b>
+                  {!everything && <button type="button" className="lp-link" onClick={() => setEverything(true)}>{tt('Show all My PC instead', 'اعرض كل جهازي بدلها')}</button>}
+                </div>
+              ) : (
                 <ul className="lp-list">
                   {list.map((n) => {
                     const k = KIND_BY_KEY[n.kind]; const on = sel.has(n.id);
@@ -124,6 +131,7 @@ export default function LibraryPicker({ ar, onClose, onPick }) {
                   })}
                 </ul>
               )}
+          </div>
           {sel.size >= MAX_PICK && <small className="lp-hint">{tt(`Up to ${MAX_PICK} files at a time.`, `لحد ${MAX_PICK} ملف في المرة.`)}</small>}
           {error && <div className="lp-err" role="alert">{error}</div>}
         </div>

@@ -6,7 +6,8 @@ import { api, errorMessage } from '../api/client';
  *   mode 'own'     a password just for the library
  *   mode 'account' the account password itself
  *   mode 'mypc'    the My PC lock-screen password
- * "Unlocked" lives in sessionStorage (this tab only): a new tab / device / browser session starts locked.
+ * "Unlocked" is remembered for the whole login session (localStorage, all tabs of this browser) and is cleared by
+ * clearTokens() in api/client.js when the person logs out or the session ends. A new device starts locked.
  */
 const B = '/api/v1/library-lock';
 const unwrap = (r) => (r && r.data !== undefined ? r.data : r);
@@ -29,8 +30,8 @@ const kRe = (uid) => `uip_library_relock_v1_${uid ?? 'anon'}`;
 const get = (s, k) => { try { return s.getItem(k); } catch { return null; } };
 const put = (s, k, v) => { try { if (v === null) s.removeItem(k); else s.setItem(k, v); } catch { /* private mode */ } };
 
-export const readUnlocked = (uid) => get(sessionStorage, kUn(uid)) === '1';
-export const writeUnlocked = (uid, on) => put(sessionStorage, kUn(uid), on ? '1' : null);
+export const readUnlocked = (uid) => get(localStorage, kUn(uid)) === '1';
+export const writeUnlocked = (uid, on) => put(localStorage, kUn(uid), on ? '1' : null);
 /** Last known "is the lock on?" — so a failed request never opens a library that was locked. */
 export const readLockCache = (uid) => { const v = get(localStorage, kOn(uid)); return v === '1' ? true : v === '0' ? false : null; };
 export const writeLockCache = (uid, on) => put(localStorage, kOn(uid), on ? '1' : '0');

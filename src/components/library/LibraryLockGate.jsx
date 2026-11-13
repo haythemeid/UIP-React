@@ -90,7 +90,7 @@ export default function LibraryLockGate({ children }) {
 }
 
 // ---------------------------------------------------------------- the lock page
-function LockPage({ tt, status, onUnlocked }) {
+export function LockPage({ tt, status, onUnlocked, embedded = false }) {
   const [pw, setPw] = useState('');
   const [show, setShow] = useState(false);
   const [caps, setCaps] = useState(false);
@@ -130,9 +130,8 @@ function LockPage({ tt, status, onUnlocked }) {
 
   const what = asAccount ? tt('Account password', 'باسورد الحساب') : mode === 'mypc' ? tt('My PC lock password', 'باسورد قفل جهازي') : tt('Library password', 'باسورد المكتبة');
   const mm = Math.floor(wait / 60); const ss = String(wait % 60).padStart(2, '0');
-  return (
-    <div className="ll-wrap">
-      <form className="ll-card" key={shake} data-shake={shake > 0 ? '1' : undefined} onSubmit={submit} autoComplete="off">
+  const form = (
+      <form className={`ll-card${embedded ? ' ll-card--flat' : ''}`} key={shake} data-shake={shake > 0 ? '1' : undefined} onSubmit={submit} autoComplete="off">
         <span className="ll-badge"><Icon name="lock" size={28} /></span>
         <h2>{tt('My Library is locked', 'مكتبتي مقفولة')}</h2>
         <p>{tt('Enter the password to open it.', 'اكتب الباسورد عشان تفتحها.')}</p>
@@ -154,8 +153,8 @@ function LockPage({ tt, status, onUnlocked }) {
           </button>
         )}
       </form>
-    </div>
   );
+  return embedded ? form : <div className="ll-wrap">{form}</div>;
 }
 
 // ---------------------------------------------------------------- lock settings

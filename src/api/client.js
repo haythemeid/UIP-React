@@ -162,6 +162,13 @@ export function setTokens({ access_token, idle_timeout_minutes, user }) {
 }
 
 export function clearTokens() {
+  // The library lock stays open for the whole login session, and is forgotten the moment the session ends.
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('uip_library_unlocked_v1_')) localStorage.removeItem(k);
+    }
+  } catch { /* private mode */ }
   store.remove(USER_KEY);
   store.remove(ACCESS_KEY);
   store.remove(REFRESH_KEY);

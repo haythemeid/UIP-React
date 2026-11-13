@@ -1,7 +1,7 @@
 import { drive } from './driveApi';
 import { loadAttachmentBlob } from './chatMedia';
 import { kindOf, KIND_BY_KEY, safeName } from './libraryKinds';
-import { showToast } from '../native';
+import { beginToast } from './transferToast';
 
 /**
  * Chat -> My Library. Stores a chat file as an ordinary My PC file under "My Library/<type>" (same place the Library
@@ -19,19 +19,20 @@ export async function saveBlobToLibrary(blob, name) {
   window.dispatchEvent(new Event('uip-drive-changed'));
 }
 
-function report(ok, failed) {
-  const ar = isAr();
-  if (ok && !failed) showToast(ar ? `تم الحفظ في مكتبتي${ok > 1 ? ` (${ok} ملفات)` : ''}` : `Saved to My Library${ok > 1 ? ` (${ok} files)` : ''}`);
-  else if (ok) showToast(ar ? `اتحفظ ${ok} وفشل ${failed}` : `Saved ${ok}, ${failed} failed`);
-  else showToast(ar ? 'تعذّر الحفظ في مكتبتي، جرّب تاني' : 'Could not save to My Library, try again');
-}
-
-/** Message attachments (photo / video / file / audio) -> My Library. */
+/** Message attachments (photo / video / file / audio) -> My Library, with a visible progress / result notification. */
 export async function saveAttachmentsToLibrary(attachments) {
   const list = (attachments || []).filter((a) => a && a.url && !a.local);
-  let ok = 0; let failed = 0;
-  for (const a of list) {
-    try { await saveBlobToLibrary(await loadAttachmentBlob(a.url), a.original_name || `chat-${a.id ?? Date.now()}`); ok += 1; } catch { failed += 1; }
+  if (!list.length) return;
+  const ar = isAr();
+  const nameOf = (a) => a.original_name || `chat-${a.id ?? Date.now()}`;
+  const t = beginToast({ title: ar ? 'جارِ الحفظ في مكتبتي…' : 'Saving to My Library…', detail: nameOf(list[0]), total: list.length });
+  let ok = 0; const failed = [];
+  for (let i = 0; i < list.length; i += 1) {
+    const a = list[i];
+    t.update({ title: list.length > 1 ? (ar ? `جارِ الحفظ في مكتبتي (${i + 1}/${list.length})…` : `Saving to My Library (${i + 1}/${list.length})…`) : undefined, detail: nameOf(a), done: i });
+    try { await saveBlobToLibrary(await loadAttachmentBlob(a.url), nameOf(a)); ok += 1; } catch { failed.push(nameOf(a)); }
   }
-  if (list.length) report(ok, failed);
+  if (ok && !failed.length) t.success(ar ? 'تم الحفظ في مكتبتي' : 'Saved to My Library', ok > 1 ? (ar ? `${ok} ملفات` : `${ok} files`) : nameOf(list[0]));
+  else if (ok) t.fail(ar ? `اتحفظ ${ok} وفشل ${failed.length}` : `Saved ${ok}, ${failed.length} failed`, failed.join(', '));
+  else t.fail(ar ? 'تعذّر الحفظ في مكتبتي' : 'Could not save to My Library', failed[0] || '');
 }

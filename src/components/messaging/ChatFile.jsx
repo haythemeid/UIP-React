@@ -6,7 +6,7 @@ import { BlobPreviewModal } from '../FilePreviewButton';
 import { confirmRiskyDownload } from '../../lib/pdfSafety';
 import { saveBlob } from '../../lib/exporter';
 import { saveBlobToLibrary } from '../../lib/libraryFromChat';
-import { showToast } from '../../native';
+import { beginToast } from '../../lib/transferToast';
 import { useLanguage } from '../../context/LanguageContext';
 import { attachmentUrl } from './format';
 
@@ -43,12 +43,14 @@ export default function ChatFile({ attachment: a, fmtBytes }) {
     if (busy) return;
     setBusy(true);
     setError('');
+    const toast = mode === 'preview' ? null : beginToast({ title: mode === 'library' ? tt('Saving to My Library…', 'جارِ الحفظ في مكتبتي…') : tt('Downloading…', 'جارِ التنزيل…'), detail: name, total: 1 });
     try {
       const blob = await load();
-      if (mode === 'download') saveBlob(blob, name);
-      else if (mode === 'library') { await saveBlobToLibrary(blob, name); showToast(tt('Saved to My Library', 'تم الحفظ في مكتبتي')); }
+      if (mode === 'download') { saveBlob(blob, name); toast.success(tt('Download started', 'بدأ التنزيل'), name); }
+      else if (mode === 'library') { await saveBlobToLibrary(blob, name); toast.success(tt('Saved to My Library', 'تم الحفظ في مكتبتي'), name); }
       else setPreview({ blob, filename: name });
     } catch (err) {
+      toast?.fail(err instanceof ApiError && err.status === 423 ? tt('Blocked by the security scan', 'اتمنع بواسطة فحص الحماية') : tt('Could not complete', 'تعذّر إتمام العملية'), name);
       if (err instanceof ApiError && err.status === 423) {
         const reason = err.payload?.errors?.blocked?.[0] || 'malware';
         setBlocked({ reason, mode });
