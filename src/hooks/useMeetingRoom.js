@@ -1563,7 +1563,8 @@ export function useMeetingRoom({
       // 1080p / 30 fps made weaker laptops and phones stall (the encoder, not the network). Slides, documents and code stay sharp at
       // 15 fps, so cap there; the browser still downscales further on its own if the machine struggles.
       displayStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: { ideal: 24, max: 30 }, width: { ideal: 1600, max: 1920 }, height: { ideal: 900, max: 1080 } },
+        // 15 fps + سقف 1080p: الشرايح/الكود/المستندات مش محتاجة أكتر، وده بيخفف حمل الـ capture/encode اللي كان بيهنّج الجهاز.
+        video: { frameRate: { ideal: 15, max: 20 }, width: { max: 1920 }, height: { max: 1080 } },
         audio: false,
         // Chrome/Edge hints (ignored elsewhere): don't offer this meeting tab (it would mirror itself), let the presenter switch the
         // shared tab/window without restarting, and offer whole screens — the same picker behaviour as Google Meet.
@@ -1609,7 +1610,7 @@ export function useMeetingRoom({
           const peers = Math.max(1, Object.keys(cameraTrackSendersRef.current).length);
           const enc = params.encodings[0];
           enc.maxBitrate = Math.max(700_000, Math.min(2_500_000, Math.floor(4_000_000 / peers))); // bounded per peer: keeps the uplink (and the encoder) from choking
-          enc.maxFramerate = 24;
+          enc.maxFramerate = 15;
           enc.scaleResolutionDownBy = 1;
           enc.networkPriority = 'medium'; // above the camera default ('low'), still below the voice ('high')
           await sender.setParameters(params);
