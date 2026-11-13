@@ -147,7 +147,13 @@ export default function MeetingRoomShell({
   const dockRef = useRef(null);
   const [elapsed, setElapsed] = useState('00:00');
   useEffect(() => {
-    const started = Date.now();
+    // وقت البداية محفوظ per-meeting في sessionStorage عشان الريفريش ما يصفّرش العدّاد.
+    const key = `uip:meeting-started:${meetingUuid}`;
+    let started = Date.now();
+    try {
+      const saved = Number(sessionStorage.getItem(key));
+      if (saved > 0 && saved <= started) started = saved; else sessionStorage.setItem(key, String(started));
+    } catch { /* storage blocked: falls back to the mount time */ }
     const pad = (n) => String(n).padStart(2, '0');
     const tick = () => {
       const sec = Math.floor((Date.now() - started) / 1000);
@@ -157,7 +163,7 @@ export default function MeetingRoomShell({
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [meetingUuid]);
   // close the reactions / "more" popovers when clicking anywhere outside the dock
   useEffect(() => {
     if (!reactionsOpen && !moreOpen && !fxOpen) return undefined;
