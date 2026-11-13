@@ -3,6 +3,7 @@ import { Workbook } from './workbook.js';
 import { ERR_BY_CODE, isErr } from './formula.js';
 import { key, keyR, keyC, colName, parseRange, rangeStr } from './addr.js';
 import { parseCell } from './addr.js';
+import { stripXlfn, addXlfn } from './xlfn.js';
 import { dxfXml, cfXml, readCf, readDxfs, filterXml, readFilter, chartParts, readCharts } from './xlsxext.js';
 
 /* ---------- tiny XML parser (works in browser and node) ---------- */
@@ -78,8 +79,8 @@ export async function readXlsx(data) {
           if (t === 's') v = sst[+textOf(vN)] ?? ''; else if (t === 'str') v = textOf(vN); else if (t === 'inlineStr') v = siText(isN); else if (t === 'b') v = textOf(vN) === '1'; else if (t === 'e') v = ERR_BY_CODE[textOf(vN)] || ERR_BY_CODE['#VALUE!'];
           else if (vN && textOf(vN) !== '') v = Number(textOf(vN));
           const cell = { v, f: null, s: c.a.s ? styleOf(+c.a.s) : 0 };
-          if (fN && textOf(fN) && fN.a.t !== 'shared' && fN.a.t !== 'array') cell.f = textOf(fN);
-          else if (fN && fN.a.t === 'shared') { if (textOf(fN)) { (sheet._sh ||= {})[fN.a.si] = { f: textOf(fN), r: p.r, c: p.c }; cell.f = textOf(fN); } else if (sheet._sh?.[fN.a.si]) { cell.f = { shared: sheet._sh[fN.a.si], r: p.r, c: p.c }; } } else if (fN && fN.a.t === 'array' && textOf(fN)) cell.f = textOf(fN);
+          if (fN && stripXlfn(textOf(fN)) && fN.a.t !== 'shared' && fN.a.t !== 'array') cell.f = stripXlfn(textOf(fN));
+          else if (fN && fN.a.t === 'shared') { if (stripXlfn(textOf(fN))) { (sheet._sh ||= {})[fN.a.si] = { f: stripXlfn(textOf(fN)), r: p.r, c: p.c }; cell.f = stripXlfn(textOf(fN)); } else if (sheet._sh?.[fN.a.si]) { cell.f = { shared: sheet._sh[fN.a.si], r: p.r, c: p.c }; } } else if (fN && fN.a.t === 'array' && stripXlfn(textOf(fN))) cell.f = stripXlfn(textOf(fN));
           if (cell.v === null && !cell.f && !cell.s) continue;
           sheet.cells.set(key(p.r, p.c), cell); sheet.bump(p.r, p.c);
         }
@@ -128,7 +129,7 @@ export function writeXlsx(wb) {
     const body = [...rows.keys()].sort((a, b) => a - b).map((r) => {
       const cs = rows.get(r).sort((a, b) => a[0] - b[0]).map(([c, cell]) => {
         const ref = `${colName(c)}${r + 1}`; const sA = cell.s && xfOf.has(cell.s) ? ` s="${xfOf.get(cell.s)}"` : '';
-        const val = cell.f ? wb.getValue(s, r, c) : cell.v; const f = cell.f ? `<f>${esc(cell.f)}</f>` : '';
+        const val = cell.f ? wb.getValue(s, r, c) : cell.v; const f = cell.f ? `<f>${esc(addXlfn(cell.f))}</f>` : '';
         if (val === null || val === undefined) return f || sA ? `<c r="${ref}"${sA}>${f}</c>` : '';
         if (isErr(val)) return `<c r="${ref}"${sA} t="e">${f}<v>${esc(val.code)}</v></c>`;
         if (typeof val === 'number') return `<c r="${ref}"${sA}>${f}<v>${val}</v></c>`;
