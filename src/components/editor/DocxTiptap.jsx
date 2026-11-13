@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { TextSelection } from '@tiptap/pm/state';
+import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import OfficeShell from './OfficeShell';
 import { Btn } from './EditorUI';
 import DocxTabs from './DocxTabs';
@@ -180,7 +180,11 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
       const out = await renderImage(rec.orig, ops, { maxSide: 1600 }); if (tok !== picTok.current || ed.isDestroyed) return;
       const n = ed.state.doc.nodeAt(pos); if (n?.type.name !== 'image') return;
       const width = n.attrs.width || out.w; picSet(id, { orig: rec.orig, ops });
-      ed.view.dispatch(ed.state.tr.setNodeMarkup(pos, undefined, { ...n.attrs, src: out.src, width, height: Math.round((width * out.h) / out.w), dxId: id })); setPicVer((v) => v + 1); mark();
+      { // keep the picture SELECTED after the change: the Picture tab stays open and the next adjustment works on the same picture
+        const tr = ed.state.tr.setNodeMarkup(pos, undefined, { ...n.attrs, src: out.src, width, height: Math.round((width * out.h) / out.w), dxId: id });
+        try { tr.setSelection(NodeSelection.create(tr.doc, pos)); } catch { /* keep whatever selection the mapping gave */ }
+        ed.view.dispatch(tr);
+      } setPicVer((v) => v + 1); mark();
     } catch { setErr(tt('That picture could not be changed.', 'تعذّر تعديل الصورة.')); }
   };
   const applyTemplate = (item, mode0) => {

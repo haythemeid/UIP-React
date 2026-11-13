@@ -102,8 +102,12 @@
 
 /* menu rows inside popups */
 .dxt__item { display: flex; align-items: center; gap: 9px; width: 100%; }
-.dxt__item .dxth__dots { margin-inline-start: auto; }
-.dxt__themes { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); gap: 6px; align-items: stretch; }
+.dxt__item .dxth__dots { margin: 0; flex: none; }
+.dxt__item > span:last-child { flex: 1; min-width: 0; }
+.dxpop .dxb__more { margin: 0; min-width: 0; padding: 0; overflow-x: hidden; }
+.dxpop .dxb__item { white-space: nowrap; }
+.dxt__themes { display: flex; flex-wrap: nowrap; gap: 6px; align-items: stretch; } /* one row: the ribbon scrolls sideways when the screen is narrow */
+.dxt__themes .dxth { flex: none; min-width: 78px; }
 
 /* document theme tile */
 .dxth { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 72px; padding: 6px 8px; border: 1px solid var(--ed-line); border-radius: 9px; background: color-mix(in srgb, var(--ed-ink, #fff) 4%, transparent); color: var(--ed-text); cursor: pointer; font: inherit; }
@@ -325,7 +329,6 @@
   .dxt__tabs { padding: 4px 6px 0; } .dxt__tab { height: 34px; padding: 0 10px; font-size: 12.5px; }
   .dxt__panel { padding: 6px 4px 4px; min-height: 84px; }
   .dxt__g { padding: 0 5px; } .dxt__lbl { font-size: 10.5px; }
-  .dxt__themes { grid-template-rows: repeat(1, auto); }
   .dx__status { gap: 10px; padding: 4px 8px; font-size: 11.5px; } .dx__status input[type="range"] { width: 80px; }
 }
 @media (max-width: 480px) {

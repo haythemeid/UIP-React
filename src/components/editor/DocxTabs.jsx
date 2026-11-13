@@ -259,7 +259,7 @@ function DesignTab({ tt, ar, S, A }) {
       </Group>
       <Sep />
       <Group title={tt('Page background', 'خلفية الصفحة')}>
-        <Pop2 icon="ed-outline" label={tt('Page borders', 'حدود الصفحة')} text={tt('Page borders', 'حدود الصفحة')} w={330} btnClass="dxt__bigpop">
+        <Pop2 icon="file" label={tt('Page borders', 'حدود الصفحة')} text={tt('Page borders', 'حدود الصفحة')} w={330} btnClass="dxt__bigpop">
           {(close) => <PageBorderPanel tt={tt} S={S} A={A} close={close} />}
         </Pop2>
       </Group>
@@ -461,8 +461,11 @@ function DocxTabs({ tt, ar, S, A }) {
   const ctx = S.imgSel ? 'picture' : S.inTable ? 'table' : null; const was = useRef(null);
   useEffect(() => { // a table / picture was just selected: jump to its tab; when it is left, go back
     if (ctx && ctx !== was.current) { if (!['table', 'picture'].includes(tab)) back.current = tab; setTab(ctx); }
-    if (!ctx && ['table', 'picture'].includes(tab)) setTab(back.current);
     was.current = ctx;
+    if (!ctx && ['table', 'picture'].includes(tab)) { // the picture / table is no longer selected: leave its tab, but not on a momentary blink (a picture edit re-renders the picture)
+      const t = setTimeout(() => setTab(back.current), 900); return () => clearTimeout(t);
+    }
+    return undefined;
   }, [ctx]); // eslint-disable-line react-hooks/exhaustive-deps
   const tabs = [['home', tt('Home', 'الرئيسية')], ['insert', tt('Insert', 'إدراج')], ['design', tt('Design', 'التصميم')], ['layout', tt('Layout', 'التخطيط')], ['view', tt('View', 'عرض')], ...(S.inTable ? [['table', tt('Table', 'جدول'), 1]] : []), ...(S.imgSel ? [['picture', tt('Picture', 'صورة'), 1]] : [])];
   const cur = tabs.some((t) => t[0] === tab) ? tab : 'home'; const P = { tt, ar, S, A };
