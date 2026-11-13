@@ -7,7 +7,7 @@
  * We NEVER fall back to the frontend's own hostname/8080 any more: a Vercel domain has no WebSocket server, which is what broke meetings
  * ("WebSocket connection to wss://<app>.vercel.app:8080 failed").
  */
-const FALLBACK = { key: '', host: 'uip-reverb.up.railway.app', port: 443, scheme: 'https' };
+const FALLBACK = { key: '', host: '13-51-1-13.nip.io', port: 443, scheme: 'https' };
 
 let cached = null;
 let pending = null;

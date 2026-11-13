@@ -824,8 +824,18 @@ export default function Messages() {
     // stay in the normal request. The message lists the small files first, then the big ones (denoise[] follows that order).
     const isBig = (f) => (f?.size || 0) > CHUNKED_MIN_BYTES;
     const idx = files.map((_, i) => i);
-    const smallIdx = idx.filter((i) => !isBig(files[i]));
-    const bigIdx = idx.filter((i) => isBig(files[i]));
+    // Vercel refuses request bodies over ~4.5 MB, so the files that travel inside the message request itself must add up to less
+    // than that: a single file up to 4 MB stays as before, but several photos together (multi-select) are capped at SMALL_BUDGET
+    // and the rest go up through the chunked service (lib/chunkedUpload.js) like big files.
+    const SMALL_BUDGET = 3.5 * 1024 * 1024;
+    let smallBytes = 0;
+    const smallIdx = [];
+    const bigIdx = [];
+    idx.forEach((i) => {
+      const sz = files[i]?.size || 0;
+      if (!isBig(files[i]) && (smallBytes === 0 || smallBytes + sz <= SMALL_BUDGET)) { smallIdx.push(i); smallBytes += sz; }
+      else bigIdx.push(i);
+    });
     const bigBytes = bigIdx.reduce((n, i) => n + files[i].size, 0);
     const allBytes = files.reduce((n, f) => n + (f.size || 0), 0) || 1;
     const bigShare = bigBytes / allBytes;

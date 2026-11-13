@@ -57,7 +57,7 @@ function loadRuntimeToken(rawFetch) {
  * headers) for every video above that size while small ones went through. Files bigger than DIRECT_UPLOAD_MIN go straight to the
  * API host instead (its CORS already allows the app origin). Override with VITE_DIRECT_UPLOAD_BASE; set it to "off" to disable.
  */
-const DIRECT_RAW = (import.meta.env.VITE_DIRECT_UPLOAD_BASE ?? (import.meta.env.PROD ? 'https://uip-laravel-production.up.railway.app' : '')).trim();
+const DIRECT_RAW = (import.meta.env.VITE_DIRECT_UPLOAD_BASE ?? (import.meta.env.PROD ? 'https://13-51-1-13.nip.io' : '')).trim();
 export const DIRECT_UPLOAD_BASE = DIRECT_RAW === 'off' ? '' : DIRECT_RAW.replace(/\/+$/, '');
 export const DIRECT_UPLOAD_MIN = 3 * 1024 * 1024;
 export function directUploadUrl(path, formData) {
