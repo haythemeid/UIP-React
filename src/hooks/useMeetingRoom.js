@@ -1354,7 +1354,7 @@ export function useMeetingRoom({
           if (st === 'ended' || st === 'cancelled') setMeetingStatus('ended');
         })
         .catch((err) => { if (isSessionReplacedError(err)) setSessionConflict('replaced'); });
-    }, 25000);
+    }, 10000); // كان 25 ثانية — أقصر عشان الخروج بعد إنهاء الاجتماع ما يعتمدش على وصول الـ websocket
     return () => clearInterval(timer);
   }, [meetingUuid, guestToken]);
 
