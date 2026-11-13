@@ -23,12 +23,12 @@ export const ST = {
   pct0: { bd: bd(), nf: '0%' },
   money: { bd: bd(), nf: '#,##0.00' },
   center: { bd: bd(), al: 'center' },
-  input: { bd: bd('#E0B84C'), bg: C.input },
-  inputNum: { bd: bd('#E0B84C'), bg: C.input, nf: '#,##0.00' },
-  inputInt: { bd: bd('#E0B84C'), bg: C.input, nf: '#,##0' },
-  inputPct: { bd: bd('#E0B84C'), bg: C.input, nf: '0.0%' },
-  total: { b: 1, bg: C.soft, bd: { t: ['medium', C.navy], b: ['thin', C.line], l: ['thin', C.line], r: ['thin', C.line] } },
-  totalNum: { b: 1, bg: C.soft, nf: '#,##0.00', bd: { t: ['medium', C.navy], b: ['thin', C.line], l: ['thin', C.line], r: ['thin', C.line] } },
+  input: { color: '#1F2937', bd: bd('#E0B84C'), bg: C.input },
+  inputNum: { color: '#1F2937', bd: bd('#E0B84C'), bg: C.input, nf: '#,##0.00' },
+  inputInt: { color: '#1F2937', bd: bd('#E0B84C'), bg: C.input, nf: '#,##0' },
+  inputPct: { color: '#1F2937', bd: bd('#E0B84C'), bg: C.input, nf: '0.0%' },
+  total: { color: '#1F2937', b: 1, bg: C.soft, bd: { t: ['medium', C.navy], b: ['thin', C.line], l: ['thin', C.line], r: ['thin', C.line] } },
+  totalNum: { color: '#1F2937', b: 1, bg: C.soft, nf: '#,##0.00', bd: { t: ['medium', C.navy], b: ['thin', C.line], l: ['thin', C.line], r: ['thin', C.line] } },
   label: { b: 1, color: C.blue },
   kpiLabel: { b: 1, color: C.white, bg: C.blue, al: 'center', bd: bd('#8EAADB') },
   kpiVal: { b: 1, fs: 16, color: C.navy, bg: C.soft, al: 'center', va: 'center', bd: bd('#8EAADB') },
@@ -50,15 +50,21 @@ export class SheetB {
   row(r, c0, arr, st) { arr.forEach((v, i) => this.put(r, c0 + i, v, typeof st === 'function' ? st(i) : st)); return this; }
   fill(r1, c1, r2, c2, st) { for (let r = r1; r <= r2; r += 1) for (let c = c1; c <= c2; c += 1) this.wb.setStyle(this.sh, r, c, st); return this; }
   head(r, c0, labels, h = 34) { this.row(r, c0, labels, ST.head); this.sh.rowH.set(r, h); return this; }
+  /** Banner header: dark band with the title, a soft sub line underlined with the template's accent colour; gridlines off for a clean page. */
   title(text, sub, cols = 8) {
-    this.put(0, 0, text, ST.title); this.sh.rowH.set(0, 34); this.merge(0, 0, 0, cols - 1);
-    if (sub) { this.put(1, 0, sub, ST.sub); this.merge(1, 0, 1, cols - 1); }
+    const ac = this.wb._accent || C.blue; const last = Math.max(0, cols - 1);
+    this.sh.noGrid = true;
+    const band = { bg: C.navy, color: C.white, b: 1, fs: 18, va: 'center' };
+    this.fill(0, 0, 0, last, band).put(0, 0, text, band).merge(0, 0, 0, last); this.sh.rowH.set(0, 42);
+    const subSt = { bg: C.soft, color: C.ink, i: 1, fs: 10, va: 'center', bd: { b: ['medium', ac] } };
+    this.fill(1, 0, 1, last, subSt); if (sub) this.put(1, 0, sub, subSt); this.merge(1, 0, 1, last); this.sh.rowH.set(1, 26);
     return this;
   }
   w(arr, from = 0) { arr.forEach((x, i) => this.sh.colW.set(from + i, x)); return this; }
   h(r, px) { this.sh.rowH.set(r, px); return this; }
   merge(r1, c1, r2, c2) { this.sh.merges.push({ r1, c1, r2, c2 }); return this; }
-  freeze(r, c = 0) { this.sh.freeze = { r, c }; return this; }
+  /** Freezes the header rows only: merged banner / KPI cards crossing a frozen column boundary are clipped by the grid, so columns are never frozen. */
+  freeze(r) { this.sh.freeze = { r, c: 0 }; return this; }
   filter(rng) { this.sh.filter = { rng: parseRange(rng), cols: {}, hidden: new Set() }; return this; }
   cf(rng, rule) { this.sh.cf.push({ id: `cf${seq++}`, rng: parseRange(rng), ...rule }); return this; }
   /** pixel position of a cell's top-left corner (for placing charts) */

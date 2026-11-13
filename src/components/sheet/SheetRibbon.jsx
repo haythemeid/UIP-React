@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Icon from '../Icon';
 import SxIcon from './SheetIcons';
 import { NUM_FORMATS } from '../../lib/sheet/format.js';
-import { THEME_LIST } from '../../lib/sheet/themes.js';
 import { FUNCS } from '../../lib/sheet/funcs.js';
 import { HILITE, SCALES, BARS } from '../../lib/sheet/cf.js';
 import { CHART_TYPES } from '../../lib/sheet/chart.js';
@@ -342,11 +341,6 @@ export default function SheetRibbon({ A, tt, state, collapsed, setCollapsed, tab
 
   const layout = (
     <>
-      <Grp label={tt('Themes', 'السمات')}>
-        <Drop wide trigger={({ open, toggle }) => <LB icon="palette" label={tt('Theme', 'السمة')} caret on={open} onClick={toggle} />}>
-          <div className="sx__themes">{['excel', 'code'].map((g) => <div key={g}><Head>{g === 'excel' ? tt('Excel styles', 'ستايلات إكسل') : tt('Code editor themes', 'ثيمات محرر الأكواد')}</Head>{THEME_LIST.filter((t) => t.group === g).map((t) => <button key={t.id} type="button" className={`sx__it sx__th${A.theme === t.id ? ' is-on' : ''}`} onClick={() => A.setTheme(t.id)}><span className="sx__sws">{t.swatch.map((c, i) => <i key={i} style={{ background: c }} />)}</span>{tt(t.en, t.ar)}{A.theme === t.id && <b>✓</b>}</button>)}</div>)}</div>
-        </Drop>
-      </Grp>
       <Grp label={tt('Page Setup', 'إعداد الصفحة')}>
         <DropL large sicon={A.view.land ? 'landscape' : 'portrait'} label={tt('Orientation', 'الاتجاه')}><Item sicon="portrait" on={!A.view.land} onClick={() => A.setView({ land: false })}>{tt('Portrait', 'طولي')}</Item><Item sicon="landscape" on={!!A.view.land} onClick={() => A.setView({ land: true })}>{tt('Landscape', 'عرضي')}</Item></DropL>
         <LB sicon="print" label={tt('Print', 'طباعة')} title="Ctrl+P" onClick={A.print} />

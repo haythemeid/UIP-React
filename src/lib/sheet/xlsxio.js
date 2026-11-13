@@ -90,6 +90,7 @@ export async function readXlsx(data) {
       const cols = kid(ws, 'cols'); kids(cols, 'col').forEach((c) => { for (let i = +c.a.min - 1; i <= Math.min(+c.a.max - 1, 300); i += 1) { if (c.a.width) { sheet.colW.set(i, Math.round(+c.a.width * 7 + 5)); if (c.a.customWidth === '1') sheet.manualW.add(i); } if (c.a.hidden === '1') sheet.hiddenCols.add(i); } });
       kids(kid(ws, 'mergeCells'), 'mergeCell').forEach((m) => { const g = parseRange(m.a.ref); if (g) sheet.merges.push(g); });
       sheet.cf = readCf(H, ws, dxfs); sheet.filter = readFilter(H, ws, sheet); sheet.charts = readCharts(H, files, target, ws, sheet);
+      const sview = kid(kid(ws, 'sheetViews'), 'sheetView'); if (sview && sview.a.showGridLines === '0') sheet.noGrid = true; // dashboards hide the grid
       const pane = kid(kid(kid(ws, 'sheetViews'), 'sheetView'), 'pane'); if (pane && pane.a.state && /frozen/.test(pane.a.state)) sheet.freeze = { r: +(pane.a.ySplit || 0), c: +(pane.a.xSplit || 0) };
     }
     kids(kid(wbN, 'definedNames'), 'definedName').forEach((d) => { const f = textOf(d); const m = /^(?:'([^']+)'|([\w.]+))!\$?([A-Z]+)\$?(\d+)(?::\$?([A-Z]+)\$?(\d+))?$/.exec(f); const g = m ? parseRange(`${m[3]}${m[4]}${m[5] ? `:${m[5]}${m[6]}` : ''}`) : null; wb.names.set(d.a.name.toUpperCase(), g ? { ref: { sheet: m[1] || m[2], ...g }, name: d.a.name } : { f, name: d.a.name }); });
@@ -139,7 +140,8 @@ export function writeXlsx(wb) {
       return `<row r="${r + 1}"${h ? ` ht="${(h * 72) / 96}" customHeight="1"` : ''}${s.hiddenRows.has(r) ? ' hidden="1"' : ''}>${cs}</row>`;
     }).join('');
     const cols = [...new Set([...s.colW.keys(), ...s.hiddenCols])].sort((a, b) => a - b).map((c) => `<col min="${c + 1}" max="${c + 1}" width="${s.colW.has(c) ? ((s.colW.get(c) - 5) / 7).toFixed(2) : 8.43}" customWidth="1"${s.hiddenCols.has(c) ? ' hidden="1"' : ''}/>`).join('');
-    const pane = s.freeze.r || s.freeze.c ? `<sheetViews><sheetView workbookViewId="0"><pane${s.freeze.c ? ` xSplit="${s.freeze.c}"` : ''}${s.freeze.r ? ` ySplit="${s.freeze.r}"` : ''} topLeftCell="${colName(s.freeze.c)}${s.freeze.r + 1}" state="frozen"/></sheetView></sheetViews>` : '';
+    const frz = s.freeze.r || s.freeze.c ? `<pane${s.freeze.c ? ` xSplit="${s.freeze.c}"` : ''}${s.freeze.r ? ` ySplit="${s.freeze.r}"` : ''} topLeftCell="${colName(s.freeze.c)}${s.freeze.r + 1}" state="frozen"/>` : '';
+    const pane = frz || s.noGrid ? `<sheetViews><sheetView${s.noGrid ? ' showGridLines="0"' : ''} workbookViewId="0">${frz}</sheetView></sheetViews>` : '';
     const cp = chartParts(wb, s, si + 1, chartNo); if (cp) { chartNo += cp.charts.length; extra[si + 1] = cp; }
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"${cp ? ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"' : ''}>${pane}${cols ? `<cols>${cols}</cols>` : ''}<sheetData>${body}</sheetData>${filterXml(s)}${s.merges.length ? `<mergeCells count="${s.merges.length}">${s.merges.map((g) => `<mergeCell ref="${rangeStr(g)}"/>`).join('')}</mergeCells>` : ''}${cfXml(s, dxf)}${cp ? '<drawing r:id="rId1"/>' : ''}</worksheet>`;
   });
@@ -194,7 +196,7 @@ export function workbookToCsv(wb, d = ',', sheetIx = 0) {
 /* ---------- JSON snapshot for local drafts (cheap, no zip) ---------- */
 export function serializeWb(wb) {
   const enc = (v) => (isErr(v) ? { e: v.code } : v);
-  return JSON.stringify({ v: 1, styles: wb.styles, names: [...wb.names.values()], sheets: wb.sheets.map((s) => ({ name: s.name, cells: [...s.cells].map(([k, c]) => [k, enc(c.v), c.f, c.s]), colW: [...s.colW], rowH: [...s.rowH], hr: [...s.hiddenRows], hc: [...s.hiddenCols], merges: s.merges, freeze: s.freeze, cf: s.cf.map(({ _c, ...r }) => r), filter: s.filter ? { rng: s.filter.rng, cols: s.filter.cols, hidden: [...(s.filter.hidden || [])] } : null, charts: s.charts.map(({ _d, ...c }) => c) })) });
+  return JSON.stringify({ v: 1, styles: wb.styles, names: [...wb.names.values()], sheets: wb.sheets.map((s) => ({ name: s.name, cells: [...s.cells].map(([k, c]) => [k, enc(c.v), c.f, c.s]), colW: [...s.colW], rowH: [...s.rowH], hr: [...s.hiddenRows], hc: [...s.hiddenCols], merges: s.merges, freeze: s.freeze, ng: !!s.noGrid, cf: s.cf.map(({ _c, ...r }) => r), filter: s.filter ? { rng: s.filter.rng, cols: s.filter.cols, hidden: [...(s.filter.hidden || [])] } : null, charts: s.charts.map(({ _d, ...c }) => c) })) });
 }
 export function deserializeWb(text) {
   const j = JSON.parse(text); const wb = new Workbook(); wb.styles = j.styles || [{}];
@@ -202,7 +204,7 @@ export function deserializeWb(text) {
   for (const sj of j.sheets) {
     const s = wb.addSheet(sj.name);
     for (const [k, v, f, st] of sj.cells) { s.cells.set(k, { v: v && typeof v === 'object' && v.e ? ERR_BY_CODE[v.e] : v, f, s: st }); s.bump(keyR(k), keyC(k)); }
-    s.colW = new Map(sj.colW); s.manualW = new Set(sj.colW.map((x) => x[0])); s.rowH = new Map(sj.rowH); s.hiddenRows = new Set(sj.hr); s.hiddenCols = new Set(sj.hc); s.merges = sj.merges || []; s.freeze = sj.freeze || { r: 0, c: 0 };
+    s.colW = new Map(sj.colW); s.manualW = new Set(sj.colW.map((x) => x[0])); s.rowH = new Map(sj.rowH); s.hiddenRows = new Set(sj.hr); s.hiddenCols = new Set(sj.hc); s.merges = sj.merges || []; s.freeze = sj.freeze || { r: 0, c: 0 }; s.noGrid = !!sj.ng;
     s.cf = sj.cf || []; s.charts = sj.charts || []; s.filter = sj.filter ? { rng: sj.filter.rng, cols: sj.filter.cols || {}, hidden: new Set(sj.filter.hidden || []) } : null;
   }
   wb.touch(); return wb;

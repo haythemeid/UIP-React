@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import OfficeShell from '../editor/OfficeShell';
 import SheetApp from './SheetApp';
+import SheetThemeMenu from './SheetThemeMenu';
+import { sheetFrameVars, themeOf, useSheetTheme } from '../../lib/sheet/themes.js';
 import { autoFitAll } from '../../lib/sheet/autofit.js';
 import { Ctl } from '../../lib/sheet/ctl.js';
 import { csvToWorkbook, deserializeWb, readXlsx, serializeWb, workbookToCsv, writeXlsx } from '../../lib/sheet/xlsxio.js';
@@ -40,6 +42,8 @@ export default function SheetEditor({ blob, fileName, ext, tt, rtl, guardRef, on
   const [, tick] = useState(0);
   const saveKeyRef = useRef(null);
   const actionsRef = useRef({});
+  const [themeId] = useSheetTheme();
+  const frame = useMemo(() => sheetFrameVars(themeOf(themeId)), [themeId]);
   useEffect(() => {
     let dead = false;
     openWorkbook(blob, ext).then((wb) => { if (dead) return; const ctl = new Ctl(wb); if (startDirty) ctl.rev = 1; setState({ status: 'ready', ctl }); }).catch((e) => !dead && setState({ status: 'error', msg: e?.message || String(e) }));
@@ -61,7 +65,7 @@ export default function SheetEditor({ blob, fileName, ext, tt, rtl, guardRef, on
   if (state.status === 'loading') return <div className="ed ed--center"><span className="st-fv-spinner" /><p className="ed__hint">{tt('Opening the sheet…', 'جارٍ فتح الجدول…')}</p></div>;
   if (state.status === 'error') return <div className="ed ed--center"><p className="ed__err">{state.msg}</p><button type="button" className="ed__btn" onClick={onClose}>{tt('Close', 'إغلاق')}</button></div>;
   return (
-    <OfficeShell className="ed--sheet" actionsRef={actionsRef} saveKeyRef={saveKeyRef} fileName={fileName} tt={tt} guardRef={guardRef} onSave={onSave} onClose={onClose} dirty={ctl.dirty} build={build} onSaved={() => ctl.markSaved()} draftKey={draftKey} draftToken={ctl.rev} draftBuild={draftBuild}
+    <OfficeShell className="ed--sheet" themeVars={frame} topExtra={<SheetThemeMenu tt={tt} />} actionsRef={actionsRef} saveKeyRef={saveKeyRef} fileName={fileName} tt={tt} guardRef={guardRef} onSave={onSave} onClose={onClose} dirty={ctl.dirty} build={build} onSaved={() => ctl.markSaved()} draftKey={draftKey} draftToken={ctl.rev} draftBuild={draftBuild}
       status={note ? <p className="ed__hint ed__hint--note xg__note">{note}</p> : null}>
       <SheetApp ctl={ctl} tt={tt} rtl={rtl} saveKeyRef={saveKeyRef} actionsRef={actionsRef} fileName={fileName} />
     </OfficeShell>

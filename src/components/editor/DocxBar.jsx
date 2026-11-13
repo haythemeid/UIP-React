@@ -1,6 +1,5 @@
 import { memo, useState } from 'react';
 import { B, Pop, ColorBtn, NumField, keep } from './ribbonParts';
-import EdThemePicker from './EdThemePicker';
 import { DOC_THEMES } from '../../lib/officeFmt/docxTemplates';
 import { FONTS, SIZES, PAGE_SIZES, MARGIN_PRESETS, SYMBOLS, STYLES, twToCm, cmToTw } from './docxEdit';
 import '../../styles/css/docx-bar.css';
@@ -124,8 +123,6 @@ function DocxBar({ tt, S, A, ruler }) {
               <Item close={close} label={tt('Clear formatting', 'مسح التنسيق')} onClick={A.clear} disabled={!has} />
               <Item close={close} label={ruler ? tt('Hide ruler', 'إخفاء المسطرة') : tt('Show ruler', 'إظهار المسطرة')} onClick={A.toggleRuler} />
               <Item close={close} label={tt('Fit width', 'ملاءمة العرض')} onClick={A.fit} />
-              <small className="dxb__cap">{tt('Theme', 'السمة')}</small>
-              <EdThemePicker tt={tt} />
               {A.legacy && <Item close={close} label={tt('Use the old editor', 'استخدام المحرر القديم')} onClick={A.legacy} />}
             </div>
           )}

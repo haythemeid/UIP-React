@@ -4,6 +4,7 @@ import { TextSelection } from '@tiptap/pm/state';
 import OfficeShell from './OfficeShell';
 import { Btn } from './EditorUI';
 import DocxBar from './DocxBar';
+import EdThemePicker from './EdThemePicker';
 import DocxRuler from './DocxRuler';
 import { FloatingBar, DocxContextMenu, TemplateGallery } from './DocxPopups';
 import { PageBorders } from './DocxView';
@@ -267,7 +268,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
   return (
     <OfficeShell
       fileName={fileName} tt={tt} guardRef={guardRef} onSave={onSave} onClose={onClose} dirty={dirty} build={build} onSaved={() => setDirty(false)} draftKey={draftKey} draftToken={ver} draftBuild={draftBuild} draftDelay={20000}
-      className="ed--docx" tools={<DocxBar tt={ttS} S={S} A={Astable} ruler={ruler} />}
+      className="ed--docx" topExtra={<EdThemePicker tt={ttS} />} tools={<DocxBar tt={ttS} S={S} A={Astable} ruler={ruler} />}
       status={(
         <div className="dx__status">
           <span>{tt('Page', 'صفحة')} {pages}</span><span>{tt('Words', 'كلمات')}: {words.sel ? `${words.sel} / ${words.all}` : words.all}</span><span>{sizeName}{pg.w > pg.h ? ` · ${tt('Landscape', 'عرضي')}` : ''}</span>

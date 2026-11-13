@@ -84,14 +84,23 @@
 
 /* ================= Excel look (ribbon with captioned groups, backstage, dialogs, status bar) ================= */
 .ed--sheet { border-radius: 0; }
-.ed--sheet .ed__top { background: #217346; color: #fff; border-bottom: 0; padding: 5px 10px; gap: 6px; }
-.ed--sheet .ed__title { color: #fff; font-weight: 600; max-width: min(50vw, 520px); }
-.ed--sheet .ed__pagecount, .ed--sheet .ed__hint { color: rgba(255,255,255,.85); }
-.ed--sheet .ed__btn { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.28); color: #fff; height: 30px; }
-.ed--sheet .ed__btn:hover:not(:disabled) { background: rgba(255,255,255,.26); }
-.ed--sheet .ed__btn--primary { background: #fff; color: #1a5c38; }
-.ed--sheet .ed__btn--primary:hover:not(:disabled) { background: #e9f5ee; }
+.ed--sheet .ed__top { background: var(--sx-bar, #217346); color: var(--sx-barfg, #fff); border-bottom: 1px solid color-mix(in srgb, var(--sx-barfg, #fff) 14%, transparent); padding: 5px 10px; gap: 6px; }
+.ed--sheet .ed__title { color: var(--sx-barfg, #fff); font-weight: 600; max-width: min(50vw, 520px); }
+.ed--sheet .ed__pagecount, .ed--sheet .ed__hint { color: color-mix(in srgb, var(--sx-barfg, #fff) 85%, transparent); }
+.ed--sheet .ed__btn { background: color-mix(in srgb, var(--sx-barfg, #fff) 14%, transparent); border-color: color-mix(in srgb, var(--sx-barfg, #fff) 28%, transparent); color: var(--sx-barfg, #fff); height: 30px; }
+.ed--sheet .ed__btn:hover:not(:disabled) { background: color-mix(in srgb, var(--sx-barfg, #fff) 26%, transparent); }
+.ed--sheet .ed__btn--primary { background: var(--sx-barfg, #fff); color: var(--sx-bar, #1a5c38); }
+.ed--sheet .ed__btn--primary:hover:not(:disabled) { background: color-mix(in srgb, var(--sx-barfg, #fff) 88%, var(--sx-bar, #1a5c38)); }
 .ed--sheet .ed__err { color: #ffd7d9; } .ed--sheet .ed__warn { color: #fff3bf; }
+/* theme picker (title bar) */
+.edth { display: flex; flex-direction: column; gap: 2px; min-width: 220px; max-height: min(360px, 55vh); overflow: auto; }
+.edth small { display: block; margin: 6px 4px 3px; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ed-muted); }
+.edth__it { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 8px; border: 1px solid transparent; border-radius: 8px; background: none; color: var(--ed-text); font: inherit; font-size: 12.5px; cursor: pointer; text-align: start; }
+.edth__it:hover { background: color-mix(in srgb, var(--ed-ink, #fff) 9%, transparent); }
+.edth__it.is-on { background: color-mix(in srgb, var(--ed-accent, #6ea8ff) 18%, transparent); border-color: var(--ed-accent); }
+.edth__it b { margin-inline-start: auto; color: var(--ed-accent); }
+.edth__sw { display: inline-flex; flex: none; border-radius: 6px; overflow: hidden; border: 1px solid var(--ed-line); }
+.edth__sw i { display: block; width: 14px; height: 18px; }
 .ed--sheet .ed__office-body { min-height: 0; min-width: 0; }
 
 .sx { font-family: "Segoe UI", Calibri, system-ui, "Noto Sans Arabic", sans-serif; font-size: 12px; }

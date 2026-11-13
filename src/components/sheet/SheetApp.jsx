@@ -6,7 +6,7 @@ import { eachCell, Rng, toStr } from '../../lib/sheet/core.js';
 import { FUNCS } from '../../lib/sheet/funcs.js';
 import { DEF_H, DEF_W, HDR_H, HDR_W, FONT, THEMES, drawGrid, geometry, locate, displayOf, fontOf, mergeIndex } from '../../lib/sheet/draw.js';
 import { fitColumn } from '../../lib/sheet/autofit.js';
-import { loadThemeId, saveThemeId, themeOf } from '../../lib/sheet/themes.js';
+import { hasSavedThemeId, loadThemeId, themeOf, useSheetTheme } from '../../lib/sheet/themes.js';
 import SheetRibbon, { FONTS } from './SheetRibbon';
 import SheetFileMenu from './SheetFileMenu';
 import SxIcon from './SheetIcons';
@@ -76,9 +76,9 @@ export default function SheetApp({ ctl, readOnly = false, tt, rtl, onToast, save
   useEffect(() => ctl.on(force), [ctl]);
   const [six, setSix] = useState(0);
   const sheet = wb.sheets[Math.min(six, wb.sheets.length - 1)];
-  const [theme, setThemeS] = useState(() => loadThemeId(readOnly));
-  const setTheme = (t) => { setThemeS(t); saveThemeId(t); };
-  const [view, setView] = useState({ grid: true, head: true, showF: false, bar: true, band: true, z: 1, land: false, pgrid: false, psel: false });
+  const [storedTheme, setTheme] = useSheetTheme();
+  const theme = readOnly && !hasSavedThemeId() ? loadThemeId(true) : storedTheme; // the read-only viewer follows the page theme until one is picked
+  const [view, setView] = useState({ grid: true, head: true, showF: false, bar: true, band: false, z: 1, land: false, pgrid: false, psel: false });
   const [sel, setSelS] = useState(() => mkSel(0, 0));
   const selRef = useRef(sel); selRef.current = sel;
   const setSel = useCallback((s) => { selRef.current = s; setSelS(s); }, []);

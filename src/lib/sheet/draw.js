@@ -124,7 +124,7 @@ export function drawGrid(cv, s) {
     if (ra > rb || ca > cb) return;
     g.save(); g.beginPath(); g.rect(cl[0], cl[1], cl[2], cl[3]); g.clip();
     if (s.band && T.hdBg) { const lc = Math.min(sheet.maxCol, geom.cols - 1); for (let r = ra; r <= Math.min(rb, sheet.maxRow); r += 1) { const col = r === 0 ? T.hdBg : (r % 2 === 0 ? T.band : null); if (!col) continue; g.fillStyle = col; g.fillRect(X(0), Y(r), X(lc + 1) - X(0), Y(r + 1) - Y(r)); } }
-    if (s.showGrid) {
+    if (s.showGrid && !sheet.noGrid) {
       g.strokeStyle = T.grid; g.lineWidth = 1; g.beginPath();
       for (let c = ca; c <= cb + 1; c += 1) { const x = Math.round(X(Math.min(c, geom.cols))) - 0.5; g.moveTo(x, hh); g.lineTo(x, H); }
       for (let r = ra; r <= rb + 1; r += 1) { const y = Math.round(Y(Math.min(r, geom.rows))) - 0.5; g.moveTo(hw, y); g.lineTo(W, y); }

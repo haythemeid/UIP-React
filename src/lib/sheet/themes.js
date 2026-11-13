@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import { THEMES as CODE } from '../../components/zipbench/themePalettes.js';
 
 /**
@@ -44,3 +45,25 @@ export function loadThemeId(readOnly) {
   return 'excel';
 }
 export const saveThemeId = (id) => { try { localStorage.setItem(KEY, id); } catch { /* storage unavailable */ } };
+
+/* ---- ONE shared theme for the whole sheet editor (grid, ribbon, title bar, status bar): a change is never half applied ---- */
+let current = loadThemeId(false);
+const subs = new Set();
+export const hasSavedThemeId = () => { try { return !!THEMES[localStorage.getItem(KEY)]; } catch { return false; } };
+export function setSheetTheme(id) {
+  if (!THEMES[id] || id === current) return;
+  current = id; saveThemeId(id); subs.forEach((f) => f());
+}
+export function useSheetTheme() {
+  return [useSyncExternalStore((cb) => { subs.add(cb); return () => subs.delete(cb); }, () => current, () => current), setSheetTheme];
+}
+/** Variables for the editor frame (title bar, popups, dialogs) so they follow the sheet theme instead of staying green. */
+export function sheetFrameVars(T) {
+  const v = T.vars; const dark = !!T.dark;
+  return {
+    ...v, '--sx-bar': T.hdBg || T.corner, '--sx-barfg': T.hdBg ? (T.hdFg || '#ffffff') : (T.headOnFg || T.fg),
+    '--ed-bg': v['--sx-bg'], '--ed-panel': v['--sx-panel'], '--ed-line': v['--sx-line'], '--ed-text': v['--sx-text'], '--ed-strong': dark ? '#ffffff' : '#000000',
+    '--ed-muted': v['--sx-muted'], '--ed-accent': v['--sx-accent'], '--ed-on-accent': dark ? '#0b1020' : '#ffffff', '--ed-pop': v['--sx-pop'],
+    '--ed-stage': v['--sx-panel'], '--ed-ink': dark ? '#ffffff' : '#000000',
+  };
+}

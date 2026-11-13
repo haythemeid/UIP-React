@@ -6,6 +6,7 @@
  */
 import { newBook, SheetB, ST, C, bd, merge, addr, colName, q, rng } from './xlsxBuilder.js';
 import { DATA_BUILDERS, DATA_CATALOG } from './xlsxTemplatesData.js';
+import { PRO_BUILDERS, PRO_CATALOG, PRO_GROUP } from './xlsxTemplatesPro.js';
 
 const T = (ar) => (en, a) => (ar ? a : en);
 const R = (a, b) => `${a}:${b}`;
@@ -14,6 +15,7 @@ export const XLSX_GROUPS = [
   { id: 'basic', label: { en: 'Basic', ar: 'أساسي' } }, { id: 'academic', label: { en: 'Academic', ar: 'أكاديمي' } }, { id: 'work', label: { en: 'Work & projects', ar: 'عمل ومشاريع' } },
   { id: 'finance', label: { en: 'Finance', ar: 'مالية' } }, { id: 'data', label: { en: 'Data analysis', ar: 'تحليل بيانات' } }, { id: 'personal', label: { en: 'Personal', ar: 'شخصي' } },
 ];
+XLSX_GROUPS.splice(1, 0, PRO_GROUP); // professional templates right after the basic ones
 
 export const XLSX_TEMPLATES = [
   { id: 'blank', group: 'basic', color: '#64748b', label: { en: 'Blank workbook', ar: 'جدول فارغ' }, hint: { en: 'Empty sheet', ar: 'ورقة فاضية' } },
@@ -31,6 +33,7 @@ export const XLSX_TEMPLATES = [
   { id: 'sales', group: 'work', color: '#2563eb', label: { en: 'Monthly sales tracker', ar: 'متابعة مبيعات' }, hint: { en: 'Products × 12 months, growth', ar: 'منتجات × ١٢ شهر ونمو' } },
   { id: 'kpi', group: 'work', color: '#9333ea', label: { en: 'KPI scorecard', ar: 'لوحة مؤشرات الأداء' }, hint: { en: 'Target vs actual with status', ar: 'مستهدف مقابل فعلي بحالة' } },
   { id: 'habits', group: 'personal', color: '#db2777', label: { en: 'Habit tracker', ar: 'متابع العادات' }, hint: { en: '31-day grid and streaks', ar: 'شبكة ٣١ يوم ونسب' } },
+  ...PRO_CATALOG,
   ...DATA_CATALOG,
 ];
 
@@ -309,12 +312,47 @@ B.habits = (wb, ar) => {
 };
 
 /* ------------------------------------------------------------------------------------------------ entry */
-Object.assign(B, DATA_BUILDERS);
+Object.assign(B, DATA_BUILDERS, PRO_BUILDERS);
+
+/* ---- charts for the classic templates: small summary tables next to the data feed them ---- */
+const wrap = (wb, sh) => Object.assign(Object.create(SheetB.prototype), { wb, sh, name: sh.name });
+const ENH = {};
+ENH.kpi = (s, t) => {
+  s.head(3, 9, [t('KPI', 'المؤشر'), t('Achievement', 'التحقق')], 40);
+  for (let i = 0; i < 8; i += 1) s.put(4 + i, 9, `=IF(B${5 + i}="","",B${5 + i})`, ST.text).put(4 + i, 10, `=IF(G${5 + i}="","",G${5 + i})`, ST.pct0);
+  s.w([180, 90], 9).chart('bar', 'J4:K12', t('Achievement by KPI', 'التحقق لكل مؤشر'), 12, 9, 460, 280, { legend: false });
+};
+ENH.attendance = (s, t) => {
+  s.put(33, 1, t('Lecture', 'المحاضرة'), ST.head).put(34, 1, t('Attendance %', 'نسبة الحضور'), ST.text);
+  for (let c = 3; c <= 17; c += 1) s.put(33, c, `${t('L', 'م')}${c - 2}`, ST.head).put(34, c, `=N(${colName(c)}31)`, ST.pct0);
+  s.chart('line', 'D34:R35', t('Attendance rate by lecture', 'نسبة الحضور لكل محاضرة'), 36, 1, 700, 260, { byRow: true, legend: false });
+};
+ENH.loan = (s, t) => {
+  s.chart('line', 'E11:E71', t('Remaining balance', 'الرصيد المتبقي'), 3, 6, 480, 270, { legend: false });
+  s.chart('area', 'C11:D71', t('Interest vs principal', 'الفائدة مقابل أصل الدين'), 19, 6, 480, 270, {});
+};
+ENH.inventory = (s, t) => {
+  s.head(3, 11, [t('Item', 'الصنف'), t('In stock', 'الرصيد')], 28);
+  for (let i = 0; i < 8; i += 1) s.put(4 + i, 11, `=IF(B${5 + i}="","",B${5 + i})`, ST.text).put(4 + i, 12, `=IF(F${5 + i}="",0,F${5 + i})`, ST.int);
+  s.w([170, 80], 11).chart('col', 'L4:M12', t('Stock by item', 'الرصيد لكل صنف'), 13, 11, 460, 270, { legend: false });
+};
+ENH.gpa = (s, t) => {
+  s.head(3, 11, [t('Course', 'المقرر'), t('Points', 'النقاط')], 28);
+  for (let i = 0; i < 8; i += 1) s.put(4 + i, 11, `=IF(B${5 + i}="","",B${5 + i})`, ST.text).put(4 + i, 12, `=IF(E${5 + i}="",0,N(E${5 + i}))`, ST.num);
+  s.w([170, 80], 11).chart('col', 'L4:M12', t('Grade points per course', 'نقاط كل مقرر'), 13, 11, 460, 260, { legend: false });
+};
+ENH.habits = (s, t) => {
+  s.head(14, 0, [t('Habit', 'العادة'), t('Completion', 'الإنجاز')], 26);
+  for (let i = 0; i < 8; i += 1) s.put(15 + i, 0, `=IF(A${5 + i}="","",A${5 + i})`, ST.text).put(15 + i, 1, `=IF(AH${5 + i}="",0,AH${5 + i})`, ST.pct0);
+  s.chart('bar', 'A15:B23', t('Completion by habit', 'إنجاز كل عادة'), 14, 3, 520, 270, { legend: false });
+};
 
 export function buildTemplateWorkbook(id, { ar = false } = {}) {
   const wb = newBook(); const fn = B[id];
   if (!fn) { new SheetB(wb, ar ? 'ورقة1' : 'Sheet1'); return wb; }
+  wb._accent = (XLSX_TEMPLATES.find((x) => x.id === id) || {}).color;
   fn(wb, ar, { SheetB, ST, C, bd, merge, addr, colName, q, rng });
+  if (ENH[id]) ENH[id](wrap(wb, wb.sheets[0]), T(ar));
   wb.touch();
   return wb;
 }

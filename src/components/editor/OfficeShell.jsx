@@ -11,16 +11,17 @@ import '../../styles/css/office.css';
  * Shared frame for the Office editors: title, save / download / cancel, unsaved-changes guard and 409 conflict handling.
  *   build() -> Promise<Blob>   (called for both Save and Download)
  */
-export default function OfficeShell({ className = '', actionsRef, saveKeyRef, fileName, tt, guardRef, onSave, onClose, dirty, build, onSaved, tools, children, status, draftKey, draftToken, draftBuild, draftDelay }) {
+export default function OfficeShell({ className = '', actionsRef, saveKeyRef, fileName, tt, guardRef, onSave, onClose, dirty, build, onSaved, tools, topExtra, themeVars, children, status, draftKey, draftToken, draftBuild, draftDelay }) {
   const saveRef = useRef(null);
   const [themeId] = useEdTheme();
   const theme = edThemeOf(themeId);
+  const vars = themeVars || theme.vars; // an editor with its own theme system (the sheet) passes its variables here
   // floating bars / menus / dialogs are portaled to <body>, so the theme variables must live there too while an Office editor is open
   useEffect(() => {
-    const st = document.body.style; const keys = Object.keys(theme.vars);
-    keys.forEach((k) => st.setProperty(k, theme.vars[k]));
+    const st = document.body.style; const keys = Object.keys(vars);
+    keys.forEach((k) => st.setProperty(k, vars[k]));
     return () => keys.forEach((k) => st.removeProperty(k));
-  }, [theme]);
+  }, [vars]);
   // draftBuild: a cheap snapshot for the local autosave (the full file is only built on Save / Download, never every few seconds)
   const draft = useAutoDraft({ draftKey, dirty, token: draftToken, build: draftBuild || build, delay: draftDelay, meta: { name: fileName }, saver: () => saveRef.current?.() });
   const [saving, setSaving] = useState(false);
@@ -64,7 +65,7 @@ export default function OfficeShell({ className = '', actionsRef, saveKeyRef, fi
 
   if (actionsRef) actionsRef.current = { download, close: () => afterGuard(dirty ? ask() : true, onClose), exportAs: null, ...(actionsRef.current || {}), download, close: () => afterGuard(dirty ? ask() : true, onClose) };
   return (
-    <div className={`ed ed--office ${className}`} data-edtheme={theme.id} style={theme.vars}>
+    <div className={`ed ed--office ${className}`} data-edtheme={themeVars ? 'custom' : theme.id} style={vars}>
       <div className="ed__top">
         <Btn icon="x" label={tt('Cancel', 'إلغاء')} onClick={() => afterGuard(dirty ? ask() : true, onClose)} />
         <strong className="ed__title" dir="auto">{fileName}</strong>
@@ -76,6 +77,7 @@ export default function OfficeShell({ className = '', actionsRef, saveKeyRef, fi
         )}
         {err && <span className="ed__err" title={err}>{err}</span>}
         <DraftChip draft={draft} tt={tt} />
+        {topExtra}
         <Btn icon="download" label={tt('Download', 'تنزيل')} onClick={download} />
         <Btn icon="save" label={saving ? tt('Saving…', 'جارٍ الحفظ…') : tt('Save', 'حفظ')} onClick={() => doSave(false)} disabled={!dirty || saving} primary />
       </div>
