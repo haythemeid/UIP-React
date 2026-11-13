@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { TextSelection } from '@tiptap/pm/state';
 import OfficeShell from './OfficeShell';
 import { Btn } from './EditorUI';
-import DocxRibbon from './DocxRibbon';
+import DocxBar from './DocxBar';
 import DocxRuler from './DocxRuler';
 import { FloatingBar, DocxContextMenu, TemplateGallery } from './DocxPopups';
 import { PageBorders } from './DocxView';
@@ -45,14 +45,18 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
   const [find, setFind] = useState({ open: false, q: '', r: '', mc: false, idx: 0, total: 0, showReplace: false });
   const [words, setWords] = useState({ all: 0, sel: 0 }); const [pages, setPages] = useState(1); const [err, setErr] = useState('');
   const [emptyBand, setEmptyBand] = useState({ hdr: isBlankHtml(initial.header), ftr: isBlankHtml(initial.footer) });
-  const [menu, setMenu] = useState(null); const [gallery, setGallery] = useState(false); const [ruler, setRuler] = useState(true); const [ftick, setFtick] = useState(0);
-  const stage = useRef(null); const pageEl = useRef(null); const activeKey = useRef('body'); const A_ref = useRef(null); const fmtRaf = useRef(0);
-  const mark = useCallback(() => { setDirty(true); setVer((v) => v + 1); }, []);
+  const [menu, setMenu] = useState(null); const [gallery, setGallery] = useState(false); const [ruler, setRuler] = useState(false); const [ftick, setFtick] = useState(0);
+  const stage = useRef(null); const pageEl = useRef(null); const activeKey = useRef('body'); const A_ref = useRef(null); const fmtRaf = useRef(0); const selWas = useRef(false); const A_live = useRef(null);
+  // typing must not re-render the whole editor tree: `dirty` flips once, the change counter (autosave / word count) is debounced
+  const verTimer = useRef(0);
+  const mark = useCallback(() => { setDirty(true); clearTimeout(verTimer.current); verTimer.current = setTimeout(() => setVer((v) => v + 1), 500); }, []);
+  useEffect(() => () => clearTimeout(verTimer.current), []);
+  const bigDoc = useMemo(() => (initial.html || '').length > 30000, [initial]);
 
   const mk = (html, key) => ({
     extensions: buildExtensions(), content: normalizeIncoming(html) || '<p></p>', shouldRerenderOnTransaction: false,
     editorProps: {
-      attributes: { class: key === 'body' ? 'dxp__body' : key === 'hdr' ? 'dxp__hdr' : 'dxp__ftr', spellcheck: 'true', role: 'textbox', 'aria-multiline': 'true', 'aria-label': key === 'body' ? tt('Document', 'المستند') : key === 'hdr' ? tt('Header', 'رأس الصفحة') : tt('Footer', 'تذييل الصفحة') },
+      attributes: { class: key === 'body' ? 'dxp__body' : key === 'hdr' ? 'dxp__hdr' : 'dxp__ftr', spellcheck: bigDoc ? 'false' : 'true', role: 'textbox', 'aria-multiline': 'true', 'aria-label': key === 'body' ? tt('Document', 'المستند') : key === 'hdr' ? tt('Header', 'رأس الصفحة') : tt('Footer', 'تذييل الصفحة') },
       transformPastedHTML: (h) => normalizeIncoming(sanitizeHtml(h) || h),
       handleKeyDown: (_v, e) => A_ref.current?.key(e) || false,
       handlePaste: (view, e) => { const f = Array.from(e.clipboardData?.files || []).find((x) => x.type.startsWith('image/')); if (f) { A_ref.current?.picture(f); return true; } return false; },
@@ -63,7 +67,11 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
     onFocus: () => { activeKey.current = key; },
     onSelectionUpdate: () => A_ref.current?.fmtSoon(), onTransaction: () => A_ref.current?.fmtSoon(),
   });
-  const body = useEditor(mk(initial.html, 'body')); const hdr = useEditor(mk(initial.header, 'hdr')); const ftr = useEditor(mk(initial.footer, 'ftr'));
+  // options are built ONCE: a fresh options object on every render made Tiptap re-apply them to the view after each keystroke
+  const bodyOpts = useMemo(() => mk(initial.html, 'body'), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const hdrOpts = useMemo(() => mk(initial.header, 'hdr'), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const ftrOpts = useMemo(() => mk(initial.footer, 'ftr'), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const body = useEditor(bodyOpts); const hdr = useEditor(hdrOpts); const ftr = useEditor(ftrOpts);
   const active = () => ({ body, hdr, ftr }[activeKey.current] || body);
   const run = (fn) => { const ed = active(); if (!ed || ed.isDestroyed) return; fn(ed, ed.chain().focus()); };
 
@@ -87,7 +95,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
     };
     setFmt((p) => { for (const k of Object.keys(next)) if (p[k] !== next[k]) return next; return p; });
     setHist((h) => { const u = ed.can().undo(); const r = ed.can().redo(); return h.u === u && h.r === r ? h : { u, r }; });
-    setFtick((t) => t + 1);
+    const nonEmpty = !sel.empty; if (nonEmpty || selWas.current) setFtick((t) => t + 1); selWas.current = nonEmpty;
   }, [body, hdr, ftr]);
   const fmtSoon = useCallback(() => { if (fmtRaf.current) return; fmtRaf.current = requestAnimationFrame(() => { fmtRaf.current = 0; updateFmt(); }); }, [updateFmt]);
   useEffect(() => () => cancelAnimationFrame(fmtRaf.current), []);
@@ -99,7 +107,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
       const sel = body.state.selection; const selText = sel.empty ? '' : body.state.doc.textBetween(sel.from, sel.to, ' ');
       setWords({ all: countWords(body.state.doc.textBetween(0, body.state.doc.content.size, ' ')), sel: countWords(selText) });
       if (find.open) { const s = searchState(body); setFind((f) => (f.total === s.matches.length && f.idx === s.cur ? f : { ...f, total: s.matches.length, idx: s.cur })); }
-    }, 250);
+    }, 400);
     return () => clearTimeout(t);
   }, [ver, ftick, body, find.open]);
   useEffect(() => {
@@ -196,12 +204,15 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
       if (!items.length) { setErr(tt('Add headings (Heading 1-3) first, then insert the table of contents.', 'أضف عناوين (عنوان 1-3) الأول وبعدين أدرج الفهرس.')); return; }
       c.insertContent([{ type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: tt('Contents', 'المحتويات') }] }, ...items.map((i) => ({ type: 'paragraph', attrs: { style: `margin-inline-start:${(i.level - 1) * 18}pt;margin-bottom:2pt` }, content: [{ type: 'text', text: i.text }] }))]).run();
     }),
-    templates: () => setGallery(true),
+    templates: () => setGallery(true), toggleRuler: () => setRuler((r) => !r),
+    legacy: onLegacy ? () => { if (!dirty || window.confirm(tt('Unsaved changes will be lost. Switch editor?', 'التعديلات غير المحفوظة هتضيع. تغيّر المحرر؟'))) onLegacy(); } : null,
     theme: (id) => {
       const th = DOC_THEMES.find((x) => x.id === id); if (!th || !body) return; const d = { ...defRef.current, font: th.font }; defRef.current = d; setDef(d);
       const tr = body.state.tr; body.state.doc.descendants((n, pos) => { if (n.type.name === 'heading') tr.setNodeMarkup(pos, undefined, { ...n.attrs, style: mergeStyle(n.attrs.style, { color: n.attrs.level === 1 ? th.head : th.sub }) }); }); body.view.dispatch(tr); mark();
     },
   };
+  A_live.current = A;
+  const Astable = useMemo(() => new Proxy({}, { get: (_, k) => (k === 'legacy' ? (A_live.current?.legacy ? () => A_live.current.legacy() : null) : (...a) => A_live.current?.[k]?.(...a)) }), []);
   A_ref.current = {
     fmtSoon,
     picture: insertPicture,
@@ -247,22 +258,21 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
     else body.chain().focus().insertContent(normalizeIncoming(sanitizeHtml(html))).run();
   };
 
+  const ttRef = useRef(tt); ttRef.current = tt; const ttS = useCallback((e, a) => ttRef.current(e, a), []);
+  const S = useMemo(() => ({ fmt, pg, zoom, canUndo: hist.u, canRedo: hist.r, inTable: !!fmt.inTable, imgSel: fmt.img ? { w: fmt.img } : null }), [fmt, pg, zoom, hist]);
   if (!body || !hdr || !ftr) return <div className="ed ed--center"><span className="st-fv-spinner" /></div>;
 
-  const S = { tab, fmt, pg, def, zoom, canUndo: hist.u, canRedo: hist.r, words: words.all, inTable: !!fmt.inTable, imgSel: fmt.img ? { w: fmt.img } : null, tiptap: true };
   const sizeName = PAGE_SIZES.find((s) => (s[1] === Math.min(pg.w, pg.h) && s[2] === Math.max(pg.w, pg.h)))?.[0] || `${Math.round(pg.w / 56.7)}×${Math.round(pg.h / 56.7)} mm`;
 
   return (
     <OfficeShell
-      fileName={fileName} tt={tt} guardRef={guardRef} onSave={onSave} onClose={onClose} dirty={dirty} build={build} onSaved={() => setDirty(false)} draftKey={draftKey} draftToken={ver} draftBuild={draftBuild} draftDelay={10000}
-      tools={<DocxRibbon tt={tt} S={S} A={A} />}
+      fileName={fileName} tt={tt} guardRef={guardRef} onSave={onSave} onClose={onClose} dirty={dirty} build={build} onSaved={() => setDirty(false)} draftKey={draftKey} draftToken={ver} draftBuild={draftBuild} draftDelay={20000}
+      className="ed--docx" tools={<DocxBar tt={ttS} S={S} A={Astable} ruler={ruler} />}
       status={(
         <div className="dx__status">
           <span>{tt('Page', 'صفحة')} {pages}</span><span>{tt('Words', 'كلمات')}: {words.sel ? `${words.sel} / ${words.all}` : words.all}</span><span>{sizeName}{pg.w > pg.h ? ` · ${tt('Landscape', 'عرضي')}` : ''}</span>
           {(initial.warnings || []).map((w) => <span key={w} className="dx__warn" title={WARN[w]?.[0]}>⚠ {tt(WARN[w]?.[0] || w, WARN[w]?.[1] || w)}</span>)}
           <span className="dx__sp" />
-          {onLegacy && <button type="button" className="dx__zoomlbl" onClick={() => { if (!dirty || window.confirm(tt('Unsaved changes will be lost. Switch editor?', 'التعديلات غير المحفوظة هتضيع. تغيّر المحرر؟'))) onLegacy(); }} title={tt('Switch back to the previous Word editor', 'الرجوع لمحرر Word القديم')}>{tt('Old editor', 'المحرر القديم')}</button>}
-          <button type="button" className="dx__zoomlbl" onClick={() => setRuler((r) => !r)}>{tt('Ruler', 'المسطرة')}</button>
           <input type="range" min="30" max="250" step="5" value={Math.round(zoom * 100)} onChange={(e) => setZoom(Number(e.target.value) / 100)} aria-label={tt('Zoom', 'تكبير')} />
           <button type="button" className="dx__zoomlbl" onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
         </div>

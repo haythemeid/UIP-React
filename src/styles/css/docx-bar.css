@@ -1,0 +1,35 @@
+/* Light Word toolbar (DocxBar) — one wrapping row, no tabs, no group labels. Uses the editor theme variables (--ed-*). */
+.dxb { background: var(--ed-panel); border-bottom: 1px solid var(--ed-line); padding: 6px 10px; display: flex; flex-direction: column; gap: 4px; }
+.dxb__row { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; row-gap: 4px; }
+.dxb__row--ctx { padding-top: 5px; border-top: 1px dashed var(--ed-line); }
+.dxb__sep { width: 1px; height: 20px; background: var(--ed-line); margin-inline: 5px; flex: none; }
+.dxb__tag { font-size: 11px; font-weight: 700; color: #fbbf24; padding-inline: 6px; }
+.dxb .ed__btn { height: 32px; min-width: 32px; padding: 0 7px; border-color: transparent; background: transparent; border-radius: 8px; }
+.dxb .ed__btn:hover:not(:disabled) { background: color-mix(in srgb, var(--ed-ink, #fff) 10%, transparent); }
+.dxb .ed__btn.is-on { background: color-mix(in srgb, var(--ed-accent, #3b82f6) 24%, transparent); color: var(--ed-accent, #60a5fa); }
+.dxb .ed__btn:disabled { opacity: .35; }
+.dxb__sel { height: 32px; }
+.dxb .pxr__num { height: 32px; text-align: center; }
+.dxb__chip { background: color-mix(in srgb, var(--ed-ink, #fff) 7%, transparent); border: 1px solid var(--ed-line); border-radius: 999px; color: var(--ed-text); font: inherit; font-size: 12px; padding: 5px 11px; cursor: pointer; }
+.dxb__chip:hover { border-color: var(--ed-accent); }
+.dxb__more { display: flex; flex-direction: column; min-width: 250px; max-height: min(70vh, 560px); overflow: auto; margin: -4px; padding: 4px; }
+.dxb__cap { display: block; font-size: 10.5px; color: var(--ed-muted); padding: 8px 8px 3px; letter-spacing: .02em; }
+.dxb__more .dxb__cap:first-child { padding-top: 2px; }
+.dxb__item { text-align: start; background: none; border: 0; color: var(--ed-text); font: inherit; font-size: 12.5px; padding: 7px 10px; border-radius: 7px; cursor: pointer; }
+.dxb__item:hover:not(:disabled) { background: color-mix(in srgb, var(--ed-ink, #fff) 9%, transparent); } .dxb__item:disabled { opacity: .35; cursor: default; }
+.dxb__line { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 3px 4px; }
+.dxb__margins label { display: flex; flex-direction: column; font-size: 10.5px; color: var(--ed-muted); gap: 2px; }
+.dxb__syms { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; padding: 4px; }
+.dxb__syms button { height: 28px; border: 0; background: none; color: inherit; border-radius: 6px; font-size: 15px; cursor: pointer; }
+.dxb__syms button:hover { background: color-mix(in srgb, var(--ed-ink, #fff) 10%, transparent); }
+.dxb .pxr__list small.dxb__cap { padding-inline: 10px; }
+
+/* Word frame: slimmer top bar, nothing floating over the page */
+.ed--docx .ed__top { padding: 6px 10px; }
+.ed--docx .dx__stage { padding-top: 18px; }
+.dx__ruler-wrap { position: sticky; top: -18px; z-index: 3; margin-bottom: 8px; }
+
+@media (max-width: 760px) {
+  .dxb { padding: 4px 6px; }
+  .dxb__row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+}
