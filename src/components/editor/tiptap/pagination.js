@@ -28,12 +28,12 @@ const blankBand = (el) => !el || (!el.querySelector('img,table,[data-fld]') && !
 
 /** DOM of one spacer. `tag` 'div' between blocks / inside a paragraph, 'tr' between table rows. */
 function buildSpacer(info, hdrEl, ftrEl) {
-  const { h, hz, fz, k, n, cols, hdPad, ftPad } = info;
+  const { h, hz, fz, k, n, cols, hdPad, ftPad, ml = 0, mr = 0 } = info;
   const root = document.createElement(cols ? 'tr' : 'div');
   root.className = 'dxpg'; root.setAttribute('contenteditable', 'false'); root.setAttribute('aria-hidden', 'true');
   let host = root;
   if (cols) { const td = document.createElement('td'); td.colSpan = cols; td.className = 'dxpg__cell'; root.appendChild(td); host = document.createElement('div'); host.className = 'dxpg dxpg--in'; td.appendChild(host); }
-  host.style.height = `${Math.max(0, h)}px`;
+  host.style.height = `${Math.max(0, h)}px`; host.style.marginLeft = `${-ml}px`; host.style.marginRight = `${-mr}px`; // bleed to the page edges, wherever the block sits (list, indent, table)
   const ft = Math.max(0, Math.min(fz, h - PAGE_GAP - hz)); const fill = Math.max(0, h - ft - PAGE_GAP - hz);
   const fillEl = document.createElement('div'); fillEl.className = 'dxpg__fill'; fillEl.style.height = `${fill}px`;
   const ftEl = document.createElement('div'); ftEl.className = 'dxpg__ft'; ftEl.style.height = `${ft}px`; ftEl.style.paddingBottom = `${ftPad}px`;
@@ -89,17 +89,17 @@ function measure(view, opts) {
   const pushBreak = (pos, effTop, extra = {}) => { const h = (k + 1) * P - effTop; out.push({ pos, h, k, ...extra }); off += h; k += 1; };
   for (let i = 0; i < items.length; i += 1) {
     const it = items[i]; const r = rects[i]; if (!r) continue;
-    const top = Y(r.top) + off; const bottom = Y(r.bottom) + off;
+    const top = Y(r.top) + off; const bottom = Y(r.bottom) + off; const side = { ml: (r.left - sr.left) / scale, mr: (sr.right - r.right) / scale }; // where the block sits inside the sheet: the spacer bleeds out to both page edges
     if (it.t === 'b') { // hard page break: what follows starts a new page (the break itself stays on the old page)
       while (top >= (k + 1) * P - EPS) k += 1;
-      pushBreak(it.pos + it.node.nodeSize, bottom); lastBottom = (k) * P; continue;
+      pushBreak(it.pos + it.node.nodeSize, bottom, side); lastBottom = (k) * P; continue;
     }
     while (top >= (k + 1) * P - EPS) k += 1; // an earlier oversized block already spilled into the next page
     if (bottom <= limit() + EPS) { lastBottom = bottom; continue; }
     if (it.t === 'r') {
       if (top <= k * P + EPS) { lastBottom = bottom; continue; } // taller than a page: let it run
       const table = doc.resolve(it.pos).parent; let cols = 1; try { cols = TableMap.get(table).width; } catch { /* keep 1 */ }
-      pushBreak(it.pos, top, { cols }); lastBottom = bottom + out[out.length - 1].h; continue;
+      pushBreak(it.pos, top, { cols, ...side }); lastBottom = bottom + out[out.length - 1].h; continue;
     }
     // a text block that crosses the end of the page: find the first line that does not fit
     const start = it.pos + 1; const end = it.pos + it.node.nodeSize - 1; let from = start; let guard = 0; let curOff = off;
@@ -117,14 +117,14 @@ function measure(view, opts) {
       const tq = lineTop(q); if (tq < 0) break; { let lo = from; let hi = q; while (lo < hi) { const mid = (lo + hi) >> 1; if (lineTop(mid) >= tq - 3) hi = mid; else lo = mid + 1; } q = lo; }
       const effTop = q === start && guard === 1 ? top : lineTop(q);
       if (effTop <= k * P + EPS) { k += 1; break; } // it is already at the top of a page: nothing to gain, let it overflow
-      const before = off; pushBreak(q, effTop); curOff += off - before; bBottom += off - before; from = q;
+      const before = off; pushBreak(q, effTop, side); curOff += off - before; bBottom += off - before; from = q;
     }
     lastBottom = Y(r.bottom) + off;
   }
   dom.classList.remove('dx-nopg');
 
   const n = Math.max(1, Math.floor((Math.max(lastBottom, 0) - 1) / P) + 1);
-  const sig = `${out.map((o) => `${o.pos}:${Math.round(o.h)}:${o.cols || 0}`).join('|')}#${n}#${Math.round(hz)}#${Math.round(fz)}#${Math.round(g.pageH)}#${g.ghost}#${opts.bands()}`;
+  const sig = `${out.map((o) => `${o.pos}:${Math.round(o.h)}:${o.cols || 0}:${Math.round(o.ml)}:${Math.round(o.mr)}`).join('|')}#${n}#${Math.round(hz)}#${Math.round(fz)}#${Math.round(g.pageH)}#${g.ghost}#${opts.bands()}`;
   const set = out.map((o) => ({ ...o, n, hz, fz, hdPad: g.hdPad, ftPad: g.ftPad }));
   done(set, sig, n);
 }
@@ -144,7 +144,7 @@ export const PageView = Extension.create({
             const sheet = opts.sheet?.();
             const hdrEl = sheet?.querySelector('.dxp__hdr'); const ftrEl = sheet?.querySelector('.dxp__ftr');
             const g = opts.getGeom();
-            const decos = meta.set.map((s, i) => Decoration.widget(s.pos, () => buildSpacer({ ...s, ghost: g.ghost }, g.ghost ? hdrEl : null, g.ghost ? ftrEl : null), { side: -1, key: `pg${i}-${meta.sig.length}-${Math.round(s.h)}-${s.n}-${s.cols || 0}-${g.ghost ? opts.bands() : ''}`, ignoreSelection: true, stopEvent: () => true }));
+            const decos = meta.set.map((s, i) => Decoration.widget(s.pos, () => buildSpacer({ ...s, ghost: g.ghost }, g.ghost ? hdrEl : null, g.ghost ? ftrEl : null), { side: -1, key: `pg${i}-${meta.sig.length}-${Math.round(s.h)}-${s.n}-${s.cols || 0}-${Math.round(s.ml || 0)}-${g.ghost ? opts.bands() : ''}`, ignoreSelection: true, stopEvent: () => true }));
             return { deco: DecorationSet.create(next.doc, decos), sig: meta.sig };
           }
           return tr.docChanged ? { ...prev, deco: prev.deco.map(tr.mapping, tr.doc) } : prev;

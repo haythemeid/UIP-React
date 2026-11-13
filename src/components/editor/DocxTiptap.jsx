@@ -1,32 +1,43 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { TextSelection } from '@tiptap/pm/state';
 import OfficeShell from './OfficeShell';
 import { Btn } from './EditorUI';
-import DocxBar from './DocxBar';
-import EdThemePicker from './EdThemePicker';
+import DocxTabs from './DocxTabs';
+import { IllustrationsDialog } from './DocxPicture';
 import DocxRuler from './DocxRuler';
-import { FloatingBar, DocxContextMenu, TemplateGallery } from './DocxPopups';
+import { FloatingBar, DocxContextMenu } from './DocxPopups';
 import { PageBorders } from './DocxView';
 import { readDocx, htmlToDocx, sanitizeHtml } from '../../lib/officeFmt/docx';
-import { DOCX_TEMPLATES, docxTemplateHtml, DOC_THEMES } from '../../lib/officeFmt/docxTemplates';
+import { DOC_THEMES, STYLE_SETS, PAGE_BORDERS, hexOf } from '../../lib/officeFmt/docxThemes';
+import { loadWebFont, ensureFontsIn } from '../../lib/officeFmt/docxFonts';
+import { renderImage } from '../../lib/officeFmt/docxImageFx';
+import { svgOf, svgToPicture } from '../../lib/officeFmt/docxShapes';
+import { today } from '../../lib/officeFmt/docxHtml';
+import { saveUserTemplate } from '../../lib/officeFmt/docxStore';
 import { twToPx, tableHtml, fitImage, countWords, normalizeUrl, printDocument, PAGE_SIZES } from './docxEdit';
 import { buildExtensions } from './tiptap/extensions';
+import { repage, PAGE_GAP } from './tiptap/pagination';
+import { picGet, picSet, picClear, newPicId } from './tiptap/picRegistry';
 import { prepareForDocx, normalizeIncoming } from './tiptap/exportHtml';
-import { blocksIn, patchBlocks, blockStyle, applySpan, spanAt, patchCells, mergeNext } from './tiptap/docCommands';
+import { blocksIn, patchBlocks, blockStyle, applySpan, spanAt, patchCells, mergeNext, spanBlocks } from './tiptap/docCommands';
 import { mergeStyle, parseStyle, ptOf, isBlankHtml } from './tiptap/cssUtil';
 import { searchState, setSearch, replaceCurrent, replaceAll } from './tiptap/search';
 import '../../styles/css/docx.css';
 import '../../styles/css/docx-pro.css';
 import '../../styles/css/office.css';
+import '../../styles/css/docx-ui.css';
+
+const TemplateDialog = lazy(() => import('./DocxTemplates'));
+const clean = (h) => normalizeIncoming(sanitizeHtml(h) || h);
 
 const WARN = { chart: ['Charts are not editable here and will be dropped on save.', 'الرسوم البيانية مش قابلة للتعديل هنا وهتتشال عند الحفظ.'], textbox: ['Text boxes are not editable here and will be dropped on save.', 'مربعات النص مش قابلة للتعديل هنا وهتتشال عند الحفظ.'], shape: ['Shapes are not editable here and will be dropped on save.', 'الأشكال مش قابلة للتعديل هنا وهتتشال عند الحفظ.'], notes: ['Footnotes / endnotes are not kept on save.', 'الحواشي مش بتتحفظ.'], firstPage: ['Only the default header / footer is kept.', 'بيتحفظ الهيدر والفوتر الافتراضي بس.'] };
 const HEAD_PT = { 1: 16, 2: 13, 3: 12 };
-const pageStyle = (pg, d, zoom) => ({
-  width: twToPx(pg.w), minHeight: twToPx(pg.h), padding: `${twToPx(Math.min(pg.header, pg.top))}px ${twToPx(pg.right)}px ${twToPx(Math.min(pg.footer, pg.bottom))}px ${twToPx(pg.left)}px`,
+const pageStyle = (pg, d, zoom, minH) => ({
+  width: twToPx(pg.w), minHeight: minH, padding: `${twToPx(Math.min(pg.header, pg.top))}px ${twToPx(pg.right)}px ${twToPx(Math.min(pg.footer, pg.bottom))}px ${twToPx(pg.left)}px`,
   '--dx-hmin': `${twToPx(Math.max(0, pg.top - pg.header))}px`, '--dx-fmin': `${twToPx(Math.max(0, pg.bottom - pg.footer))}px`,
   '--dx-font': `'${d.font}', Calibri, Arial, 'Noto Naskh Arabic', sans-serif`, '--dx-size': `${d.size}pt`, '--dx-before': `${d.before}pt`, '--dx-after': `${d.after}pt`, '--dx-line': d.line,
-  '--dx-ph': `${twToPx(pg.h)}px`, '--dx-hd': `${twToPx(pg.header)}px`, '--dx-fd': `${twToPx(pg.footer)}px`, zoom,
+  '--dx-ph': `${twToPx(pg.h)}px`, '--dx-padl': `${twToPx(pg.left)}px`, '--dx-padr': `${twToPx(pg.right)}px`, '--dx-hd': `${twToPx(pg.header)}px`, '--dx-fd': `${twToPx(pg.footer)}px`, zoom,
 });
 
 /** Word editor on Tiptap / ProseMirror: real document model, native undo history, mouse selection, table / picture handles, find & replace. Saves the same .docx as the old editor. */
@@ -46,8 +57,13 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
   const [find, setFind] = useState({ open: false, q: '', r: '', mc: false, idx: 0, total: 0, showReplace: false });
   const [words, setWords] = useState({ all: 0, sel: 0 }); const [pages, setPages] = useState(1); const [err, setErr] = useState('');
   const [emptyBand, setEmptyBand] = useState({ hdr: isBlankHtml(initial.header), ftr: isBlankHtml(initial.footer) });
-  const [menu, setMenu] = useState(null); const [gallery, setGallery] = useState(false); const [ruler, setRuler] = useState(false); const [ftick, setFtick] = useState(0);
+  const [menu, setMenu] = useState(null); const [dlg, setDlg] = useState(null); const [ruler, setRuler] = useState(false); const [ftick, setFtick] = useState(0);
+  const [paged, setPaged] = useState(() => (initial.html || '').length < 600000); const [picVer, setPicVer] = useState(0);
+  const [themeId, setThemeId] = useState(() => DOC_THEMES.find((t) => t.font === initial.defaults.font)?.id || 'office');
+  const bodyRef = useRef(null); const geomRef = useRef({ enabled: false }); const bandSig = useRef(''); const bandT = useRef(0); const picTok = useRef(0); const themeRef = useRef(DOC_THEMES.find((t) => t.font === initial.defaults.font) || DOC_THEMES[0]);
   const stage = useRef(null); const pageEl = useRef(null); const activeKey = useRef('body'); const A_ref = useRef(null); const fmtRaf = useRef(0); const selWas = useRef(false); const A_live = useRef(null);
+  // page view options: read through refs so the extension (built once) always sees the current page setup
+  const pagedOpts = useMemo(() => ({ getGeom: () => geomRef.current, onPages: (n) => { if (n) setPages(n); }, onTooBig: () => { setPaged(false); setErr('This document is very long: the page view was switched off to keep typing fast (View > Separate pages turns it back on).'); }, bands: () => bandSig.current, sheet: () => pageEl.current }), []); // eslint-disable-line react-hooks/exhaustive-deps
   // typing must not re-render the whole editor tree: `dirty` flips once, the change counter (autosave / word count) is debounced
   const verTimer = useRef(0);
   const mark = useCallback(() => { setDirty(true); clearTimeout(verTimer.current); verTimer.current = setTimeout(() => setVer((v) => v + 1), 500); }, []);
@@ -55,7 +71,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
   const bigDoc = useMemo(() => (initial.html || '').length > 30000, [initial]);
 
   const mk = (html, key) => ({
-    extensions: buildExtensions(), content: normalizeIncoming(html) || '<p></p>', shouldRerenderOnTransaction: false,
+    extensions: buildExtensions(key === 'body' ? pagedOpts : undefined), content: normalizeIncoming(html) || '<p></p>', shouldRerenderOnTransaction: false,
     editorProps: {
       attributes: { class: key === 'body' ? 'dxp__body' : key === 'hdr' ? 'dxp__hdr' : 'dxp__ftr', spellcheck: bigDoc ? 'false' : 'true', role: 'textbox', 'aria-multiline': 'true', 'aria-label': key === 'body' ? tt('Document', 'المستند') : key === 'hdr' ? tt('Header', 'رأس الصفحة') : tt('Footer', 'تذييل الصفحة') },
       transformPastedHTML: (h) => normalizeIncoming(sanitizeHtml(h) || h),
@@ -64,7 +80,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
       handleDrop: (view, e) => { const f = Array.from(e.dataTransfer?.files || []).find((x) => x.type.startsWith('image/')); if (!f) return false; e.preventDefault(); const at = view.posAtCoords({ left: e.clientX, top: e.clientY }); if (at) view.dispatch(view.state.tr.setSelection(view.state.selection.constructor.near(view.state.doc.resolve(at.pos)))); A_ref.current?.picture(f); return true; },
       handleDOMEvents: { contextmenu: (view, e) => { A_ref.current?.ctx(e); return true; }, click: (view, e) => { const a = e.target.closest?.('a'); if (a && (e.ctrlKey || e.metaKey)) { window.open(a.href, '_blank', 'noopener'); return true; } return false; } },
     },
-    onUpdate: () => { if (key !== 'body') setEmptyBand((s) => ({ ...s, [key]: false })); mark(); },
+    onUpdate: () => { if (key !== 'body') { setEmptyBand((s) => ({ ...s, [key]: false })); bandSig.current = String(Date.now()); clearTimeout(bandT.current); bandT.current = setTimeout(() => repage(bodyRef.current), 250); } mark(); },
     onFocus: () => { activeKey.current = key; },
     onSelectionUpdate: () => A_ref.current?.fmtSoon(), onTransaction: () => A_ref.current?.fmtSoon(),
   });
@@ -73,6 +89,10 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
   const hdrOpts = useMemo(() => mk(initial.header, 'hdr'), []); // eslint-disable-line react-hooks/exhaustive-deps
   const ftrOpts = useMemo(() => mk(initial.footer, 'ftr'), []); // eslint-disable-line react-hooks/exhaustive-deps
   const body = useEditor(bodyOpts); const hdr = useEditor(hdrOpts); const ftr = useEditor(ftrOpts);
+  bodyRef.current = body;
+  geomRef.current = { enabled: paged, pageW: twToPx(pg.w), pageH: twToPx(pg.h), ftPad: twToPx(Math.min(pg.footer, pg.bottom)), hdPad: twToPx(Math.min(pg.header, pg.top)), ghost: true };
+  useEffect(() => { if (body) repage(body); }, [body, paged, pg, def]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => { clearTimeout(bandT.current); picClear(); }, []);
   const active = () => ({ body, hdr, ftr }[activeKey.current] || body);
   const run = (fn) => { const ed = active(); if (!ed || ed.isDestroyed) return; fn(ed, ed.chain().focus()); };
 
@@ -92,7 +112,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
       color: span.color || '#000000', hl: span['background-color'] || null, align: al, rtl: dirRtl,
       style: st || (level ? `h${level}` : 'p'), list: ed.isActive('bulletList') ? 'ul' : ed.isActive('orderedList') ? 'ol' : null, link: ed.isActive('link'), inTable: ed.isActive('table'),
       line: Number.isFinite(lh) && lh < 10 ? lh : d.line, before: ptOf(bs['margin-top']) ?? d.before, after: ptOf(bs['margin-bottom']) ?? d.after,
-      img: sel.node?.type.name === 'image' ? Math.round(sel.node.attrs.width || 0) : 0,
+      img: sel.node?.type.name === 'image' ? Math.round(sel.node.attrs.width || 0) : 0, imgFl: sel.node?.type.name === 'image' ? sel.node.attrs.dataFl || null : null, imgAlt: sel.node?.type.name === 'image' ? sel.node.attrs.alt || '' : '',
     };
     setFmt((p) => { for (const k of Object.keys(next)) if (p[k] !== next[k]) return next; return p; });
     setHist((h) => { const u = ed.can().undo(); const r = ed.can().redo(); return h.u === u && h.r === r ? h : { u, r }; });
@@ -112,9 +132,9 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
     return () => clearTimeout(t);
   }, [ver, ftick, body, find.open]);
   useEffect(() => {
-    const el = pageEl.current; if (!el) return undefined; const ph = twToPx(pg.h);
+    const el = pageEl.current; if (!el || paged) return undefined; const ph = twToPx(pg.h);
     const calc = () => setPages(Math.max(1, Math.ceil(el.offsetHeight / ph - 0.02))); calc(); const ro = new ResizeObserver(calc); ro.observe(el); return () => ro.disconnect();
-  }, [pg.h]);
+  }, [pg.h, paged]);
   useEffect(() => { // Ctrl + wheel = zoom
     const el = stage.current; if (!el) return undefined;
     const h = (e) => { if (!(e.ctrlKey || e.metaKey)) return; e.preventDefault(); setZoom((z) => Math.max(0.3, Math.min(2.5, Math.round((z - Math.sign(e.deltaY) * 0.1) * 10) / 10))); };
@@ -127,10 +147,49 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
     try { const { src, w, h } = await fitImage(file); run((ed, c) => c.setImage({ src, width: w, height: h }).run()); } catch (e) { setErr(e?.message === 'size' ? tt('Picture is larger than 20 MB.', 'الصورة أكبر من 20 ميجا.') : tt('That picture could not be added.', 'تعذّر إضافة الصورة.')); }
   };
   const doFind = (q, mc, idx = 0, jump = false) => { if (!body) return; setSearch(body, { q, mc, cur: Math.max(0, idx) }, false); const s = searchState(body); const i = s.matches.length ? ((idx % s.matches.length) + s.matches.length) % s.matches.length : 0; if (i !== s.cur) setSearch(body, { cur: i }, jump); else if (jump) setSearch(body, {}, true); setFind((f) => ({ ...f, q, mc, idx: i, total: s.matches.length })); };
+  const picApply = async (patch) => {
+    const ed = body; const sel = ed?.state.selection; const n0 = sel?.node; if (n0?.type.name !== 'image') return;
+    const pos = sel.from; const id = n0.attrs.dxId || newPicId(); const rec = picGet(id) || { orig: n0.attrs.src, ops: {} };
+    const ops = typeof patch === 'function' ? patch(rec.ops) : { ...rec.ops, ...patch }; picTok.current += 1; const tok = picTok.current;
+    try {
+      const out = await renderImage(rec.orig, ops, { maxSide: 1600 }); if (tok !== picTok.current || ed.isDestroyed) return;
+      const n = ed.state.doc.nodeAt(pos); if (n?.type.name !== 'image') return;
+      const width = n.attrs.width || out.w; picSet(id, { orig: rec.orig, ops });
+      ed.view.dispatch(ed.state.tr.setNodeMarkup(pos, undefined, { ...n.attrs, src: out.src, width, height: Math.round((width * out.h) / out.w), dxId: id })); setPicVer((v) => v + 1); mark();
+    } catch { setErr(tt('That picture could not be changed.', 'تعذّر تعديل الصورة.')); }
+  };
+  const applyTemplate = (item, mode0) => {
+    let html; try { html = clean(item.html({ ar, title: fileName.replace(/\.docx$/i, ''), today })); } catch { setErr(tt('That template could not be opened.', 'تعذّر فتح القالب.')); return; }
+    const empty = isBlankHtml(body.getHTML()); const mode = empty ? 'replace' : mode0; const PB = '<hr data-pb="1">';
+    if (mode === 'replace') {
+      if (!empty && !window.confirm(tt('Replace the whole document with this template? (Undo brings it back.)', 'استبدال المستند كله بالقالب ده؟ (التراجع بيرجّعه.)'))) return;
+      setDlg(null); body.chain().focus().setContent(html, { emitUpdate: true }).run();
+      const rec = item.rec;
+      if (rec) {
+        if (rec.header != null) { hdr.commands.setContent(clean(rec.header) || '<p></p>', { emitUpdate: false }); setEmptyBand((b) => ({ ...b, hdr: isBlankHtml(rec.header) })); }
+        if (rec.footer != null) { ftr.commands.setContent(clean(rec.footer) || '<p></p>', { emitUpdate: false }); setEmptyBand((b) => ({ ...b, ftr: isBlankHtml(rec.footer) })); }
+        if (rec.page) { pgRef.current = { ...pgRef.current, ...rec.page }; setPg(pgRef.current); }
+        if (rec.defaults) { defRef.current = { ...defRef.current, ...rec.defaults }; setDef(defRef.current); }
+      }
+      return;
+    }
+    setDlg(null);
+    if (mode === 'start') body.chain().insertContentAt(0, html + PB).focus('start').run();
+    else if (mode === 'end') body.chain().insertContentAt(body.state.doc.content.size, PB + html).focus('end').run();
+    else body.chain().focus().insertContent(html).run();
+  };
+  const saveCurrentAsTemplate = async (name) => {
+    const html = body.getHTML(); if (html.length > 6e6) throw new Error('big'); const hh = hdr.getHTML(); const ff = ftr.getHTML();
+    await saveUserTemplate({ label: { en: name, ar: name }, html, header: isBlankHtml(hh) ? '' : hh, footer: isBlankHtml(ff) ? '' : ff, page: pgRef.current, defaults: defRef.current });
+  };
+  const insertShape = async ({ item, color, color2, width }) => {
+    try { const pic = await svgToPicture(svgOf(item, color, color2), item.vb, { width }); setDlg(null); run((ed, c) => c.setImage({ src: pic.src, width: pic.w, height: pic.h }).run()); } catch { setErr(tt('That shape could not be added.', 'تعذّر إضافة الشكل.')); }
+  };
   const A = {
     setTab, undo: () => run((ed, c) => c.undo().run()), redo: () => run((ed, c) => c.redo().run()),
     toggle: (k) => run((ed, c) => ({ bold: c.toggleBold(), italic: c.toggleItalic(), underline: c.toggleUnderline(), strikeThrough: c.toggleStrike(), subscript: c.toggleSubscript(), superscript: c.toggleSuperscript() }[k]?.run())),
-    font: (f) => run((ed) => applySpan(ed, { 'font-family': `'${f}'` })),
+    font: (f) => { loadWebFont(f); run((ed) => applySpan(ed, { 'font-family': `'${f}'` })); },
+    usedFonts: () => (body ? ensureFontsIn(body.getHTML()) : []),
     size: (pt) => { if (pt > 0) run((ed) => applySpan(ed, { 'font-size': `${pt}pt` })); },
     color: (c) => run((ed) => applySpan(ed, { color: c || '#000000' })),
     highlight: (c) => run((ed) => applySpan(ed, { 'background-color': c || null })),
@@ -205,12 +264,66 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
       if (!items.length) { setErr(tt('Add headings (Heading 1-3) first, then insert the table of contents.', 'أضف عناوين (عنوان 1-3) الأول وبعدين أدرج الفهرس.')); return; }
       c.insertContent([{ type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: tt('Contents', 'المحتويات') }] }, ...items.map((i) => ({ type: 'paragraph', attrs: { style: `margin-inline-start:${(i.level - 1) * 18}pt;margin-bottom:2pt` }, content: [{ type: 'text', text: i.text }] }))]).run();
     }),
-    templates: () => setGallery(true), toggleRuler: () => setRuler((r) => !r),
+    templates: (group = 'all') => setDlg({ type: 'templates', group }), saveTemplate: () => setDlg({ type: 'templates', group: 'mine', naming: true }), shapes: () => setDlg({ type: 'shapes' }),
+    toggleRuler: () => setRuler((r) => !r), togglePaged: () => setPaged((p) => !p),
     legacy: onLegacy ? () => { if (!dirty || window.confirm(tt('Unsaved changes will be lost. Switch editor?', 'التعديلات غير المحفوظة هتضيع. تغيّر المحرر؟'))) onLegacy(); } : null,
-    theme: (id) => {
-      const th = DOC_THEMES.find((x) => x.id === id); if (!th || !body) return; const d = { ...defRef.current, font: th.font }; defRef.current = d; setDef(d);
-      const tr = body.state.tr; body.state.doc.descendants((n, pos) => { if (n.type.name === 'heading') tr.setNodeMarkup(pos, undefined, { ...n.attrs, style: mergeStyle(n.attrs.style, { color: n.attrs.level === 1 ? th.head : th.sub }) }); }); body.view.dispatch(tr); mark();
+    block: (b) => run((ed, c) => c.insertContent(clean(b.html({ ar, title: fileName.replace(/\.docx$/i, ''), today }))).run()),
+    caption: () => run((ed, c) => {
+      const sel = ed.state.selection; let n = 0; ed.state.doc.descendants((nd, pos) => { if (nd.type.name === 'image' && pos <= sel.from) n += 1; return true; });
+      const at = sel.$from.after(); const label = `${tt('Figure', 'شكل')} ${Math.max(1, n)}: `;
+      c.insertContentAt(at, { type: 'paragraph', attrs: { style: 'text-align:center;margin-top:2pt' }, content: [{ type: 'text', text: label, marks: [{ type: 'italic' }, { type: 'span', attrs: { style: 'font-size:9pt;color:#595959' } }] }] }).setTextSelection(at + 1 + label.length).run();
+    }),
+    styleSet: (id) => { const st = STYLE_SETS.find((x) => x.id === id); if (!st) return; const d = { ...defRef.current, line: st.line, before: st.before, after: st.after }; defRef.current = d; setDef(d); mark(); },
+    pageBorder: (id) => { const p = PAGE_BORDERS.find((x) => x.id === id); if (p) setPage((cur) => ({ ...cur, borders: p.borders ? JSON.parse(JSON.stringify(p.borders)) : null })); },
+    pageBorderColor: (color) => setPage((cur) => { const b = cur.borders ? { ...cur.borders } : JSON.parse(JSON.stringify(PAGE_BORDERS.find((x) => x.id === 'thin').borders)); ['top', 'left', 'bottom', 'right'].forEach((k) => { if (b[k]) b[k] = { ...b[k], color }; }); return { ...cur, borders: b }; }),
+    theme: (id, part = 'all') => {
+      const th = DOC_THEMES.find((x) => x.id === id); if (!th || !body) return; const prev = themeRef.current;
+      if (part !== 'colors') { const d = { ...defRef.current, font: th.font }; defRef.current = d; setDef(d); loadWebFont(th.font); loadWebFont(th.headFont); spanBlocks(body, (n) => n.type.name === 'heading' || n.attrs.dataSt === 'title' || n.attrs.dataSt === 'subtitle', { 'font-family': `'${th.headFont}'` }); }
+      if (part !== 'fonts') {
+        const tr = body.state.tr; const old = new Set([prev.accent, prev.soft, '#1F3864', '#E8EEF9'].map((x) => x.toLowerCase())); const softs = new Set([prev.soft.toLowerCase(), '#e8eef9']);
+        body.state.doc.descendants((n, pos) => {
+          if (n.type.name === 'heading') tr.setNodeMarkup(pos, undefined, { ...n.attrs, style: mergeStyle(n.attrs.style, { color: n.attrs.level === 1 ? th.head : th.sub }) });
+          else if (n.attrs.dataSt === 'title' || n.attrs.dataSt === 'subtitle') tr.setNodeMarkup(pos, undefined, { ...n.attrs, style: mergeStyle(n.attrs.style, { color: n.attrs.dataSt === 'title' ? th.sub : null }) });
+          else if (n.type.name === 'tableCell' || n.type.name === 'tableHeader') {
+            const bg = hexOf(parseStyle(n.attrs.style)['background-color']);
+            if (bg && old.has(bg)) tr.setNodeMarkup(pos, undefined, { ...n.attrs, style: mergeStyle(n.attrs.style, { 'background-color': softs.has(bg) ? th.soft : th.accent }) });
+          }
+          return true;
+        });
+        if (tr.docChanged) body.view.dispatch(tr);
+      }
+      themeRef.current = th; setThemeId(id); mark();
     },
+    tPreset: (kind) => run((ed) => {
+      const { $from } = ed.state.selection; let tPos = -1; let tNode = null;
+      for (let d = $from.depth; d > 0; d -= 1) { const n = $from.node(d); if (n.type.name === 'table') { tPos = $from.before(d); tNode = n; break; } }
+      if (!tNode) return;
+      const th = themeRef.current; const tr = ed.state.tr; const span = ed.state.schema.marks.span;
+      tr.setNodeMarkup(tPos, undefined, { ...tNode.attrs, dataB: kind === 'minimal' ? 'none' : null });
+      tNode.forEach((row, rOff, ri) => row.forEach((cell, cOff) => {
+        const pos = tPos + 1 + rOff + 1 + cOff;
+        const bg = kind === 'soft' || kind === 'minimal' ? (ri === 0 ? th.soft : null) : kind === 'zebra' ? (ri === 0 ? th.soft : ri % 2 === 0 ? '#F5F7FB' : null) : kind === 'dark' ? (ri === 0 ? th.accent : ri % 2 === 0 ? th.soft : null) : null;
+        tr.setNodeMarkup(pos, undefined, { ...cell.attrs, style: mergeStyle(cell.attrs.style, { 'background-color': bg }) });
+        if (ri === 0) cell.descendants((t, off) => { // header text: white on a dark header, otherwise back to normal
+          if (!t.isText) return true; const a = pos + 1 + off; const cur = t.marks.find((m) => m.type === span); const was = parseStyle(cur?.attrs.style).color;
+          const style = mergeStyle(cur?.attrs.style, kind === 'dark' ? { color: '#ffffff', 'font-weight': 'bold' } : { color: hexOf(was) === '#ffffff' ? null : was });
+          if (style) tr.addMark(a, a + t.nodeSize, span.create({ style, dir: cur?.attrs.dir || null })); else if (cur) tr.removeMark(a, a + t.nodeSize, span); return false;
+        });
+      }));
+      ed.view.dispatch(tr);
+    }),
+    /* ---- pictures: every change re-renders from the ORIGINAL (kept in picRegistry), so crop / colour / frame never pile up on a lossy bitmap */
+    picGet: () => { const n = body?.state.selection.node; return n?.type.name === 'image' ? picGet(n.attrs.dxId) : undefined; },
+    picSrc: () => { const n = body?.state.selection.node; return n?.type.name === 'image' ? (picGet(n.attrs.dxId)?.orig || n.attrs.src) : ''; },
+    picOps: (patch) => picApply(patch),
+    picStyle: (st) => picApply((old) => {
+      const o = { ...old }; ['shape', 'radius', 'border', 'frame', 'shadow'].forEach((k) => delete o[k]); if (st.id === 'plain') delete o.adj;
+      return { ...o, ...st.ops, adj: st.ops.adj ? { ...(old.adj || {}), ...st.ops.adj } : o.adj, crop: st.ops.crop ? { ...(old.crop || {}), ...st.ops.crop } : o.crop };
+    }),
+    picReset: () => picApply(() => ({})),
+    picAlt: (alt) => run((ed) => { const n = ed.state.selection.node; if (n?.type.name === 'image') ed.view.dispatch(ed.state.tr.setNodeMarkup(ed.state.selection.from, undefined, { ...n.attrs, alt })); }),
+    picFit: () => A_live.current.imgWidth(twToPx(pgRef.current.w - pgRef.current.left - pgRef.current.right)),
+    picReplace: () => { const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/png,image/jpeg,image/gif,image/webp,image/bmp'; i.onchange = async () => { const f = i.files?.[0]; if (!f) return; try { const { src, w, h } = await fitImage(f); run((ed) => { const n = ed.state.selection.node; if (n?.type.name !== 'image') return; const width = n.attrs.width || w; ed.view.dispatch(ed.state.tr.setNodeMarkup(ed.state.selection.from, undefined, { ...n.attrs, src, width, height: Math.round((width * h) / w), dxId: null })); setPicVer((v) => v + 1); }); } catch { setErr(tt('That picture could not be added.', 'تعذّر إضافة الصورة.')); } }; i.click(); },
   };
   A_live.current = A;
   const Astable = useMemo(() => new Proxy({}, { get: (_, k) => (k === 'legacy' ? (A_live.current?.legacy ? () => A_live.current.legacy() : null) : (...a) => A_live.current?.[k]?.(...a)) }), []);
@@ -251,16 +364,11 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
   }, [body, hdr, ftr]);
   const draftBuild = useCallback(async () => { await new Promise((r) => (window.requestIdleCallback ? window.requestIdleCallback(r, { timeout: 3000 }) : setTimeout(r, 50))); return build(); }, [build]);
 
-  const pickTemplate = (x) => {
-    const html = x.id === 'blank' ? '<p></p>' : docxTemplateHtml(x.id, { ar, title: fileName.replace(/\.docx$/i, '') });
-    const empty = isBlankHtml(body.getHTML());
-    setGallery(false);
-    if (empty || window.confirm(tt('Replace the current document with this template? (Undo brings it back.)', 'استبدال المستند الحالي بالقالب ده؟ (التراجع بيرجّعه.)'))) body.chain().focus().setContent(normalizeIncoming(sanitizeHtml(html)), { emitUpdate: true }).run();
-    else body.chain().focus().insertContent(normalizeIncoming(sanitizeHtml(html))).run();
-  };
-
   const ttRef = useRef(tt); ttRef.current = tt; const ttS = useCallback((e, a) => ttRef.current(e, a), []);
-  const S = useMemo(() => ({ fmt, pg, zoom, canUndo: hist.u, canRedo: hist.r, inTable: !!fmt.inTable, imgSel: fmt.img ? { w: fmt.img } : null }), [fmt, pg, zoom, hist]);
+  const borderId = useMemo(() => (pg.borders ? PAGE_BORDERS.find((p) => JSON.stringify(p.borders) === JSON.stringify(pg.borders))?.id || 'custom' : 'none'), [pg.borders]);
+  const styleSetId = STYLE_SETS.find((x) => x.line === def.line && x.after === def.after)?.id || null;
+  const theme = useMemo(() => DOC_THEMES.find((t) => t.id === themeId) || DOC_THEMES[0], [themeId]);
+  const S = useMemo(() => ({ fmt, pg, zoom, canUndo: hist.u, canRedo: hist.r, inTable: !!fmt.inTable, imgSel: fmt.img ? { w: fmt.img, fl: fmt.imgFl, alt: fmt.imgAlt } : null, themeId, theme, borderId, styleSetId, paged, ruler, picVer }), [fmt, pg, zoom, hist, themeId, theme, borderId, styleSetId, paged, ruler, picVer]);
   if (!body || !hdr || !ftr) return <div className="ed ed--center"><span className="st-fv-spinner" /></div>;
 
   const sizeName = PAGE_SIZES.find((s) => (s[1] === Math.min(pg.w, pg.h) && s[2] === Math.max(pg.w, pg.h)))?.[0] || `${Math.round(pg.w / 56.7)}×${Math.round(pg.h / 56.7)} mm`;
@@ -268,7 +376,7 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
   return (
     <OfficeShell
       fileName={fileName} tt={tt} guardRef={guardRef} onSave={onSave} onClose={onClose} dirty={dirty} build={build} onSaved={() => setDirty(false)} draftKey={draftKey} draftToken={ver} draftBuild={draftBuild} draftDelay={20000}
-      className="ed--docx" topExtra={<EdThemePicker tt={ttS} />} tools={<DocxBar tt={ttS} S={S} A={Astable} ruler={ruler} />}
+      className="ed--docx" tools={<DocxTabs tt={ttS} ar={ar} S={S} A={Astable} />}
       status={(
         <div className="dx__status">
           <span>{tt('Page', 'صفحة')} {pages}</span><span>{tt('Words', 'كلمات')}: {words.sel ? `${words.sel} / ${words.all}` : words.all}</span><span>{sizeName}{pg.w > pg.h ? ` · ${tt('Landscape', 'عرضي')}` : ''}</span>
@@ -293,8 +401,8 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
       {err && <p className="ed__err dx__err" role="alert" onClick={() => setErr('')}>{err}</p>}
       <div className="dx__stage" ref={stage}>
         {ruler && <DocxRuler pg={pg} zoom={zoom} onMargins={(m, commit) => { if (Object.keys(m).length) setPage((p) => ({ ...p, ...m })); else if (commit) mark(); }} />}
-        <div className="dxp" ref={pageEl} dir={def.rtl ? 'rtl' : 'ltr'} style={pageStyle(pg, def, zoom)}>
-          <PageBorders pg={pg} zoom={zoom} />
+        <div className={`dxp${paged ? ' dxp--paged' : ''}`} ref={pageEl} dir={def.rtl ? 'rtl' : 'ltr'} style={pageStyle(pg, def, zoom, paged ? Math.max(twToPx(pg.h), pages * (twToPx(pg.h) + PAGE_GAP) - PAGE_GAP) : twToPx(pg.h))}>
+          <PageBorders pg={pg} zoom={zoom} gap={paged ? PAGE_GAP : 0} count={paged ? pages : 0} />
           <div className="dxp__bandwrap">{emptyBand.hdr && <span className="dxp__ph">{tt('Header', 'رأس الصفحة')}</span>}<EditorContent editor={hdr} /></div>
           <div className="dxp__bodywrap"><EditorContent editor={body} /></div>
           <div className="dxp__bandwrap">{emptyBand.ftr && <span className="dxp__ph">{tt('Footer', 'تذييل الصفحة')}</span>}<EditorContent editor={ftr} /></div>
@@ -302,7 +410,10 @@ function Inner({ initial, fileName, tt, rtl: uiRtl, guardRef, onSave, onClose, d
       </div>
       <FloatingBar editor={active()} fmt={fmt} A={A} tt={tt} tick={ftick} host={document.body} />
       <DocxContextMenu menu={menu} onClose={() => setMenu(null)} />
-      <TemplateGallery open={gallery} onClose={() => setGallery(false)} templates={DOCX_TEMPLATES} tt={tt} ar={ar} onPick={pickTemplate} />
+      <Suspense fallback={null}>
+        {dlg?.type === 'templates' && <TemplateDialog tt={tt} ar={ar} docTitle={fileName.replace(/\.docx$/i, '')} group={dlg.group} startNaming={!!dlg.naming} hasContent={!isBlankHtml(body.getHTML())} canSave onClose={() => setDlg(null)} onApply={applyTemplate} onSaveCurrent={saveCurrentAsTemplate} />}
+      </Suspense>
+      {dlg?.type === 'shapes' && <IllustrationsDialog tt={tt} ar={ar} onClose={() => setDlg(null)} onInsert={insertShape} />}
     </OfficeShell>
   );
 }

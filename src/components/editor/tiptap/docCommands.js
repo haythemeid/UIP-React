@@ -69,3 +69,21 @@ export function mergeNext(editor) {
   const sel = CellSelection.create(state.doc, c.pos, next); editor.view.dispatch(state.tr.setSelection(sel));
   return editor.commands.mergeCells();
 }
+
+/** Merge CSS props into the inline `span` mark of every text run inside the blocks that match `pred(node)` (used by document themes: heading font / colour). */
+export function spanBlocks(editor, pred, props) {
+  const { state, view } = editor; const type = state.schema.marks.span; const tr = state.tr;
+  state.doc.descendants((node, pos) => {
+    if (!node.isTextblock) return true;
+    if (!pred(node)) return false;
+    node.descendants((child, off) => {
+      if (!child.isText) return true;
+      const a = pos + 1 + off; const b = a + child.nodeSize;
+      const cur = child.marks.find((m) => m.type === type); const style = mergeStyle(cur?.attrs.style, props);
+      if (style || cur?.attrs.dir) tr.addMark(a, b, type.create({ style, dir: cur?.attrs.dir || null })); else if (cur) tr.removeMark(a, b, type);
+      return false;
+    });
+    return false;
+  });
+  if (tr.docChanged) view.dispatch(tr);
+}

@@ -26,14 +26,14 @@ const pageStyle = (pg, d, zoom) => ({
 });
 
 /** Page borders (Word "Page Borders"): one frame per page, placed from the page edge or from the text like Word does. */
-export function PageBorders({ pg, zoom }) {
-  const ref = useRef(null); const [pages, setPages] = useState(1); const b = pg.borders;
+export function PageBorders({ pg, zoom, gap = 0, count = 0 }) { // gap / count: page view of the Tiptap editor (sheets with a grey gap, page count known)
+  const ref = useRef(null); const [pages0, setPages] = useState(1); const b = pg.borders; const pages = count || pages0;
   useLayoutEffect(() => {
-    const host = ref.current?.parentElement; if (!host || !b) return undefined;
+    const host = ref.current?.parentElement; if (!host || !b || count) return undefined;
     const ph = twToPx(pg.h);
     const calc = () => setPages(Math.max(1, Math.ceil(host.getBoundingClientRect().height / (zoom || 1) / ph - 0.02)));
     calc(); const ro = new ResizeObserver(calc); ro.observe(host); return () => ro.disconnect();
-  }, [b, pg.h, zoom]);
+  }, [b, pg.h, zoom, count]);
   if (!b) return null;
   const ph = twToPx(pg.h); const px = (p) => (p * 4) / 3;
   const edge = (k, margin) => Math.max(0, b.offsetFrom === 'text' ? twToPx(margin) - (b[k] ? px(b[k].space) : 0) : (b[k] ? px(b[k].space) : 0));
@@ -42,7 +42,7 @@ export function PageBorders({ pg, zoom }) {
   return (
     <div ref={ref} className="dxp__pb" aria-hidden="true" style={{ zIndex: b.zOrder === 'back' ? 0 : 2 }}>
       {Array.from({ length: pages }, (_, i) => ((b.display === 'firstPage' && i > 0) || (b.display === 'notFirstPage' && i === 0) ? null
-        : <i key={i} style={{ position: 'absolute', left: L, right: R, top: i * ph + T, height: Math.max(0, ph - T - B), ...frame }} />))}
+        : <i key={i} style={{ position: 'absolute', left: L, right: R, top: i * (ph + gap) + T, height: Math.max(0, ph - T - B), ...frame }} />))}
     </div>
   );
 }

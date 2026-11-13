@@ -31,9 +31,9 @@ const download = (name, text) => { const a = document.createElement('a'); a.href
  *   at the cursor · at the start (cover pages: adds a page break after) · at the end (adds a page break before) · replace the document.
  * Sources: built-in, packs (drop a .js in lib/officeFmt/docxPacks), and "My templates" (saved from a document, importable / exportable as .json).
  */
-export default function TemplateDialog({ tt, ar, docTitle, group: startGroup = 'all', hasContent, onClose, onApply, onSaveCurrent, canSave }) {
+export default function TemplateDialog({ tt, ar, docTitle, group: startGroup = 'all', hasContent, onClose, onApply, onSaveCurrent, canSave, startNaming }) {
   const [lib, setLib] = useState(null); const [group, setGroup] = useState(startGroup); const [q, setQ] = useState(''); const [mode, setMode] = useState(null);
-  const [naming, setNaming] = useState(false); const [name, setName] = useState(''); const [msg, setMsg] = useState(''); const file = useRef(null);
+  const [naming, setNaming] = useState(!!startNaming); const [name, setName] = useState(''); const [msg, setMsg] = useState(''); const file = useRef(null);
   const reload = () => loadTemplateLibrary().then(setLib);
   useEffect(() => { let on = true; loadTemplateLibrary().then((l) => on && setLib(l)); return () => { on = false; }; }, []);
   const groups = useMemo(() => {

@@ -52,7 +52,7 @@ export const Field = Node.create({
 });
 
 const DocImage = Image.extend({
-  addAttributes() { return { ...this.parent?.(), dataFl: attr('dataFl', 'data-fl', (v) => v === 'left' || v === 'right'), dxId: { default: null, rendered: false } }; // dxId: key of the picture's original in picRegistry (not an HTML attribute, never saved) },
+  addAttributes() { return { ...this.parent?.(), dataFl: attr('dataFl', 'data-fl', (v) => v === 'left' || v === 'right'), dxId: { default: null, rendered: false } }; }, // dxId: key of the picture's original in picRegistry (not an HTML attribute, never saved)
   addNodeView() { return imageNodeView; },
 });
 
