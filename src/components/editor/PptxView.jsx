@@ -164,6 +164,13 @@ export default function PptxView({ blob, fileName, tt, rtl, guardRef, onSave, on
   const fmt = editing && live && modelFmt ? { ...modelFmt, ...live } : modelFmt;
 
   const build = useCallback(async () => { let f = fr.current; const c = editorApi.current?.commit(); if (c) f = E.setParas(f, pathRef.current, c.target, c.paras).files; return zip(f); }, []);
+  // الـ autosave المحلي: zip بدون ضغط (level 0) وفي وقت فراغ الـ browser، بدل ضغط level 6 للملف كله كل ما تبطّل تعدّل. الناتج لسه .pptx صالح.
+  const draftBuild = useCallback(async () => {
+    await new Promise((r) => (window.requestIdleCallback ? window.requestIdleCallback(r, { timeout: 3000 }) : setTimeout(r, 50)));
+    let f = fr.current; const c = editorApi.current?.commit(); if (c) f = E.setParas(f, pathRef.current, c.target, c.paras).files;
+    const o = {}; Object.keys(f).forEach((k) => { o[k] = [f[k], { level: 0 }]; });
+    return new Blob([zipSync(o)], { type: PPTX_MIME });
+  }, []);
   if (status.s === 'loading' || (status.s === 'ok' && !deckRes)) return <div className="ed ed--center"><span className="st-fv-spinner" /><p className="ed__hint">{tt('Opening the presentation…', 'جارٍ فتح العرض…')}</p></div>;
   if (status.s === 'error' || deckRes.err) return <div className="ed ed--center"><p className="ed__err">{status.msg || deckRes.err}</p><Btn label={tt('Close', 'إغلاق')} onClick={onClose} /></div>;
 
@@ -177,7 +184,7 @@ export default function PptxView({ blob, fileName, tt, rtl, guardRef, onSave, on
       <span>{tt('Click a selected object again to edit its text · Arrows nudge · Shift = faster', 'اضغط على العنصر المحدد مرة تانية لتعديل النص · الأسهم للتحريك · Shift أسرع')}</span></div>
   );
   return (
-    <OfficeShell fileName={fileName} tt={tt} guardRef={guardRef} onSave={onSave} onClose={onClose} dirty={h.dirty} build={build} onSaved={h.markSaved} draftKey={draftKey} draftToken={h.value} tools={<Ribbon tt={tt} S={S} A={A} />} status={statusBar}>
+    <OfficeShell fileName={fileName} tt={tt} guardRef={guardRef} onSave={onSave} onClose={onClose} dirty={h.dirty} build={build} onSaved={h.markSaved} draftKey={draftKey} draftToken={h.value} draftBuild={draftBuild} draftDelay={8000} tools={<Ribbon tt={tt} S={S} A={A} />} status={statusBar}>
       <div className="px" onKeyDown={onRootKey}>
         <div className="px__thumbs">{deck.slides.map((sl, i) => (
           <div key={sl.path || i} className={`px__tw${overIdx === i ? ' is-over' : ''}`} draggable onDragStart={(e) => { e.dataTransfer.setData('text/plain', String(i)); e.dataTransfer.effectAllowed = 'move'; }}

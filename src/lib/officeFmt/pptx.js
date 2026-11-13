@@ -192,17 +192,22 @@ function readShapes(treeEl, ctx, map, out, tbIndex) {
   });
 }
 
-export function layoutsOf(files) {
+export function layoutsOf(files, cache) {
+  // cache (WeakMap بالـ bytes): أسماء الـ layouts ما بتتغيّرش مع تعديل الشرايح، فمنعيدش parse لكلها مع كل تعديل
   return Object.keys(files).filter((k) => /^ppt\/slideLayouts\/slideLayout\d+\.xml$/.test(k)).sort((a, b) => num(a.match(/(\d+)\.xml$/)[1]) - num(b.match(/(\d+)\.xml$/)[1]))
-    .map((path) => { const d = parseXml(strFromU8(files[path])); const c = Array.from(d.getElementsByTagNameNS('*', 'cSld'))[0]; return { path, name: at(c, 'name') || path.split('/').pop() }; });
+    .map((path) => {
+      const bytes = files[path]; let name = cache?.get(bytes);
+      if (name === undefined) { const d = parseXml(strFromU8(bytes)); const c = Array.from(d.getElementsByTagNameNS('*', 'cSld'))[0]; name = at(c, 'name') || path.split('/').pop(); cache?.set(bytes, name); }
+      return { path, name };
+    });
 }
 
 /** A session keeps image object-URLs and parsed slides alive between edits so only changed slides are re-read. */
 export function createSession() {
-  const urls = new Set(); const byBytes = new WeakMap(); const slides = new WeakMap();
+  const urls = new Set(); const byBytes = new WeakMap(); const slides = new WeakMap(); const layoutNames = new WeakMap();
   return {
     url(bytes, mime) { let u = byBytes.get(bytes); if (!u) { u = URL.createObjectURL(new Blob([bytes], { type: mime })); byBytes.set(bytes, u); urls.add(u); } return u; },
-    slides,
+    slides, layoutNames,
     revoke() { urls.forEach((u) => URL.revokeObjectURL(u)); urls.clear(); },
   };
 }
@@ -241,7 +246,7 @@ export function loadDeck(files, session = createSession()) {
     session.slides.set(files[path], { rels: files[relsPath], res });
     return res;
   });
-  return { files, cx, cy, slides, theme, layouts: layoutsOf(files) };
+  return { files, cx, cy, slides, theme, layouts: layoutsOf(files, session.layoutNames) };
 }
 
 export async function loadPptx(buf) {

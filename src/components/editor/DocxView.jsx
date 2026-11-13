@@ -158,7 +158,8 @@ export default function DocxView({ blob, fileName, tt, rtl, guardRef, onSave, on
     let al = bcs.textAlign; if (al === 'start') al = isRtl ? 'right' : 'left'; else if (al === 'end') al = isRtl ? 'left' : 'right';
     const px = parseFloat(cs.fontSize) || 16; const sz = Math.round(px * 0.75 * 2) / 2;
     const hl = rgbToHex(cs.backgroundColor);
-    setFmt({
+    // بيحدّث الـ ribbon بس لو حاجة اتغيّرت فعلاً (قبل كده كل حركة مؤشر كانت بتعمل re-render للـ ribbon كله)
+    const next = {
       has: true, root: root === body.current ? 'body' : root === hdr.current ? 'hdr' : 'ftr',
       font: cs.fontFamily.split(',')[0].replace(/['"]/g, '').trim(), size: sz, b: q('bold'), i: q('italic'), u: q('underline'), st: q('strikeThrough'), sub: q('subscript'), sup: q('superscript'),
       color: rgbToHex(cs.color) || '#000000', hl, align: al === 'justify' ? 'justify' : al, rtl: isRtl,
@@ -166,10 +167,14 @@ export default function DocxView({ blob, fileName, tt, rtl, guardRef, onSave, on
       list: list ? list.tagName.toLowerCase() : null, link: !!closestIn(root, el, 'a'), inTable: !!cellOf(root),
       line: parseFloat(bcs.lineHeight) && parseFloat(bcs.fontSize) ? Math.round((parseFloat(bcs.lineHeight) / parseFloat(bcs.fontSize)) * 100) / 100 : '',
       before: Math.round(parseFloat(bcs.marginTop) * 0.75 * 10) / 10 || 0, after: Math.round(parseFloat(bcs.marginBottom) * 0.75 * 10) / 10 || 0,
-    });
+    };
+    setFmt((p) => { for (const k of Object.keys(next)) if (p[k] !== next[k]) return next; return p; });
     pendingSize.current = sz;
   }, []);
-  useEffect(() => { document.addEventListener('selectionchange', updateFmt); return () => document.removeEventListener('selectionchange', updateFmt); }, [updateFmt]);
+  // selectionchange بيطلق مرات كتير أثناء الكتابة/السحب: نجمّعها في frame واحد بدل getComputedStyle + queryCommandState لكل حدث
+  const fmtRaf = useRef(0);
+  const updateFmtSoon = useCallback(() => { if (fmtRaf.current) return; fmtRaf.current = requestAnimationFrame(() => { fmtRaf.current = 0; updateFmt(); }); }, [updateFmt]);
+  useEffect(() => { document.addEventListener('selectionchange', updateFmtSoon); return () => { document.removeEventListener('selectionchange', updateFmtSoon); cancelAnimationFrame(fmtRaf.current); fmtRaf.current = 0; }; }, [updateFmtSoon]);
 
   /* ------------------------------------------------------------ run a command against the saved selection */
   const run = useCallback((fn, { soft = false } = {}) => {
@@ -334,6 +339,9 @@ export default function DocxView({ blob, fileName, tt, rtl, guardRef, onSave, on
     return htmlToDocx(body.current, { header: isBlank(h) ? '' : h, footer: isBlank(f) ? '' : f, page: pgRef.current, defaults: defRef.current });
   }, []);
 
+  // الـ autosave المحلي: بنستنى الـ browser يبقى فاضي ونأخّره (10 ثواني) عشان بناء ملف docx كامل ما يهنّجش الكتابة
+  const draftBuild = useCallback(async () => { await new Promise((r) => (window.requestIdleCallback ? window.requestIdleCallback(r, { timeout: 3000 }) : setTimeout(r, 50))); return build(); }, [build]);
+
   if (status === 'loading') return <div className="ed ed--center"><span className="st-fv-spinner" /><p className="ed__hint">{tt('Opening the document…', 'جارٍ فتح المستند…')}</p></div>;
   if (status === 'error') return <div className="ed ed--center"><p className="ed__err">{err}</p><Btn label={tt('Close', 'إغلاق')} onClick={onClose} /></div>;
 
@@ -343,7 +351,7 @@ export default function DocxView({ blob, fileName, tt, rtl, guardRef, onSave, on
 
   return (
     <OfficeShell
-      fileName={fileName} tt={tt} guardRef={guardRef} onSave={onSave} onClose={onClose} dirty={dirty} build={build} onSaved={() => setDirty(false)} draftKey={draftKey} draftToken={ver}
+      fileName={fileName} tt={tt} guardRef={guardRef} onSave={onSave} onClose={onClose} dirty={dirty} build={build} onSaved={() => setDirty(false)} draftKey={draftKey} draftToken={ver} draftBuild={draftBuild} draftDelay={10000}
       tools={<DocxRibbon tt={tt} S={S} A={A} />}
       status={(
         <div className="dx__status">
