@@ -2,6 +2,7 @@ import { api } from '../api/client';
 import { getDraft, pruneCache, putDraft } from './draftStore';
 import { emitDriveFailed, emitDriveSaved } from './driveEvents';
 import { trackDelete } from './deleteProgress';
+import { transfers } from './transfers';
 
 /**
  * "My PC" (جهازي) client — thin wrappers over /api/v1/drive/* (App\Http\Controllers\Api\DriveApiController).
@@ -127,24 +128,37 @@ export const drive = {
     (opts?.preserve || []).forEach((n) => fd.append('preserve[]', n)); // folders missing from the ZIP on purpose (node_modules…): keep them in My PC
     return api.postForm(`${B}/nodes/${id}/sync`, fd).then((r) => { emitDriveSaved({ id, name: '', kind: 'sync', size: blob.size }); return r; });
   },
-  /** One file per request (clear progress, parallel-safe). rel = "dir/sub/file.txt" when uploading a folder. */
-  upload: async (parentId, file, rel, onProgress, signal) => {
+  /**
+   * One file per request (clear progress, parallel-safe). rel = "dir/sub/file.txt" when uploading a folder.
+   * Every call shows up in the upload panel (lib/transfers.js). opts.tid = reuse a row the caller registered with transfers.add().
+   */
+  upload: async (parentId, file, rel, onProgress, signal, opts) => {
+    const tid = opts?.tid || transfers.add(file, { rel });
+    const ctrl = new AbortController();
+    if (signal) { if (signal.aborted) ctrl.abort(); else signal.addEventListener('abort', () => ctrl.abort(), { once: true }); }
+    transfers.begin(tid, {
+      abort: () => ctrl.abort(),
+      retry: () => drive.upload(parentId, file, rel, null, null, { tid }).then(() => window.dispatchEvent(new Event('uip-drive-changed'))).catch(() => {}),
+    });
+    const report = (p) => { transfers.progress(tid, p); onProgress?.(p); };
     let res = null;
     try {
       if (await directOn()) {
-        try { res = await directUpload(parentId, file, rel, onProgress, signal); } catch (e) { if (e?.name === 'AbortError' || !canFallBack(e)) throw e; }
+        try { res = await directUpload(parentId, file, rel, report, ctrl.signal); } catch (e) { if (e?.name === 'AbortError' || !canFallBack(e)) throw e; }
       }
       if (!res) {
         const fd = new FormData();
         if (parentId) fd.append('parent_id', String(parentId));
         fd.append('files[]', file, file.name);
         if (rel && rel.includes('/')) fd.append('paths[]', rel);
-        res = await api.postFormProgress(`${B}/upload`, fd, onProgress, signal);
+        res = await api.postFormProgress(`${B}/upload`, fd, report, ctrl.signal);
       }
     } catch (e) {
-      if (e?.name !== 'AbortError') emitDriveFailed({ name: file.name, kind: 'upload', message: e?.message || '' }); // a cancelled upload is not a failure
+      if (e?.name === 'AbortError') transfers.remove(tid); // cancelled by the student: the row just disappears
+      else { transfers.fail(tid, e?.message || ''); emitDriveFailed({ name: file.name, kind: 'upload', message: e?.message || '' }); }
       throw e;
     }
+    transfers.done(tid);
     emitDriveSaved({ id: unwrap(res)?.items?.[0]?.id, name: file.name, kind: 'upload', size: file.size });
     return res;
   },

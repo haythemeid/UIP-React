@@ -10,6 +10,8 @@ import ShareDialog from '../../components/ShareDialog';
 import MySharedLinks from '../../components/MySharedLinks';
 import StorageDialog from '../../components/StorageDialog';
 import DeleteProgressHost from '../../components/DeleteProgress';
+import UploadProgressHost from '../../components/UploadProgress';
+import { transfers } from '../../lib/transfers';
 import VersionHistoryDialog from '../../components/VersionHistoryDialog';
 import '../../styles/css/drive-share.css';
 import { useLanguage } from '../../context/LanguageContext';
@@ -717,9 +719,9 @@ export default function StudentMyPC({ embedded = false, onOpenWindow }) {
       if (!item || item.status !== 'queued') continue; // eslint-disable-line no-continue
       running.current += 1;
       patchQ(uid, { status: 'uploading', pct: 0 });
-      drive.upload(item.parent, item.file, item.rel, (p) => patchQ(uid, { pct: p }))
+      drive.upload(item.parent, item.file, item.rel, (p) => patchQ(uid, { pct: p }), null, { tid: item.tid })
         .then(() => { patchQ(uid, { status: 'done', pct: 100 }); window.setTimeout(() => setQ((q) => q.filter((x) => x.uid !== uid)), DONE_LINGER_MS); })
-        .catch((err) => patchQ(uid, { status: 'error', error: errorMessage(err) }))
+        .catch((err) => { if (err?.name === 'AbortError') setQ((q) => q.filter((x) => x.uid !== uid)); else patchQ(uid, { status: 'error', error: errorMessage(err) }); })
         .finally(() => {
           running.current -= 1;
           window.clearTimeout(reloadTimer.current);
@@ -733,11 +735,15 @@ export default function StudentMyPC({ embedded = false, onOpenWindow }) {
     const files = picked.filter((i) => !i.dir && i.file);
     const dirs = picked.filter((i) => i.dir).map((i) => i.rel.replace(/\/$/, ''));
     const tooBig = (f) => f.size > maxMb * 1048576;
-    const rows = files.map((i, k) => ({
-      uid: `${Date.now()}-${k}-${Math.random().toString(36).slice(2, 7)}`, file: i.file, rel: i.rel, name: i.file.name, parent,
-      size: i.file.size, status: tooBig(i.file) ? 'error' : 'queued', pct: 0,
-      error: tooBig(i.file) ? tt(`Larger than ${maxMb} MB`, `أكبر من ${maxMb} ميجابايت`) : '',
-    }));
+    const rows = files.map((i, k) => {
+      const uid = `${Date.now()}-${k}-${Math.random().toString(36).slice(2, 7)}`;
+      const big = tooBig(i.file);
+      const msg = big ? tt(`Larger than ${maxMb} MB`, `أكبر من ${maxMb} ميجابايت`) : '';
+      // shown in the upload panel at once (queued files read "Waiting"); cancelling a waiting file drops it from this queue
+      const tid = transfers.add(i.file, { rel: i.rel, onCancel: () => setQ((q) => q.filter((x) => x.uid !== uid)) });
+      if (big) transfers.fail(tid, msg);
+      return { uid, tid, file: i.file, rel: i.rel, name: i.file.name, parent, size: i.file.size, status: big ? 'error' : 'queued', pct: 0, error: msg };
+    });
     // empty folders from a drag & drop (mkdir -p), best effort
     const emptyDirs = dirs.filter((d) => !files.some((f) => f.rel.startsWith(`${d}/`)));
     for (const d of emptyDirs) { try { await drive.ensurePath(parent, d); } catch { /* ignore */ } } // eslint-disable-line no-await-in-loop
@@ -1286,23 +1292,8 @@ export default function StudentMyPC({ embedded = false, onOpenWindow }) {
         )}
       </footer>
 
-      {queue.length > 0 && (
-        <div className="mp-queue" role="status">
-          <div className="mp-queue__head"><strong>{busyUploading ? tt('Uploading…', 'جارٍ الرفع…') : tt('Uploads', 'الرفع')}</strong>
-            <button type="button" onClick={() => { pending.current = []; setQ((q) => q.filter((x) => x.status === 'uploading')); }} aria-label={tt('Clear', 'مسح')}><Icon name="x" size={14} /></button></div>
-          <ul>
-            {queue.slice(-30).map((q) => (
-              <li key={q.uid} className={`is-${q.status}`}>
-                <span dir="auto" title={q.rel}>{q.rel}</span>
-                <em>{q.status === 'error' ? q.error : q.status === 'done' ? '✓' : q.status === 'queued' ? tt('Waiting', 'في الانتظار') : `${q.pct}%`}</em>
-                {q.status === 'uploading' && <i style={{ width: `${q.pct}%` }} />}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       {!embedded && <DeleteProgressHost />}
+      {!embedded && <UploadProgressHost portal />}
       {toast && <div className={`mp-toast${toast.tone === 'error' ? ' is-error' : ''}`} role="status">{toast.msg}</div>}
 
       {menu && (

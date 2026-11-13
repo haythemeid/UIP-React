@@ -9,6 +9,8 @@ import { onDriveChanged } from '../lib/driveEvents';
 import { isRealtimeConnected } from '../lib/realtime';
 import CloudTray from './CloudTray';
 import DeleteProgressHost from '../components/DeleteProgress';
+import UploadProgressHost from '../components/UploadProgress';
+import { transfers } from '../lib/transfers';
 import { NotifFlyout, NotifToasts, NotifTray } from './NotificationCenter';
 import { useDesktopNotifications } from './notifications';
 import { lockScroll } from '../lib/scrollLock';
@@ -941,10 +943,14 @@ export default function DesktopOS() {
     if (hasDriveIds(e.dataTransfer)) { dropDriveNodes(e); return; }
     const files = [...(e.dataTransfer?.files || [])];
     if (!files.length || !desk.id) return;
-    flash(tt(`Uploading ${files.length} file(s)…`, `جارٍ رفع ${files.length} ملف…`));
+    // every file is registered first, so the upload panel shows the whole batch at once (queued files read "Waiting")
+    const jobs = files.map((f) => { const j = { f, off: false }; j.tid = transfers.add(f, { onCancel: () => { j.off = true; } }); return j; });
     let bad = 0;
-    for (const f of files) { try { await drive.upload(desk.id, f, null); } catch { bad += 1; } } // eslint-disable-line no-await-in-loop
-    flash(bad ? tt(`${bad} file(s) could not be uploaded (folders are not supported on the desktop).`, `${bad} ملف مترفعش (المجلدات مش مدعومة على سطح المكتب).`) : tt('Files added to the desktop.', 'تمت إضافة الملفات لسطح المكتب.'), bad ? 'error' : 'ok');
+    for (const j of jobs) {
+      if (j.off) continue; // eslint-disable-line no-continue
+      try { await drive.upload(desk.id, j.f, null, null, null, { tid: j.tid }); } catch (err) { if (err?.name !== 'AbortError') bad += 1; } // eslint-disable-line no-await-in-loop
+    }
+    if (bad) flash(tt(`${bad} file(s) could not be uploaded (folders are not supported on the desktop).`, `${bad} ملف مترفعش (المجلدات مش مدعومة على سطح المكتب).`), 'error');
     reloadDesk();
   };
 
@@ -1317,6 +1323,7 @@ export default function DesktopOS() {
         /></Suspense>
       )}
       <DeleteProgressHost />
+      <UploadProgressHost />
       {toast && <div className={`os-toast${toast.tone === 'error' ? ' is-error' : ''}`} role="status">{toast.msg}</div>}
       {locked && <LockScreen ar={ar} tt={tt} user={user} lockEnabled={lockEnabled} hideDetails={sec.hideLockDetails} onUnlock={() => setLocked(false)} onLockEnabled={setLockEnabled} onPortal={() => navigate(roleHome(user?.role))} />}
       {!locked && !asleep && <ResetUndoBar tt={tt} uid={user?.id} />}
