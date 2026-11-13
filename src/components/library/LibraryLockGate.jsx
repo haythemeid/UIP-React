@@ -197,7 +197,7 @@ function LockSettings({ tt, uid, status, onClose, onChanged }) {
   };
 
   return (
-    <StModal title={tt('Library lock', 'قفل المكتبة')} onClose={onClose}
+    <StModal title={tt('Library lock', 'قفل المكتبة')} onClose={onClose} wide
       actions={(
         <>
           {on && <button type="button" className="btn btn-ghost" onClick={remove} disabled={busy}>{tt('Remove lock', 'إلغاء القفل')}</button>}
@@ -206,13 +206,14 @@ function LockSettings({ tt, uid, status, onClose, onChanged }) {
         </>
       )}>
       <div className="ll-set">
-        <p className="ll-lead">{on ? tt(`Locked with: ${MODE_LABEL[status.mode][0]}.`, `مقفولة بـ: ${MODE_LABEL[status.mode][1]}.`) : tt('Ask for a password before My Library opens.', 'اطلب باسورد قبل ما مكتبتي تتفتح.')}</p>
+        <p className="ll-lead">{on ? tt(`Locked with: ${MODE_LABEL[status.mode][0]}.`, `مقفولة بـ: ${MODE_LABEL[status.mode][1]}.`) : tt('Choose how My Library should unlock.', 'اختار إزاي مكتبتي تتفتح.')}</p>
         {status.fallback && <div className="ll-note">{tt('The My PC lock password was removed, so the library opens with your account password for now.', 'باسورد قفل جهازي اتشال، فالمكتبة بتتفتح بباسورد حسابك دلوقتي.')}</div>}
         <div className="ll-opts" role="radiogroup" aria-label={tt('Unlock with', 'تتفتح بـ')}>
           {options.map((o) => (
             <button key={o.k} type="button" role="radio" aria-checked={mode === o.k} disabled={!o.ok} className={`ll-opt${mode === o.k ? ' is-on' : ''}`} onClick={() => { setMode(o.k); setErr(''); }}>
-              <Icon name={o.icon} size={18} />
-              <span><b>{tt(o.en, o.ar)}</b><small>{o.ok ? o.d : o.why}</small></span>
+              <span className="ll-opt__ic"><Icon name={o.icon} size={18} /></span>
+              <span className="ll-opt__txt"><b>{tt(o.en, o.ar)}</b><small>{o.ok ? o.d : o.why}</small></span>
+              <span className="ll-radio" aria-hidden="true" />
             </button>
           ))}
         </div>
